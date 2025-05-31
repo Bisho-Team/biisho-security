@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  
+  // For operators - who manages them
+  managedById String?
+  managedBy   User?   @relation("UserManagement", fields: [managedById], references: [id])
+  managedUsers User[] @relation("UserManagement")
+  
+  // For operators - what type (office/police)
+  operatorType OperatorType?
+  
+  // Created entities
+  createdBranches Branch[]
+  createdAlarms   Alarm[]
+  createdReports  AlarmReport[]
+  
+  // Assigned branches (for operators)
+  assignedBranches BranchOperator[]
+
+  @@map("users")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logo        String?  // ✅ New
+  type        String?  // ✅ New
+  industry    String?  // ✅ New
+  address     String?  // ✅ New
+  city        String?  // ✅ New
+  country     String?  @default("Ethiopia") // ✅ Optional
+  phone       String?  // ✅ New
+  email       String?  // ✅ New
+  status      CompanyStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  branches    Branch[]
+
+  @@map("companies")
+}
+
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  locationType String
+  gpsAddress  String?
+  city        String
+  subCity     String?
+  woreda      String?
+  country     String   @default("Ethiopia")
+  managerName String
+  phoneNumber String
+  contactNumber1 String?
+  contactNumber2 String?
+  description String?
+  status      BranchStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  
+  // Assigned operators
+  operators BranchOperator[]
+  alarms    Alarm[]
+
+  @@map("branches")
+}
+
+model BranchOperator {
+  id       String @id @default(cuid())
+  branchId String
+  userId   String
+  
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  assignedAt DateTime @default(now())
+
+  @@unique([branchId, userId])
+  @@map("branch_operators")
+}
+
+model Alarm {
+  id          String   @id @default(cuid())
+  type        String
+  location    String?
+  severity    AlarmSeverity
+  description String
+  additionalNotes String?
+  status      AlarmStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+  
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  
+  // Police response
+  reports AlarmReport[]
+
+  @@map("alarms")
+}
+
+model AlarmReport {
+  id          String   @id @default(cuid())
+  status      ReportStatus @default(PENDING)
+  acknowledgedAt DateTime?
+  completedAt    DateTime?
+  resolutionDescription String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  alarmId String
+  alarm   Alarm  @relation(fields: [alarmId], references: [id])
+  
+  assignedToId String
+  assignedTo   User   @relation(fields: [assignedToId], references: [id])
+
+  @@map("alarm_reports")
+}
+
+// Enums
+enum Role {
+  SUPER_ADMIN
+  OFFICE_MANAGER
+  POLICE_MANAGER
+  OPERATOR
+}
+
+enum OperatorType {
+  OFFICE
+  POLICE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum AlarmSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlarmStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  DISPATCHED
+  RESOLVED
+}
+
+enum ReportStatus {
+  PENDING
+  ACKNOWLEDGED
+  INVESTIGATING
+  COMPLETED
+}

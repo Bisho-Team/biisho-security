@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: koppa_security
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://postgres:password123@postgres:5432/koppa_security?schema=public"
+      JWT_SECRET: "your-super-secret-jwt-key-here"
+      NODE_ENV: "development"
+      FRONTEND_URL: "http://localhost:3000"
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
