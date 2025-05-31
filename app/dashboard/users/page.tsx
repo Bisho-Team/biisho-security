@@ -52,10 +52,10 @@ interface User {
 	name: string;
 	email: string;
 	phone: string;
-	role: "office_manager" | "police_manager";
+	role: "OFFICE_MANAGER" | "POLICE_MANAGER";
 	companyId?: string;
 	companyName?: string;
-	status: "active" | "inactive" | "suspended";
+	status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 	createdAt: string;
 	lastLogin?: string;
 	permissions: string[];
@@ -65,18 +65,18 @@ interface Company {
 	id: string;
 	name: string;
 	type: string;
-	status: "active" | "inactive";
+	status: "ACTIVE" | "INACTIVE";
 }
 
 const rolePermissions = {
-	office_manager: [
+	OFFICE_MANAGER: [
 		"manage_branches",
 		"manage_operators",
 		"create_alarms",
 		"view_reports",
 		"manage_settings",
 	],
-	police_manager: [
+	POLICE_MANAGER: [
 		"manage_reports",
 		"manage_officers",
 		"view_analytics",
@@ -104,7 +104,7 @@ export default function UsersPage() {
 		name: "",
 		email: "",
 		phone: "",
-		role: "" as "office_manager" | "police_manager" | "",
+		role: "" as "OFFICE_MANAGER" | "POLICE_MANAGER" | "",
 		companyId: "",
 		password: "",
 		confirmPassword: "",
@@ -276,13 +276,13 @@ export default function UsersPage() {
 			const user = users.find((u) => u.id === userId);
 			if (!user) return;
 
-			const newStatus = user.status === "active" ? "inactive" : "active";
+			const newStatus = user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
 			await apiService.put(`/users/${userId}`, { status: newStatus });
 
 			toast({
 				title: "Success",
 				description: `User ${
-					newStatus === "active" ? "activated" : "deactivated"
+					newStatus === "ACTIVE" ? "activated" : "deactivated"
 				} successfully`,
 			});
 
@@ -449,16 +449,16 @@ export default function UsersPage() {
 									<Select
 										value={newUser.role}
 										onValueChange={(
-											value: "office_manager" | "police_manager"
+											value: "OFFICE_MANAGER" | "POLICE_MANAGER"
 										) => setNewUser({ ...newUser, role: value })}>
 										<SelectTrigger>
 											<SelectValue placeholder="Select role" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="office_manager">
+											<SelectItem value="OFFICE_MANAGER">
 												Office Manager
 											</SelectItem>
-											<SelectItem value="police_manager">
+											<SelectItem value="POLICE_MANAGER">
 												Police Manager
 											</SelectItem>
 										</SelectContent>
@@ -466,7 +466,7 @@ export default function UsersPage() {
 								</div>
 							</div>
 
-							{newUser.role === "office_manager" && (
+							{newUser.role === "OFFICE_MANAGER" && (
 								<div className="space-y-2">
 									<Label htmlFor="company">Company</Label>
 									<Select
@@ -479,7 +479,7 @@ export default function UsersPage() {
 										</SelectTrigger>
 										<SelectContent>
 											{companies
-												.filter((c) => c.status === "active")
+												.filter((c) => c.status === "ACTIVE")
 												.map((company) => (
 													<SelectItem key={company.id} value={company.id}>
 														{company.name} ({company.type})
@@ -577,7 +577,7 @@ export default function UsersPage() {
 					<CardContent>
 						<div className="text-2xl font-bold">{users.length}</div>
 						<p className="text-xs text-muted-foreground">
-							{users.filter((u) => u.status === "active").length} active
+							{users.filter((u) => u.status === "ACTIVE").length} active
 						</p>
 					</CardContent>
 				</Card>
@@ -590,7 +590,7 @@ export default function UsersPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-blue-600">
-							{users.filter((u) => u.role === "office_manager").length}
+							{users.filter((u) => u.role === "OFFICE_MANAGER").length}
 						</div>
 						<p className="text-xs text-muted-foreground">Managing companies</p>
 					</CardContent>
@@ -604,7 +604,7 @@ export default function UsersPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-green-600">
-							{users.filter((u) => u.role === "police_manager").length}
+							{users.filter((u) => u.role === "POLICE_MANAGER").length}
 						</div>
 						<p className="text-xs text-muted-foreground">Handling security</p>
 					</CardContent>
@@ -618,7 +618,7 @@ export default function UsersPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-green-600">
-							{users.filter((u) => u.status === "active" && u.lastLogin).length}
+							{users.filter((u) => u.status === "ACTIVE" && u.lastLogin).length}
 						</div>
 						<p className="text-xs text-muted-foreground">Currently online</p>
 					</CardContent>
@@ -669,11 +669,11 @@ export default function UsersPage() {
 					</TabsTrigger>
 					<TabsTrigger value="office_managers">
 						Office Managers (
-						{filteredUsers.filter((u) => u.role === "office_manager").length})
+						{filteredUsers.filter((u) => u.role === "OFFICE_MANAGER").length})
 					</TabsTrigger>
 					<TabsTrigger value="police_managers">
 						Police Managers (
-						{filteredUsers.filter((u) => u.role === "police_manager").length})
+						{filteredUsers.filter((u) => u.role === "POLICE_MANAGER").length})
 					</TabsTrigger>
 				</TabsList>
 
@@ -686,14 +686,14 @@ export default function UsersPage() {
 										<div className="flex items-center space-x-4">
 											<div
 												className={`p-2 rounded-lg ${
-													user.role === "office_manager"
+													user.role === "OFFICE_MANAGER"
 														? "bg-blue-100"
 														: "bg-green-100"
 												}`}>
-												{user.role === "office_manager" ? (
+												{user.role === "OFFICE_MANAGER" ? (
 													<Building
 														className={`h-5 w-5 ${
-															user.role === "office_manager"
+															user.role === "OFFICE_MANAGER"
 																? "text-blue-600"
 																: "text-green-600"
 														}`}
@@ -718,7 +718,7 @@ export default function UsersPage() {
 												</div>
 												<div className="flex items-center space-x-2 mt-2">
 													<Badge className={getRoleColor(user.role)}>
-														{user.role === "office_manager"
+														{user.role === "OFFICE_MANAGER"
 															? "Office Manager"
 															: "Police Manager"}
 													</Badge>
@@ -766,7 +766,7 @@ export default function UsersPage() {
 													</DropdownMenuItem>
 													<DropdownMenuItem
 														onClick={() => toggleUserStatus(user.id)}>
-														{user.status === "active" ? (
+														{user.status === "ACTIVE" ? (
 															<>
 																<UserX className="h-4 w-4 mr-2" />
 																Deactivate
@@ -778,7 +778,7 @@ export default function UsersPage() {
 															</>
 														)}
 													</DropdownMenuItem>
-													{user.status === "active" && (
+													{user.status === "ACTIVE" && (
 														<DropdownMenuItem
 															onClick={() => suspendUser(user.id)}
 															className="text-red-600">
@@ -799,7 +799,7 @@ export default function UsersPage() {
 				<TabsContent value="office_managers" className="space-y-4">
 					<div className="grid gap-4">
 						{filteredUsers
-							.filter((u) => u.role === "office_manager")
+							.filter((u) => u.role === "OFFICE_MANAGER")
 							.map((user) => (
 								<Card key={user.id}>
 									<CardContent className="p-6">
@@ -869,7 +869,7 @@ export default function UsersPage() {
 														</DropdownMenuItem>
 														<DropdownMenuItem
 															onClick={() => toggleUserStatus(user.id)}>
-															{user.status === "active" ? (
+															{user.status === "ACTIVE" ? (
 																<>
 																	<UserX className="h-4 w-4 mr-2" />
 																	Deactivate
@@ -894,7 +894,7 @@ export default function UsersPage() {
 				<TabsContent value="police_managers" className="space-y-4">
 					<div className="grid gap-4">
 						{filteredUsers
-							.filter((u) => u.role === "police_manager")
+							.filter((u) => u.role === "POLICE_MANAGER")
 							.map((user) => (
 								<Card key={user.id}>
 									<CardContent className="p-6">
@@ -959,7 +959,7 @@ export default function UsersPage() {
 														</DropdownMenuItem>
 														<DropdownMenuItem
 															onClick={() => toggleUserStatus(user.id)}>
-															{user.status === "active" ? (
+															{user.status === "ACTIVE" ? (
 																<>
 																	<UserX className="h-4 w-4 mr-2" />
 																	Deactivate
@@ -1039,7 +1039,7 @@ export default function UsersPage() {
 									<Select
 										value={selectedUser.status}
 										onValueChange={(
-											value: "active" | "inactive" | "suspended"
+											value: "ACTIVE" | "INACTIVE" | "SUSPENDED"
 										) => setSelectedUser({ ...selectedUser, status: value })}>
 										<SelectTrigger>
 											<SelectValue />
@@ -1053,7 +1053,7 @@ export default function UsersPage() {
 								</div>
 							</div>
 
-							{selectedUser.role === "office_manager" && (
+							{selectedUser.role === "OFFICE_MANAGER" && (
 								<div className="space-y-2">
 									<Label htmlFor="editCompany">Company</Label>
 									<Select
@@ -1071,7 +1071,7 @@ export default function UsersPage() {
 										</SelectTrigger>
 										<SelectContent>
 											{companies
-												.filter((c) => c.status === "active")
+												.filter((c) => c.status === "ACTIVE")
 												.map((company) => (
 													<SelectItem key={company.id} value={company.id}>
 														{company.name} ({company.type})
