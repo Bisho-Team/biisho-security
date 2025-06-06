@@ -1,5 +1,6 @@
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+import { persistentNotificationService } from "./persistent-notification-service";
 
 interface ApiResponse<T = any> {
 	data: T;
@@ -133,6 +134,9 @@ class ApiService {
 			localStorage.setItem("authToken", response.data.token);
 			localStorage.setItem("currentUser", JSON.stringify(response.data.user));
 		}
+
+		// Reinitialize notification service after login
+		await persistentNotificationService.reinitializeAfterLogin();
 
 		return response;
 	}

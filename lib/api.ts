@@ -7,6 +7,7 @@ interface ApiResponse<T> {
 	error?: string;
 	details?: any;
 }
+import { persistentNotificationService } from "./persistent-notification-service";
 
 class ApiClient {
 	private getAuthHeaders() {
@@ -57,6 +58,9 @@ class ApiClient {
 			localStorage.setItem("authToken", response.token);
 			localStorage.setItem("currentUser", JSON.stringify(response.user));
 		}
+
+		// Reinitialize notification service after login
+		await persistentNotificationService.reinitializeAfterLogin();
 
 		return response;
 	}
