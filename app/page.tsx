@@ -49,8 +49,16 @@ export default function LoginPage() {
 		setLoading(true);
 
 		try {
-			await login(email, password);
-			router.push("/dashboard");
+			const result = await login(email, password);
+			console.log("Quick login result:", result);
+			if (email === "police@koppa.com") {
+				// Redirect to police dashboard if police manager
+				return router.push("/dashboard/alarm-reports");
+			} else {
+				// Redirect to general dashboard for other roles
+				router.push("/dashboard");
+			}
+			// router.push("/dashboard");
 		} catch (error: any) {
 			setError(error.message || "Login failed. Please check your credentials.");
 		} finally {
@@ -62,11 +70,12 @@ export default function LoginPage() {
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
 			<div className="w-full max-w-md space-y-6">
 				<div className="text-center space-y-2">
-					<div className="flex items-center justify-center space-x-2">
+					<img src="/logo-shield.png" alt="" />
+					{/* <div className="flex items-center justify-center space-x-2">
 						<Shield className="h-8 w-8 text-blue-600" />
 						<h1 className="text-3xl font-bold text-gray-900">Koppa</h1>
 					</div>
-					<p className="text-gray-600">Smart Security System</p>
+					<p className="text-gray-600">Smart Security System</p> */}
 				</div>
 
 				<Card>

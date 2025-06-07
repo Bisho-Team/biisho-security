@@ -68,7 +68,7 @@ interface Alarm {
 		lat: number;
 		lng: number;
 	};
-	status: "ACTIVE" | "acknowledged" | "completed";
+	status: "ACTIVE" | "ACKNOWLEDGED" | "completed";
 	severity: "low" | "medium" | "high" | "critical";
 	description: string;
 	additionalNotes?: string;
@@ -356,7 +356,7 @@ export default function EnhancedAlarmReportsPage() {
 		(alarm) => alarm.status === "ACTIVE"
 	);
 	const acknowledgedAlarms = filteredAlarms.filter(
-		(alarm) => alarm.status === "acknowledged"
+		(alarm) => alarm.status === "ACKNOWLEDGED"
 	);
 	const completedAlarms = filteredAlarms.filter(
 		(alarm) => alarm.status === "completed"
@@ -404,7 +404,7 @@ export default function EnhancedAlarmReportsPage() {
 									SECURITY COMMAND CENTER
 								</h1>
 								<p className="text-slate-400 font-mono text-lg mt-2">
-									Real-time threat monitoring & incident response system
+									Real-time ALARM monitoring & incident response system
 								</p>
 							</div>
 						</div>
@@ -430,7 +430,7 @@ export default function EnhancedAlarmReportsPage() {
 					<Card className="bg-gradient-to-br from-red-900/40 to-red-800/20 border-red-500/30 shadow-xl shadow-red-500/10 animate-slide-up">
 						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 							<CardTitle className="text-sm font-medium text-red-200">
-								ACTIVE THREATS
+								ACTIVE ALARMS
 							</CardTitle>
 							<div className="relative p-3 bg-red-600/30 rounded-lg border border-red-500/40">
 								<Bell className="h-6 w-6 text-red-400 animate-swing" />
@@ -462,7 +462,7 @@ export default function EnhancedAlarmReportsPage() {
 						style={{ animationDelay: "0.1s" }}>
 						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 							<CardTitle className="text-sm font-medium text-yellow-200">
-								UNDER INVESTIGATION
+								ACKNOWLEDGED
 							</CardTitle>
 							<div className="p-3 bg-yellow-600/30 rounded-lg border border-yellow-500/40">
 								<Target className="h-6 w-6 text-yellow-400" />
@@ -494,7 +494,7 @@ export default function EnhancedAlarmReportsPage() {
 								{completedAlarms.length}
 							</div>
 							<p className="text-xs text-green-300 font-mono mt-1">
-								THREATS NEUTRALIZED
+								ALARMS NEUTRALIZED
 							</p>
 						</CardContent>
 					</Card>
@@ -578,7 +578,7 @@ export default function EnhancedAlarmReportsPage() {
 						<TabsTrigger
 							value="ACTIVE"
 							className="relative data-[state=active]:bg-red-600/30 data-[state=active]:text-red-200 font-mono">
-							ACTIVE THREATS ({activeAlarms.length})
+							ACTIVE ALARMS ({activeAlarms.length})
 							{activeAlarms.length > 0 && (
 								<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-ping" />
 							)}
@@ -586,7 +586,7 @@ export default function EnhancedAlarmReportsPage() {
 						<TabsTrigger
 							value="acknowledged"
 							className="data-[state=active]:bg-yellow-600/30 data-[state=active]:text-yellow-200 font-mono">
-							INVESTIGATING ({acknowledgedAlarms.length})
+							ACKNOWLEDGED ({acknowledgedAlarms.length})
 						</TabsTrigger>
 						<TabsTrigger
 							value="completed"
@@ -695,7 +695,7 @@ export default function EnhancedAlarmReportsPage() {
 													) : (
 														<Clock className="h-4 w-4 mr-2" />
 													)}
-													ACKNOWLEDGE THREAT
+													ACKNOWLEDGE ALARM
 												</Button>
 												<Button
 													variant="outline"
@@ -708,13 +708,13 @@ export default function EnhancedAlarmReportsPage() {
 													<Eye className="h-4 w-4 mr-2" />
 													TACTICAL DETAILS
 												</Button>
-												<Button
+												{/* <Button
 													variant="outline"
 													size="sm"
 													className="border-blue-600/50 text-blue-300 hover:bg-blue-900/30 font-mono">
 													<Crosshair className="h-4 w-4 mr-2" />
 													DISPATCH UNIT
-												</Button>
+												</Button> */}
 											</div>
 										</div>
 									</CardContent>
@@ -728,7 +728,7 @@ export default function EnhancedAlarmReportsPage() {
 											ALL SYSTEMS SECURE
 										</h3>
 										<p className="text-green-400 font-mono">
-											No active security threats detected
+											No active security ALARMs detected
 										</p>
 									</CardContent>
 								</Card>
@@ -904,7 +904,7 @@ export default function EnhancedAlarmReportsPage() {
 											? "border-l-red-500 bg-gradient-to-r from-red-900/40 to-slate-900/60"
 											: alarm.status === "ACTIVE"
 											? "border-l-orange-500 bg-gradient-to-r from-orange-900/40 to-slate-900/60"
-											: alarm.status === "acknowledged"
+											: alarm.status === "ACKNOWLEDGED"
 											? "border-l-yellow-500 bg-gradient-to-r from-yellow-900/40 to-slate-900/60"
 											: "border-l-green-500 bg-gradient-to-r from-green-900/40 to-slate-900/60"
 									)}
@@ -939,13 +939,13 @@ export default function EnhancedAlarmReportsPage() {
 														className={
 															alarm.status === "ACTIVE"
 																? "bg-red-600/30 text-red-200 border border-red-500/50"
-																: alarm.status === "acknowledged"
+																: alarm.status === "ACKNOWLEDGED"
 																? "bg-yellow-600/30 text-yellow-200 border border-yellow-500/50"
 																: "bg-green-600/30 text-green-200 border border-green-500/50"
 														}>
 														{alarm.status === "ACTIVE"
 															? "ACTIVE"
-															: alarm.status === "acknowledged"
+															: alarm.status === "ACKNOWLEDGED"
 															? "INVESTIGATING"
 															: "RESOLVED"}
 													</Badge>
@@ -997,7 +997,7 @@ export default function EnhancedAlarmReportsPage() {
 								<div className="p-2 bg-red-600/20 rounded-lg border border-red-500/30">
 									<AlertTriangle className="h-6 w-6 text-red-400" />
 								</div>
-								THREAT ANALYSIS - {selectedAlarm?.type}
+								ALARM ANALYSIS - {selectedAlarm?.type}
 							</DialogTitle>
 							<DialogDescription className="text-slate-400 font-mono">
 								Comprehensive security incident report and tactical information
@@ -1005,12 +1005,12 @@ export default function EnhancedAlarmReportsPage() {
 						</DialogHeader>
 						{selectedAlarm && (
 							<div className="space-y-6 py-4">
-								{/* Threat Overview */}
+								{/* ALARM Overview */}
 								<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 									<Card className="bg-slate-800/50 border-slate-700">
 										<CardHeader>
 											<CardTitle className="text-lg font-mono text-slate-200">
-												THREAT CLASSIFICATION
+												ALARM CLASSIFICATION
 											</CardTitle>
 										</CardHeader>
 										<CardContent className="space-y-4">
@@ -1025,7 +1025,7 @@ export default function EnhancedAlarmReportsPage() {
 												</div>
 												<div>
 													<Label className="text-sm font-medium text-slate-400 font-mono">
-														THREAT TYPE
+														ALARM TYPE
 													</Label>
 													<p className="text-sm text-white font-mono bg-slate-900/50 p-2 rounded border">
 														{selectedAlarm.type}
@@ -1051,13 +1051,13 @@ export default function EnhancedAlarmReportsPage() {
 														className={
 															selectedAlarm.status === "ACTIVE"
 																? "bg-red-600/30 text-red-200 border border-red-500/50"
-																: selectedAlarm.status === "acknowledged"
+																: selectedAlarm.status === "ACKNOWLEDGED"
 																? "bg-yellow-600/30 text-yellow-200 border border-yellow-500/50"
 																: "bg-green-600/30 text-green-200 border border-green-500/50"
 														}>
 														{selectedAlarm.status === "ACTIVE"
-															? "ACTIVE THREAT"
-															: selectedAlarm.status === "acknowledged"
+															? "ACTIVE ALARM"
+															: selectedAlarm.status === "ACKNOWLEDGED"
 															? "UNDER INVESTIGATION"
 															: "RESOLVED"}
 													</Badge>
@@ -1201,7 +1201,7 @@ export default function EnhancedAlarmReportsPage() {
 												</div>
 												<div>
 													<p className="text-red-200 font-mono font-medium">
-														THREAT DETECTED
+														ALARM DETECTED
 													</p>
 													<p className="text-red-300 text-sm font-mono">
 														{formatDateTime(selectedAlarm.createdAt)}
@@ -1230,7 +1230,7 @@ export default function EnhancedAlarmReportsPage() {
 													</div>
 													<div>
 														<p className="text-green-200 font-mono font-medium">
-															THREAT NEUTRALIZED
+															ALARM NEUTRALIZED
 														</p>
 														<p className="text-green-300 text-sm font-mono">
 															{formatDateTime(selectedAlarm.completedAt)}
@@ -1258,10 +1258,10 @@ export default function EnhancedAlarmReportsPage() {
 									}}
 									className="bg-yellow-600 hover:bg-yellow-700 font-mono">
 									<Clock className="h-4 w-4 mr-2" />
-									ACKNOWLEDGE THREAT
+									ACKNOWLEDGE ALARM
 								</Button>
 							)}
-							{selectedAlarm?.status === "acknowledged" && (
+							{selectedAlarm?.status === "ACKNOWLEDGED" && (
 								<Button
 									onClick={() => {
 										setIsDetailDialogOpen(false);
@@ -1283,7 +1283,7 @@ export default function EnhancedAlarmReportsPage() {
 					<DialogContent className="bg-slate-900 border-slate-700 text-white">
 						<DialogHeader>
 							<DialogTitle className="font-mono text-xl">
-								COMPLETE THREAT RESOLUTION
+								COMPLETE ALARM RESOLUTION
 							</DialogTitle>
 							<DialogDescription className="text-slate-400 font-mono">
 								Provide detailed resolution report for incident closure
@@ -1298,7 +1298,7 @@ export default function EnhancedAlarmReportsPage() {
 								</Label>
 								<Textarea
 									id="resolution"
-									placeholder="Describe threat neutralization procedures, actions taken, and final outcome..."
+									placeholder="Describe ALARM neutralization procedures, actions taken, and final outcome..."
 									value={resolutionDescription}
 									onChange={(e) => setResolutionDescription(e.target.value)}
 									rows={6}

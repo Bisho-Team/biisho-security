@@ -59,7 +59,7 @@ interface PoliceOfficer {
 	id: string;
 	name: string;
 	badge: string;
-	status: "On Duty" | "Off Duty" | "Dispatched" | "Break";
+	status: "Available" | "On Duty" | "Off Duty" | "Dispatched" | "Break";
 	location: string;
 	lastUpdate: string;
 	activeCase?: string;
@@ -74,7 +74,7 @@ const mockRecentAlarms: RecentAlarm[] = [
 		branch: "Downtown Branch",
 		priority: "High",
 		status: "Active",
-		timestamp: "2024-01-15T10:30:00Z",
+		timestamp: "2025-01-15T10:30:00Z",
 		description: "Unauthorized movement detected in restricted area",
 		assignedOfficer: "Officer Johnson",
 	},
@@ -85,7 +85,7 @@ const mockRecentAlarms: RecentAlarm[] = [
 		branch: "Tech Center",
 		priority: "Critical",
 		status: "Dispatched",
-		timestamp: "2024-01-15T09:45:00Z",
+		timestamp: "2025-01-15T09:45:00Z",
 		description: "Forced entry attempt detected",
 		assignedOfficer: "Officer Smith",
 	},
@@ -96,7 +96,7 @@ const mockRecentAlarms: RecentAlarm[] = [
 		branch: "Main Office",
 		priority: "Critical",
 		status: "Resolved",
-		timestamp: "2024-01-15T08:15:00Z",
+		timestamp: "2025-01-15T08:15:00Z",
 		description: "Smoke detected in office area",
 		assignedOfficer: "Officer Davis",
 	},
@@ -107,7 +107,7 @@ const mockRecentAlarms: RecentAlarm[] = [
 		branch: "Retail Store",
 		priority: "Medium",
 		status: "Acknowledged",
-		timestamp: "2024-01-15T07:20:00Z",
+		timestamp: "2025-01-15T07:20:00Z",
 		description: "Glass breakage sensor triggered",
 	},
 	{
@@ -117,7 +117,7 @@ const mockRecentAlarms: RecentAlarm[] = [
 		branch: "Bank Branch",
 		priority: "Critical",
 		status: "Active",
-		timestamp: "2024-01-15T06:55:00Z",
+		timestamp: "2025-01-15T06:55:00Z",
 		description: "Emergency panic button activated",
 		assignedOfficer: "Officer Wilson",
 	},
@@ -127,46 +127,46 @@ const mockRecentAlarms: RecentAlarm[] = [
 const mockPoliceOfficers: PoliceOfficer[] = [
 	{
 		id: "OFF-001",
-		name: "Officer Johnson",
-		badge: "B-1234",
-		status: "Dispatched",
-		location: "Downtown Branch",
-		lastUpdate: "2024-01-15T10:32:00Z",
+		name: "AA Police Manager",
+		badge: "AA-1234",
+		status: "Available",
+		location: "Main Branch",
+		lastUpdate: "2025-05-15T10:32:00Z",
 		activeCase: "ALM-001",
 	},
-	{
-		id: "OFF-002",
-		name: "Officer Smith",
-		badge: "B-1235",
-		status: "On Duty",
-		location: "Central Station",
-		lastUpdate: "2024-01-15T10:30:00Z",
-	},
-	{
-		id: "OFF-003",
-		name: "Officer Davis",
-		badge: "B-1236",
-		status: "Break",
-		location: "Station 2",
-		lastUpdate: "2024-01-15T10:15:00Z",
-	},
-	{
-		id: "OFF-004",
-		name: "Officer Wilson",
-		badge: "B-1237",
-		status: "Dispatched",
-		location: "Bank Branch",
-		lastUpdate: "2024-01-15T06:57:00Z",
-		activeCase: "ALM-005",
-	},
-	{
-		id: "OFF-005",
-		name: "Officer Brown",
-		badge: "B-1238",
-		status: "Off Duty",
-		location: "N/A",
-		lastUpdate: "2024-01-14T22:00:00Z",
-	},
+	// {
+	// 	id: "OFF-002",
+	// 	name: "Officer Smith",
+	// 	badge: "B-1235",
+	// 	status: "On Duty",
+	// 	location: "Central Station",
+	// 	lastUpdate: "2024-01-15T10:30:00Z",
+	// },
+	// {
+	// 	id: "OFF-003",
+	// 	name: "Officer Davis",
+	// 	badge: "B-1236",
+	// 	status: "Break",
+	// 	location: "Station 2",
+	// 	lastUpdate: "2024-01-15T10:15:00Z",
+	// },
+	// {
+	// 	id: "OFF-004",
+	// 	name: "Officer Wilson",
+	// 	badge: "B-1237",
+	// 	status: "Dispatched",
+	// 	location: "Bank Branch",
+	// 	lastUpdate: "2024-01-15T06:57:00Z",
+	// 	activeCase: "ALM-005",
+	// },
+	// {
+	// 	id: "OFF-005",
+	// 	name: "Officer Brown",
+	// 	badge: "B-1238",
+	// 	status: "Off Duty",
+	// 	location: "N/A",
+	// 	lastUpdate: "2024-01-14T22:00:00Z",
+	// },
 ];
 
 export default function EnhancedDashboardOverview() {
@@ -279,6 +279,8 @@ export default function EnhancedDashboardOverview() {
 		switch (status) {
 			case "On Duty":
 				return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/20 dark:text-green-400";
+			case "Available":
+				return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/20 dark:text-green-400";
 			case "Dispatched":
 				return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400";
 			case "Break":
@@ -308,6 +310,26 @@ export default function EnhancedDashboardOverview() {
 			case "SUPER_ADMIN":
 				return (
 					<>
+						<Card
+							className="animate-slide-up glass"
+							style={{ animationDelay: "0.3s" }}>
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+								<CardTitle className="text-sm font-medium">
+									Active Alarms
+								</CardTitle>
+								<div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
+									<AlertTriangle className="h-4 w-4 text-red-500" />
+								</div>
+							</CardHeader>
+							<CardContent>
+								<div className="text-2xl font-bold text-red-600">
+									{stats.activeAlarms || 0}
+								</div>
+								<p className="text-xs text-muted-foreground">
+									Across all branches
+								</p>
+							</CardContent>
+						</Card>
 						<Card
 							className="animate-slide-up glass"
 							style={{ animationDelay: "0s" }}>
@@ -362,26 +384,6 @@ export default function EnhancedDashboardOverview() {
 									{stats.systemUptime}
 								</div>
 								<p className="text-xs text-muted-foreground">Last 30 days</p>
-							</CardContent>
-						</Card>
-						<Card
-							className="animate-slide-up glass"
-							style={{ animationDelay: "0.3s" }}>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Active Alarms
-								</CardTitle>
-								<div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
-									<AlertTriangle className="h-4 w-4 text-red-500" />
-								</div>
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold text-red-600">
-									{stats.activeAlarms || 0}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									Across all branches
-								</p>
 							</CardContent>
 						</Card>
 					</>

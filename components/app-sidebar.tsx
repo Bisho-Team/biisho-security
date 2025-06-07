@@ -88,7 +88,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 
 			case "OFFICE_MANAGER":
 				return [
-					...baseItems,
+					// ...baseItems,
 					{
 						title: "Alarms",
 						url: "/dashboard/alarms",
@@ -205,22 +205,22 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 				return [
 					{
 						title: "Add User",
-						url: "/dashboard/add-user",
+						url: "/dashboard/users",
 						icon: UserPlus,
 						color:
 							"bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
 					},
 				];
-			case "POLICE_MANAGER":
-				return [
-					{
-						title: "New Case",
-						url: "/dashboard/new-case",
-						icon: Plus,
-						color:
-							"bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
-					},
-				];
+			// case "POLICE_MANAGER":
+			// 	return [
+			// 		{
+			// 			title: "New Case",
+			// 			url: "/dashboard/new-case",
+			// 			icon: Plus,
+			// 			color:
+			// 				"bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
+			// 		},
+			// 	];
 			default:
 				return [];
 		}
