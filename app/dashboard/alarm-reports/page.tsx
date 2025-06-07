@@ -153,7 +153,7 @@ const AlarmLocationMap = ({
 		// Load Google Maps API if not already loaded
 		if (typeof (window as any).google === "undefined") {
 			const script = document.createElement("script");
-			script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap`;
+			script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY}&callback=initMap`;
 			script.async = true;
 			script.defer = true;
 			(window as any).initMap = initMap;
