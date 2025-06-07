@@ -23,7 +23,7 @@ export const comparePassword = async (password: string, hash: string): Promise<b
 }
 
 export const generateToken = (payload: any): string => {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
+  return (jwt as any).sign(payload, process.env.JWT_SECRET!, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   })
 }
@@ -56,7 +56,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return res.status(401).json({ error: "Invalid token or user inactive." })
     }
 
-    req.user = user
+    (req as any).user = user
     next()
   } catch (error) {
     res.status(401).json({ error: "Invalid token." })

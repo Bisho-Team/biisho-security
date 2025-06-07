@@ -18,13 +18,13 @@ dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3003;
 
 // Middleware
 app.use(helmet());
 app.use(
 	cors({
-		origin: process.env.FRONTEND_URL || "http://localhost:3002",
+		origin: process.env.FRONTEND_URL || "http://167.235.24.44:3002",
 		credentials: true,
 	})
 );

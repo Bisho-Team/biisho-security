@@ -16,7 +16,7 @@ async function main() {
 
   const company2 = await prisma.company.create({
     data: {
-      name: "SafeGuard Ethiopia",
+      name: "Hibert Bank",
       description: "Comprehensive security services",
     },
   })
@@ -80,7 +80,7 @@ async function main() {
       subCity: "Bole",
       woreda: "Woreda 03",
       country: "Ethiopia",
-      managerName: "John Doe",
+      managerName: "Abebe Tesfaye",
       phoneNumber: "+251911123456",
       description: "Main headquarters office",
       companyId: company1.id,
@@ -90,7 +90,7 @@ async function main() {
 
   const branch2 = await prisma.branch.create({
     data: {
-      name: "North Branch",
+      name: "North AA Branch",
       locationType: "Retail Store",
       city: "Addis Ababa",
       subCity: "Yeka",
@@ -108,7 +108,7 @@ async function main() {
   const operator1 = await prisma.user.create({
     data: {
       email: "operator1@koppa.com",
-      name: "Security Operator 1",
+      name: "Ayele Tesfaye",
       password: await hashPassword("password123"),
       role: "OPERATOR",
       operatorType: "OFFICE",
@@ -120,7 +120,7 @@ async function main() {
   const operator2 = await prisma.user.create({
     data: {
       email: "operator2@koppa.com",
-      name: "Police Operator 1",
+      name: "Kebede Tesfaye",
       password: await hashPassword("password123"),
       role: "OPERATOR",
       operatorType: "POLICE",
