@@ -1,10 +1,20 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const helmet_1 = __importDefault(require("helmet"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const client_1 = require("@prisma/client");
 // Import routes
@@ -21,16 +31,10 @@ const app = (0, express_1.default)();
 const prisma = new client_1.PrismaClient();
 const PORT = process.env.PORT || 3003;
 // Middleware
-// app.use(helmet());
-// app.use(
-// 	cors({
-// 		origin: process.env.FRONTEND_URL || "http://167.235.24.44:3002",
-// 		credentials: true,
-// 	})
-// );
+app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: "*",
-    credentials: false,
+    origin: process.env.FRONTEND_URL || "http://167.235.24.44:3002",
+    credentials: true,
 }));
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -73,11 +77,11 @@ app.use("*", (req, res) => {
     res.status(404).json({ error: "Route not found" });
 });
 // Graceful shutdown
-// process.on("SIGINT", async () => {
-// 	console.log("Shutting down gracefully...");
-// 	await prisma.$disconnect();
-// 	process.exit(0);
-// });
+process.on("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Shutting down gracefully...");
+    yield prisma.$disconnect();
+    process.exit(0);
+}));
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
