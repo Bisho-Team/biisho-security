@@ -247,7 +247,6 @@ const {
 	broadcastAlarmUpdate,
 } = require("./../lib/websocket-server");
 
-// Define createAlarmSchema for validating alarm creation input
 const createAlarmSchema = z.object({
 	type: z.string().min(1),
 	branchId: z.string().min(1),
@@ -258,7 +257,7 @@ const createAlarmSchema = z.object({
 	assignedToId: z.string().min(1), // Police Manager ID
 });
 
-// Get all alarms
+// Get alarms
 router.get("/", authenticate, async (req, res) => {
 	try {
 		const alarms = await prisma.alarm.findMany({
@@ -317,7 +316,7 @@ router.get("/:id", authenticate, async (req, res) => {
 	}
 });
 
-// Create a new alarm
+// Create alarm
 // router.post("/", authenticate, async (req, res) => {
 // 	try {
 // 		const { type, branchId, location, severity, description, status } =
@@ -526,7 +525,7 @@ router.post(
 	}
 );
 
-// Update an existing alarm
+// Update an alarm
 router.put("/:id", authenticate, async (req, res) => {
 	const { id } = req.params;
 	try {

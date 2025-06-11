@@ -4,7 +4,6 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
-// Import routes
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/users";
 import companyRoutes from "./routes/companies";
@@ -13,30 +12,29 @@ import alarmRoutes from "./routes/alarms";
 import reportRoutes from "./routes/reports";
 import analyticsRoutes from "./routes/analytics";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 // Middleware
 app.use(helmet());
 app.use(
 	cors({
-		origin: process.env.FRONTEND_URL || "http://localhost:3000",
+		origin: process.env.FRONTEND_URL,
 		credentials: true,
 	})
 );
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// check api test
 app.get("/health", (req, res) => {
 	res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
@@ -45,7 +43,7 @@ app.use("/api/alarms", alarmRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Error handling middleware
+// Error handling
 app.use(
 	(
 		err: any,
