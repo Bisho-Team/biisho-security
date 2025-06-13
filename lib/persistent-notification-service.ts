@@ -31,28 +31,33 @@ class PersistentNotificationService {
 			// Load persistent alarms from storage
 			await this.loadPersistentAlarms();
 
+			console.log(
+				`Loaded ${this.persistentAlarms.size} persistent alarms from storage`
+			);
+			console.log(`navigator ${JSON.stringify(navigator)}`);
+
 			// Try to register service worker if supported
-			if ("serviceWorker" in navigator) {
-				try {
-					// Register service worker
-					this.registration = await navigator.serviceWorker.register("/sw.js", {
-						scope: "/",
-					});
-					console.log("Service Worker registered:", this.registration);
-				} catch (error) {
-					console.warn("Failed to register service worker:", error);
-				}
-			} else {
-				console.warn("Service Worker not supported");
+			try {
+				// Register service worker
+				this.registration = await navigator.serviceWorker.register("/sw.js", {
+					scope: "/",
+				});
+				console.log("Service Worker registered:", this.registration);
+			} catch (error) {
+				console.warn("Failed to register service worker:", error);
 			}
+			// if ("serviceWorker" in navigator) {
+			// } else {
+			// 	console.warn("Service Worker not supported");
+			// }
 
 			// Request notification permission
-			if ("Notification" in window) {
-				const permission = await this.requestPermission();
-				if (permission !== "granted") {
-					console.warn("Notification permission not granted");
-				}
+			// if ("Notification" in window) {
+			const permission = await this.requestPermission();
+			if (permission !== "granted") {
+				console.warn("Notification permission not granted");
 			}
+			// }
 
 			// Set up message listener for service worker
 			if (navigator.serviceWorker) {
