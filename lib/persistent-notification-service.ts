@@ -3,7 +3,7 @@ interface PersistentAlarm {
 	type: string;
 	branchName: string;
 	location: string;
-	severity: "low" | "medium" | "high" | "critical";
+	severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 	description: string;
 	createdAt: string;
 	acknowledged: boolean;
@@ -120,7 +120,7 @@ class PersistentNotificationService {
 
 		// Play sound based on severity
 		if (this.audioEnabled) {
-			if (alarm.severity === "critical" || alarm.severity === "high") {
+			if (alarm.severity === "CRITICAL" || alarm.severity === "HIGH") {
 				audioService.playAlarmSiren(alarm.id);
 			} else {
 				audioService.playNotificationSound();
@@ -239,6 +239,10 @@ class PersistentNotificationService {
 
 	getMostRecentActiveAlarm(): PersistentAlarm | null {
 		const activeAlarms = this.getPersistentAlarms();
+		console.log(
+			`Found ${activeAlarms.length} active alarms for most recent check`
+		);
+
 		if (activeAlarms.length === 0) return null;
 
 		// Sort by creation date (newest first)
@@ -264,7 +268,7 @@ class PersistentNotificationService {
 			// Play sound only for the most recent critical/high alarm
 			if (
 				!playedCriticalSound &&
-				(alarm.severity === "critical" || alarm.severity === "high")
+				(alarm.severity === "CRITICAL" || alarm.severity === "HIGH")
 			) {
 				if (this.audioEnabled) {
 					audioService.playAlarmSiren(alarm.id);
@@ -287,7 +291,7 @@ class PersistentNotificationService {
 			if (unacknowledgedAlarms.length > 0) {
 				// Ensure at least one critical/high alarm has sound playing
 				const criticalAlarms = unacknowledgedAlarms.filter(
-					(alarm) => alarm.severity === "critical" || alarm.severity === "high"
+					(alarm) => alarm.severity === "CRITICAL" || alarm.severity === "HIGH"
 				);
 
 				if (criticalAlarms.length > 0 && this.audioEnabled) {
@@ -367,7 +371,7 @@ class PersistentNotificationService {
 		} else {
 			// Restart sounds for unacknowledged critical alarms
 			const criticalAlarms = this.getPersistentAlarms().filter(
-				(alarm) => alarm.severity === "critical" || alarm.severity === "high"
+				(alarm) => alarm.severity === "CRITICAL" || alarm.severity === "HIGH"
 			);
 
 			if (criticalAlarms.length > 0) {
