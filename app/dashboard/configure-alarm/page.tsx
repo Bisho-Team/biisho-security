@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
 	Card,
@@ -25,19 +25,21 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
 	MapPin,
-	Search,
 	Loader2,
 	Send,
 	AlertTriangle,
 	Shield,
 	Clock,
 	CheckCircle,
+	Navigation,
+	Globe,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiClient } from "@/lib/api";
 import { apiService } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
 import { webSocketService } from "@/lib/websocket-service";
+import { useLocationSearch } from "@/hooks/use-location-search";
 
 const alarmTypes = [
 	"Motion Detection",
@@ -90,10 +92,23 @@ export default function ConfigureAlarmPage() {
 		additionalNotes: "",
 	});
 
-	const [mapVisible, setMapVisible] = useState(false);
+	// Location search states
 	const [searchQuery, setSearchQuery] = useState("");
-	const [searchResults, setSearchResults] = useState<any[]>([]);
-	const [searching, setSearching] = useState(false);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
+
+	// Use the location search hook
+	const {
+		results: searchResults,
+		isSearching,
+		debouncedSearch,
+		reverseGeocode,
+		clearResults,
+	} = useLocationSearch();
+
+	// Refs for managing search
+	const searchInputRef = useRef<HTMLInputElement>(null);
+	const suggestionsRef = useRef<HTMLDivElement>(null);
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
@@ -104,8 +119,6 @@ export default function ConfigureAlarmPage() {
 		const fetchData = async () => {
 			try {
 				setLoading(true);
-
-				// Fetch branches
 				const branches = await apiClient.getBranches();
 				setAvailableBranches(branches);
 				fetchPoliceManagers();
@@ -122,18 +135,14 @@ export default function ConfigureAlarmPage() {
 
 	const fetchPoliceManagers = async () => {
 		try {
-			setLoading(true);
 			const response = await apiService.get("/users/police-managers");
-			console.log("Fetched alarms:", response);
 			setPoliceManagers(response as any);
 		} catch (error) {
 			toast({
 				title: "Error",
-				description: "Failed to fetch alarms",
+				description: "Failed to fetch police managers",
 				variant: "destructive",
 			});
-		} finally {
-			setLoading(false);
 		}
 	};
 
@@ -141,95 +150,142 @@ export default function ConfigureAlarmPage() {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
-	const handleLocationSearch = async () => {
-		if (!searchQuery.trim()) return;
+	const handleSearchInputChange = (value: string) => {
+		console.log("Search input changed:", value);
+		setSearchQuery(value);
 
-		setSearching(true);
-		try {
-			// Using Nominatim OpenStreetMap API for geocoding
-			const response = await fetch(
-				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-					searchQuery
-				)}`
-			);
-			const data = await response.json();
+		if (!value.trim()) {
+			clearResults();
+			setShowSuggestions(false);
+			setSelectedLocation(null);
+			setFormData((prev) => ({
+				...prev,
+				location: "",
+				latitude: "",
+				longitude: "",
+			}));
+			return;
+		}
 
-			setSearchResults(
-				data.map((item: any) => ({
-					name: item.display_name.split(",")[0],
-					address: item.display_name,
-					latitude: item.lat,
-					longitude: item.lon,
-				}))
-			);
-		} catch (error) {
-			console.error("Error searching for location:", error);
-		} finally {
-			setSearching(false);
+		// Trigger debounced search
+		debouncedSearch(value);
+
+		// Show suggestions if we have a query
+		if (value.trim().length >= 2) {
+			setShowSuggestions(true);
 		}
 	};
 
+	// Effect to update suggestions visibility when results change
+	useEffect(() => {
+		if (searchResults.length > 0 && searchQuery.trim().length >= 2) {
+			setShowSuggestions(true);
+		}
+	}, [searchResults, searchQuery]);
+
 	const selectLocation = (location: any) => {
+		setSelectedLocation(location);
+		setSearchQuery(location.name);
 		setFormData((prev) => ({
 			...prev,
 			location: location.name,
 			latitude: location.latitude,
 			longitude: location.longitude,
 		}));
-		setSearchResults([]);
-		setSearchQuery("");
+		setShowSuggestions(false);
 
-		// If we had a map instance, we would update the marker here
-		// For now, we'll just display the coordinates
+		toast({
+			title: "Location Selected",
+			description: `Selected: ${location.name}, ${location.address}`,
+		});
 	};
 
-	const getCurrentLocation = () => {
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					const { latitude, longitude } = position.coords;
-
-					// Reverse geocoding to get address from coordinates
-					fetch(
-						`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-					)
-						.then((response) => response.json())
-						.then((data) => {
-							setFormData((prev) => ({
-								...prev,
-								location: data.display_name.split(",")[0] || "Current Location",
-								latitude: latitude.toString(),
-								longitude: longitude.toString(),
-							}));
-						})
-						.catch((error) => {
-							console.error("Error getting address:", error);
-							setFormData((prev) => ({
-								...prev,
-								location: "Current Location",
-								latitude: latitude.toString(),
-								longitude: longitude.toString(),
-							}));
-						});
-				},
-				(error) => {
-					console.error("Error getting current location:", error);
-					toast({
-						title: "Location Error",
-						description:
-							"Unable to get your current location. Please try again or enter manually.",
-						variant: "destructive",
-					});
-				}
-			);
-		} else {
+	const getCurrentLocation = async () => {
+		if (!navigator.geolocation) {
 			toast({
 				title: "Geolocation Not Supported",
 				description: "Your browser does not support geolocation.",
 				variant: "destructive",
 			});
+			return;
 		}
+
+		navigator.geolocation.getCurrentPosition(
+			async (position) => {
+				const { latitude, longitude } = position.coords;
+
+				try {
+					const location = await reverseGeocode(latitude, longitude);
+
+					if (location) {
+						setSelectedLocation(location);
+						setSearchQuery(location.name);
+						setFormData((prev) => ({
+							...prev,
+							location: location.name,
+							latitude: location.latitude,
+							longitude: location.longitude,
+						}));
+
+						toast({
+							title: "Location Detected",
+							description: `Current location: ${location.name}`,
+						});
+					} else {
+						// Fallback to coordinates
+						setFormData((prev) => ({
+							...prev,
+							location: "Current Location",
+							latitude: latitude.toString(),
+							longitude: longitude.toString(),
+						}));
+						setSearchQuery("Current Location");
+					}
+				} catch (error) {
+					console.error("Reverse geocoding error:", error);
+					setFormData((prev) => ({
+						...prev,
+						location: "Current Location",
+						latitude: latitude.toString(),
+						longitude: longitude.toString(),
+					}));
+					setSearchQuery("Current Location");
+				}
+			},
+			(error) => {
+				console.error("Geolocation error:", error);
+				toast({
+					title: "Location Error",
+					description:
+						"Unable to get your current location. Please search manually.",
+					variant: "destructive",
+				});
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 15000,
+				maximumAge: 300000,
+			}
+		);
 	};
+
+	// Handle click outside to close suggestions
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				suggestionsRef.current &&
+				!suggestionsRef.current.contains(event.target as Node) &&
+				!searchInputRef.current?.contains(event.target as Node)
+			) {
+				setShowSuggestions(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -240,14 +296,13 @@ export default function ConfigureAlarmPage() {
 			const response = await apiClient.createAlarm({
 				...formData,
 				severity: "CRITICAL",
-
-				// Include coordinates in the API call
-				latitude: formData.latitude ? formData.latitude : undefined,
-				longitude: formData.longitude ? formData.longitude : undefined,
+				coordinates:
+					formData.latitude && formData.longitude
+						? { latitude: formData.latitude, longitude: formData.longitude }
+						: undefined,
 			});
-			// Emit WebSocket event for real-time notification
+
 			console.log("Alarm created:", response);
-			console.log("WebSocket connected:", webSocketService.isConnected());
 			if (webSocketService.isConnected()) {
 				webSocketService.send({
 					type: "alarm_created",
@@ -256,7 +311,6 @@ export default function ConfigureAlarmPage() {
 			}
 			setSubmitted(true);
 
-			// Redirect after 3 seconds
 			setTimeout(() => {
 				router.push("/dashboard/alarms");
 			}, 3000);
@@ -367,133 +421,148 @@ export default function ConfigureAlarmPage() {
 									</Select>
 								</div>
 
-								{/* <div className="space-y-2">
-									<Label htmlFor="severity">Severity Level *</Label>
-									<Select
-										value={formData.severity}
-										onValueChange={(value) =>
-											handleInputChange("severity", value)
-										}>
-										<SelectTrigger>
-											<SelectValue placeholder="Select severity level" />
-										</SelectTrigger>
-										<SelectContent>
-											{severityLevels.map((level) => (
-												<SelectItem key={level.value} value={level.value}>
-													<div className="flex items-center space-x-2">
-														<Badge className={level.color}>{level.label}</Badge>
-													</div>
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div> */}
-
 								<div className="space-y-2">
-									<Label htmlFor="location">Specific Location</Label>
+									<Label htmlFor="location">Location *</Label>
 									<div className="space-y-2">
-										<div className="flex gap-2">
-											<Input
-												id="location"
-												placeholder="e.g., Main Entrance, Server Room, Floor 2"
-												value={formData.location}
-												onChange={(e) =>
-													handleInputChange("location", e.target.value)
-												}
-												className="flex-1"
-											/>
-											<Button
-												type="button"
-												variant="outline"
-												size="icon"
-												onClick={() => setMapVisible(!mapVisible)}>
-												<MapPin className="h-4 w-4" />
-											</Button>
-										</div>
+										<div className="relative">
+											<div className="flex gap-2">
+												<div className="relative flex-1">
+													<Input
+														ref={searchInputRef}
+														id="location"
+														placeholder="Search for any location (e.g., Bole, Legehar, Hayat, etc.)"
+														value={searchQuery}
+														onChange={(e) =>
+															handleSearchInputChange(e.target.value)
+														}
+														onFocus={() => {
+															if (searchResults.length > 0) {
+																setShowSuggestions(true);
+															}
+														}}
+														className="pr-10"
+														autoComplete="off"
+													/>
+													{isSearching && (
+														<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+															<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+														</div>
+													)}
+												</div>
+												<Button
+													type="button"
+													variant="outline"
+													size="icon"
+													onClick={getCurrentLocation}
+													disabled={isSearching}
+													title="Use current location">
+													<Navigation className="h-4 w-4" />
+												</Button>
+											</div>
 
-										{mapVisible && (
-											<Card className="mt-2 p-3">
-												<CardContent className="p-0 space-y-3">
-													<div className="flex gap-2">
-														<Input
-															placeholder="Search for a location..."
-															value={searchQuery}
-															onChange={(e) => setSearchQuery(e.target.value)}
-															className="flex-1"
-														/>
-														<Button
-															type="button"
-															variant="secondary"
-															size="sm"
-															onClick={handleLocationSearch}
-															disabled={searching || !searchQuery.trim()}>
-															{searching ? (
-																<Loader2 className="h-4 w-4 animate-spin" />
-															) : (
-																<Search className="h-4 w-4" />
-															)}
-														</Button>
+											{/* Enhanced Autocomplete Suggestions */}
+											{showSuggestions && searchResults.length > 0 && (
+												<div
+													ref={suggestionsRef}
+													className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+													<div className="p-2 border-b bg-gray-50">
+														<p className="text-xs text-gray-600 font-medium">
+															Found {searchResults.length} location
+															{searchResults.length !== 1 ? "s" : ""}
+														</p>
 													</div>
-
-													{searchResults.length > 0 && (
-														<div className="max-h-40 overflow-y-auto border rounded-md">
-															{searchResults.map((result, index) => (
-																<div
-																	key={index}
-																	className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
-																	onClick={() => selectLocation(result)}>
-																	<p className="text-sm font-medium">
-																		{result.name}
-																	</p>
-																	<p className="text-xs text-muted-foreground">
+													{searchResults.map((result) => (
+														<div
+															key={result.id}
+															className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+															onClick={() => selectLocation(result)}>
+															<div className="flex items-start space-x-3">
+																<div className="flex-shrink-0 mt-0.5">
+																	{result.icon}
+																</div>
+																<div className="flex-1 min-w-0">
+																	<div className="flex items-center space-x-2">
+																		<p className="text-sm font-medium text-gray-900 truncate">
+																			{result.name}
+																		</p>
+																		<Badge
+																			variant="default"
+																			className="text-xs">
+																			{result.category}
+																		</Badge>
+																	</div>
+																	<p className="text-xs text-gray-500 truncate mt-1">
 																		{result.address}
 																	</p>
+																	<div className="flex items-center space-x-2 mt-1">
+																		<span className="text-xs text-gray-400">
+																			{result.country}
+																		</span>
+																		{result.region && (
+																			<>
+																				<span className="text-xs text-gray-300">
+																					•
+																				</span>
+																				<span className="text-xs text-gray-400">
+																					{result.region}
+																				</span>
+																			</>
+																		)}
+																	</div>
 																</div>
-															))}
-														</div>
-													)}
-
-													<div className="bg-slate-100 h-40 rounded-md flex items-center justify-center relative">
-														<div
-															id="location-map"
-															className="w-full h-full rounded-md"></div>
-														{!formData.latitude && (
-															<div className="absolute inset-0 flex items-center justify-center flex-col">
-																<MapPin className="h-5 w-5 text-muted-foreground" />
-																<p className="text-xs text-muted-foreground mt-1">
-																	Search for a location or click to select
-																</p>
+																<div className="flex-shrink-0">
+																	<div
+																		className="w-2 h-2 rounded-full bg-green-400"
+																		style={{ opacity: result.confidence }}
+																		title={`Confidence: ${Math.round(
+																			result.confidence * 100
+																		)}%`}
+																	/>
+																</div>
 															</div>
-														)}
-													</div>
-
-													{formData.latitude && formData.longitude && (
-														<div className="text-xs text-muted-foreground">
-															<p>Latitude: {formData.latitude}</p>
-															<p>Longitude: {formData.longitude}</p>
 														</div>
-													)}
+													))}
+												</div>
+											)}
 
-													<div className="flex justify-end">
-														<Button
-															type="button"
-															variant="outline"
-															size="sm"
-															onClick={() => getCurrentLocation()}>
-															Use Current Location
-														</Button>
+											{/* No results message */}
+											{searchQuery &&
+												!isSearching &&
+												searchResults.length === 0 &&
+												searchQuery.length >= 2 && (
+													<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+														<div className="text-center text-gray-500">
+															<Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+															<p className="text-sm">
+																No locations found for "{searchQuery}"
+															</p>
+															<p className="text-xs mt-1">
+																Try searching for cities, addresses, or
+																landmarks
+															</p>
+														</div>
 													</div>
-												</CardContent>
-											</Card>
-										)}
+												)}
+										</div>
 
-										{formData.latitude && formData.longitude && !mapVisible && (
-											<div className="text-xs text-muted-foreground flex items-center gap-1">
-												<MapPin className="h-3 w-3" />
-												<span>
-													Location coordinates saved: {formData.latitude},{" "}
-													{formData.longitude}
-												</span>
+										{/* Selected location display */}
+										{selectedLocation && (
+											<div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+												<div className="flex items-center space-x-2">
+													<MapPin className="h-4 w-4 text-blue-600" />
+													<div className="flex-1">
+														<p className="text-sm font-medium text-blue-900">
+															{selectedLocation.name}
+														</p>
+														<p className="text-xs text-blue-700">
+															{selectedLocation.address}
+														</p>
+														<p className="text-xs text-blue-600 mt-1">
+															Coordinates: {selectedLocation.latitude},{" "}
+															{selectedLocation.longitude}
+														</p>
+													</div>
+												</div>
 											</div>
 										)}
 									</div>
@@ -539,7 +608,7 @@ export default function ConfigureAlarmPage() {
 						</Card>
 					</div>
 
-					{/* Right Column */}
+					{/* Right Column - Branch Selection and Police Manager Assignment remain the same */}
 					<div className="space-y-6">
 						<Card>
 							<CardHeader>
@@ -724,35 +793,16 @@ export default function ConfigureAlarmPage() {
 									<div className="flex justify-between">
 										<span className="text-muted-foreground">Priority:</span>
 										<span>
-											{formData.severity && (
-												<Badge
-													className={
-														severityLevels.find(
-															(s) => s.value === formData.severity
-														)?.color
-													}>
-													{
-														severityLevels.find(
-															(s) => s.value === formData.severity
-														)?.label
-													}
-												</Badge>
-											)}
+											<Badge className="bg-red-100 text-red-800">
+												Critical
+											</Badge>
 										</span>
 									</div>
 									<div className="flex justify-between">
 										<span className="text-muted-foreground">
 											Estimated Response:
 										</span>
-										<span>
-											{formData.severity === "CRITICAL"
-												? "2-5 minutes"
-												: formData.severity === "HIGH"
-												? "5-10 minutes"
-												: formData.severity === "MEDIUM"
-												? "10-15 minutes"
-												: "15-30 minutes"}
-										</span>
+										<span>2-5 minutes</span>
 									</div>
 								</div>
 							</CardContent>
@@ -761,9 +811,6 @@ export default function ConfigureAlarmPage() {
 				</div>
 
 				<div className="flex justify-end space-x-4 pt-6 border-t">
-					<Button type="button" variant="outline" disabled={isSubmitting}>
-						Save as Draft
-					</Button>
 					<Button
 						type="submit"
 						disabled={!isFormValid || isSubmitting}
@@ -812,13 +859,14 @@ export default function ConfigureAlarmPage() {
 // import { Badge } from "@/components/ui/badge";
 // import { Alert, AlertDescription } from "@/components/ui/alert";
 // import {
-// 	AlertTriangle,
-// 	Send,
 // 	MapPin,
+// 	Search,
+// 	Loader2,
+// 	Send,
+// 	AlertTriangle,
 // 	Shield,
 // 	Clock,
 // 	CheckCircle,
-// 	Loader2,
 // } from "lucide-react";
 // import { useAuth } from "@/contexts/auth-context";
 // import { apiClient } from "@/lib/api";
@@ -846,8 +894,8 @@ export default function ConfigureAlarmPage() {
 
 // interface Alarm {
 // 	id: string;
-// 	type: String;
-// 	location: String;
+// 	type: string;
+// 	location: string;
 // 	severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 // 	description: string;
 // 	additionalNotes: string;
@@ -871,9 +919,16 @@ export default function ConfigureAlarmPage() {
 // 		assignedToId: "",
 // 		severity: "",
 // 		location: "",
+// 		latitude: "",
+// 		longitude: "",
 // 		description: "",
 // 		additionalNotes: "",
 // 	});
+
+// 	const [mapVisible, setMapVisible] = useState(false);
+// 	const [searchQuery, setSearchQuery] = useState("");
+// 	const [searchResults, setSearchResults] = useState<any[]>([]);
+// 	const [searching, setSearching] = useState(false);
 
 // 	const [isSubmitting, setIsSubmitting] = useState(false);
 // 	const [submitted, setSubmitted] = useState(false);
@@ -889,35 +944,6 @@ export default function ConfigureAlarmPage() {
 // 				const branches = await apiClient.getBranches();
 // 				setAvailableBranches(branches);
 // 				fetchPoliceManagers();
-
-// 				// Fetch police managers (mock for now - would need API endpoint)
-// 				// const mockPoliceManagers = [
-// 				// 	{
-// 				// 		id: "1",
-// 				// 		name: "Captain Sarah Johnson",
-// 				// 		station: "Central Police Station",
-// 				// 		status: "available",
-// 				// 	},
-// 				// 	{
-// 				// 		id: "2",
-// 				// 		name: "Lieutenant Mike Wilson",
-// 				// 		station: "North Police Station",
-// 				// 		status: "available",
-// 				// 	},
-// 				// 	{
-// 				// 		id: "3",
-// 				// 		name: "Captain David Brown",
-// 				// 		station: "South Police Station",
-// 				// 		status: "busy",
-// 				// 	},
-// 				// 	{
-// 				// 		id: "4",
-// 				// 		name: "Lieutenant Emma Davis",
-// 				// 		station: "East Police Station",
-// 				// 		status: "available",
-// 				// 	},
-// 				// ];
-// 				// setPoliceManagers(mockPoliceManagers);
 // 			} catch (error) {
 // 				console.error("Failed to fetch data:", error);
 // 				setError("Failed to load form data. Please refresh the page.");
@@ -950,6 +976,96 @@ export default function ConfigureAlarmPage() {
 // 		setFormData((prev) => ({ ...prev, [field]: value }));
 // 	};
 
+// 	const handleLocationSearch = async () => {
+// 		if (!searchQuery.trim()) return;
+
+// 		setSearching(true);
+// 		try {
+// 			// Using Nominatim OpenStreetMap API for geocoding
+// 			const response = await fetch(
+// 				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+// 					searchQuery
+// 				)}`
+// 			);
+// 			const data = await response.json();
+
+// 			setSearchResults(
+// 				data.map((item: any) => ({
+// 					name: item.display_name.split(",")[0],
+// 					address: item.display_name,
+// 					latitude: item.lat,
+// 					longitude: item.lon,
+// 				}))
+// 			);
+// 		} catch (error) {
+// 			console.error("Error searching for location:", error);
+// 		} finally {
+// 			setSearching(false);
+// 		}
+// 	};
+
+// 	const selectLocation = (location: any) => {
+// 		setFormData((prev) => ({
+// 			...prev,
+// 			location: location.name,
+// 			latitude: location.latitude,
+// 			longitude: location.longitude,
+// 		}));
+// 		setSearchResults([]);
+// 		setSearchQuery("");
+
+// 		// If we had a map instance, we would update the marker here
+// 		// For now, we'll just display the coordinates
+// 	};
+
+// 	const getCurrentLocation = () => {
+// 		if (navigator.geolocation) {
+// 			navigator.geolocation.getCurrentPosition(
+// 				(position) => {
+// 					const { latitude, longitude } = position.coords;
+
+// 					// Reverse geocoding to get address from coordinates
+// 					fetch(
+// 						`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+// 					)
+// 						.then((response) => response.json())
+// 						.then((data) => {
+// 							setFormData((prev) => ({
+// 								...prev,
+// 								location: data.display_name.split(",")[0] || "Current Location",
+// 								latitude: latitude.toString(),
+// 								longitude: longitude.toString(),
+// 							}));
+// 						})
+// 						.catch((error) => {
+// 							console.error("Error getting address:", error);
+// 							setFormData((prev) => ({
+// 								...prev,
+// 								location: "Current Location",
+// 								latitude: latitude.toString(),
+// 								longitude: longitude.toString(),
+// 							}));
+// 						});
+// 				},
+// 				(error) => {
+// 					console.error("Error getting current location:", error);
+// 					toast({
+// 						title: "Location Error",
+// 						description:
+// 							"Unable to get your current location. Please try again or enter manually.",
+// 						variant: "destructive",
+// 					});
+// 				}
+// 			);
+// 		} else {
+// 			toast({
+// 				title: "Geolocation Not Supported",
+// 				description: "Your browser does not support geolocation.",
+// 				variant: "destructive",
+// 			});
+// 		}
+// 	};
+
 // 	const handleSubmit = async (e: React.FormEvent) => {
 // 		e.preventDefault();
 // 		setError("");
@@ -959,6 +1075,10 @@ export default function ConfigureAlarmPage() {
 // 			const response = await apiClient.createAlarm({
 // 				...formData,
 // 				severity: "CRITICAL",
+
+// 				// Include coordinates in the API call
+// 				latitude: formData.latitude ? formData.latitude : undefined,
+// 				longitude: formData.longitude ? formData.longitude : undefined,
 // 			});
 // 			// Emit WebSocket event for real-time notification
 // 			console.log("Alarm created:", response);
@@ -986,7 +1106,6 @@ export default function ConfigureAlarmPage() {
 // 		formData.type &&
 // 		formData.branchId &&
 // 		formData.assignedToId &&
-// 		formData.severity &&
 // 		formData.description;
 
 // 	if (loading) {
@@ -1107,14 +1226,112 @@ export default function ConfigureAlarmPage() {
 
 // 								<div className="space-y-2">
 // 									<Label htmlFor="location">Specific Location</Label>
-// 									<Input
-// 										id="location"
-// 										placeholder="e.g., Main Entrance, Server Room, Floor 2"
-// 										value={formData.location}
-// 										onChange={(e) =>
-// 											handleInputChange("location", e.target.value)
-// 										}
-// 									/>
+// 									<div className="space-y-2">
+// 										<div className="flex gap-2">
+// 											<Input
+// 												id="location"
+// 												placeholder="e.g., Main Entrance, Server Room, Floor 2"
+// 												value={formData.location}
+// 												onChange={(e) =>
+// 													handleInputChange("location", e.target.value)
+// 												}
+// 												className="flex-1"
+// 											/>
+// 											<Button
+// 												type="button"
+// 												variant="outline"
+// 												size="icon"
+// 												onClick={() => setMapVisible(!mapVisible)}>
+// 												<MapPin className="h-4 w-4" />
+// 											</Button>
+// 										</div>
+
+// 										{mapVisible && (
+// 											<Card className="mt-2 p-3">
+// 												<CardContent className="p-0 space-y-3">
+// 													<div className="flex gap-2">
+// 														<Input
+// 															placeholder="Search for a location..."
+// 															value={searchQuery}
+// 															onChange={(e) => setSearchQuery(e.target.value)}
+// 															className="flex-1"
+// 														/>
+// 														<Button
+// 															type="button"
+// 															variant="secondary"
+// 															size="sm"
+// 															onClick={handleLocationSearch}
+// 															disabled={searching || !searchQuery.trim()}>
+// 															{searching ? (
+// 																<Loader2 className="h-4 w-4 animate-spin" />
+// 															) : (
+// 																<Search className="h-4 w-4" />
+// 															)}
+// 														</Button>
+// 													</div>
+
+// 													{searchResults.length > 0 && (
+// 														<div className="max-h-40 overflow-y-auto border rounded-md">
+// 															{searchResults.map((result, index) => (
+// 																<div
+// 																	key={index}
+// 																	className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+// 																	onClick={() => selectLocation(result)}>
+// 																	<p className="text-sm font-medium">
+// 																		{result.name}
+// 																	</p>
+// 																	<p className="text-xs text-muted-foreground">
+// 																		{result.address}
+// 																	</p>
+// 																</div>
+// 															))}
+// 														</div>
+// 													)}
+
+// 													<div className="bg-slate-100 h-40 rounded-md flex items-center justify-center relative">
+// 														<div
+// 															id="location-map"
+// 															className="w-full h-full rounded-md"></div>
+// 														{!formData.latitude && (
+// 															<div className="absolute inset-0 flex items-center justify-center flex-col">
+// 																<MapPin className="h-5 w-5 text-muted-foreground" />
+// 																<p className="text-xs text-muted-foreground mt-1">
+// 																	Search for a location or click to select
+// 																</p>
+// 															</div>
+// 														)}
+// 													</div>
+
+// 													{formData.latitude && formData.longitude && (
+// 														<div className="text-xs text-muted-foreground">
+// 															<p>Latitude: {formData.latitude}</p>
+// 															<p>Longitude: {formData.longitude}</p>
+// 														</div>
+// 													)}
+
+// 													<div className="flex justify-end">
+// 														<Button
+// 															type="button"
+// 															variant="outline"
+// 															size="sm"
+// 															onClick={() => getCurrentLocation()}>
+// 															Use Current Location
+// 														</Button>
+// 													</div>
+// 												</CardContent>
+// 											</Card>
+// 										)}
+
+// 										{formData.latitude && formData.longitude && !mapVisible && (
+// 											<div className="text-xs text-muted-foreground flex items-center gap-1">
+// 												<MapPin className="h-3 w-3" />
+// 												<span>
+// 													Location coordinates saved: {formData.latitude},{" "}
+// 													{formData.longitude}
+// 												</span>
+// 											</div>
+// 										)}
+// 									</div>
 // 								</div>
 // 							</CardContent>
 // 						</Card>
@@ -1403,186 +1620,3 @@ export default function ConfigureAlarmPage() {
 // 		</div>
 // 	);
 // }
-
-// "use client";
-
-// import { useState } from "react";
-// import { useRouter } from "next/navigation";
-// import { useForm } from "react-hook-form";
-// import * as z from "zod";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { toast } from "sonner";
-
-// import { apiService } from "@/lib/api-service";
-// import { cn } from "@/lib/utils";
-// import { Button } from "@/components/ui/button";
-// import {
-// 	Form,
-// 	FormControl,
-// 	FormField,
-// 	FormItem,
-// 	FormLabel,
-// 	FormMessage,
-// } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input";
-// import {
-// 	Select,
-// 	SelectContent,
-// 	SelectItem,
-// 	SelectTrigger,
-// 	SelectValue,
-// } from "@/components/ui/select";
-// import { webSocketService } from "@/lib/websocket-service";
-
-// const alarmFormSchema = z.object({
-// 	name: z.string().min(2, {
-// 		message: "Alarm name must be at least 2 characters.",
-// 	}),
-// 	severity: z.enum(["critical", "major", "minor", "warning", "info"]),
-// 	threshold: z.number().optional(),
-// 	metric: z.string().optional(),
-// });
-
-// const ConfigureAlarmPage = () => {
-// 	const [submitting, setSubmitting] = useState(false);
-// 	const router = useRouter();
-
-// 	const form = useForm<z.infer<typeof alarmFormSchema>>({
-// 		resolver: zodResolver(alarmFormSchema),
-// 		defaultValues: {
-// 			name: "",
-// 			severity: "minor",
-// 			threshold: undefined,
-// 			metric: undefined,
-// 		},
-// 	});
-
-// 	const createAlarm = async (alarmData: any) => {
-// 		try {
-// 			setSubmitting(true);
-// 			const response = await apiService.post("/alarms", alarmData);
-
-// 			// Emit WebSocket event for real-time notification
-// 			if (webSocketService.isConnected()) {
-// 				webSocketService.send({
-// 					type: "alarm_created",
-// 					alarm: response.data.alarm,
-// 				});
-// 			}
-
-// 			toast({
-// 				title: "Success",
-// 				description: "Alarm created and dispatched successfully",
-// 			} as any);
-
-// 			router.push("/dashboard");
-// 		} catch (error: any) {
-// 			toast({
-// 				title: "Error",
-// 				description: error.response?.data?.message || "Failed to create alarm",
-// 				variant: "destructive",
-// 			} as any);
-// 		} finally {
-// 			setSubmitting(false);
-// 		}
-// 	};
-
-// 	const onSubmit = async (values: z.infer<typeof alarmFormSchema>) => {
-// 		await createAlarm(values);
-// 	};
-
-// 	return (
-// 		<div className="container max-w-2xl">
-// 			<div className="flex justify-between items-center">
-// 				<h1 className="text-2xl font-bold">Configure Alarm</h1>
-// 			</div>
-// 			<Form {...form}>
-// 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-// 					<FormField
-// 						control={form.control}
-// 						name="name"
-// 						render={({ field }) => (
-// 							<FormItem>
-// 								<FormLabel>Alarm Name</FormLabel>
-// 								<FormControl>
-// 									<Input placeholder="Enter alarm name" {...field} />
-// 								</FormControl>
-// 								<FormMessage />
-// 							</FormItem>
-// 						)}
-// 					/>
-// 					<FormField
-// 						control={form.control}
-// 						name="severity"
-// 						render={({ field }) => (
-// 							<FormItem>
-// 								<FormLabel>Severity</FormLabel>
-// 								<Select
-// 									onValueChange={field.onChange}
-// 									defaultValue={field.value}>
-// 									<FormControl>
-// 										<SelectTrigger>
-// 											<SelectValue placeholder="Select a severity" />
-// 										</SelectTrigger>
-// 									</FormControl>
-// 									<SelectContent>
-// 										<SelectItem value="critical">Critical</SelectItem>
-// 										<SelectItem value="major">Major</SelectItem>
-// 										<SelectItem value="minor">Minor</SelectItem>
-// 										<SelectItem value="warning">Warning</SelectItem>
-// 										<SelectItem value="info">Info</SelectItem>
-// 									</SelectContent>
-// 								</Select>
-// 								<FormMessage />
-// 							</FormItem>
-// 						)}
-// 					/>
-// 					<FormField
-// 						control={form.control}
-// 						name="threshold"
-// 						render={({ field }) => (
-// 							<FormItem>
-// 								<FormLabel>Threshold</FormLabel>
-// 								<FormControl>
-// 									<Input
-// 										type="number"
-// 										placeholder="Enter threshold value"
-// 										{...field}
-// 									/>
-// 								</FormControl>
-// 								<FormMessage />
-// 							</FormItem>
-// 						)}
-// 					/>
-// 					<FormField
-// 						control={form.control}
-// 						name="metric"
-// 						render={({ field }) => (
-// 							<FormItem>
-// 								<FormLabel>Metric</FormLabel>
-// 								<FormControl>
-// 									<Input
-// 										type="text"
-// 										placeholder="Enter metric name"
-// 										{...field}
-// 									/>
-// 								</FormControl>
-// 								<FormMessage />
-// 							</FormItem>
-// 						)}
-// 					/>
-// 					<Button
-// 						type="submit"
-// 						disabled={submitting}
-// 						className={cn({
-// 							"opacity-50 cursor-not-allowed": submitting,
-// 						})}>
-// 						{submitting ? "Creating..." : "Create Alarm"}
-// 					</Button>
-// 				</form>
-// 			</Form>
-// 		</div>
-// 	);
-// };
-
-// export default ConfigureAlarmPage;

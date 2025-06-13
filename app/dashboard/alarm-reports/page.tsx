@@ -163,7 +163,7 @@ const AlarmLocationMap = ({
 		// Load script if not already loaded
 		if (typeof (window as any).google === "undefined") {
 			const script = document.createElement("script");
-			script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&callback=initMap`;
+			script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&callback=initMap`;
 			script.async = true;
 			script.defer = true;
 			document.head.appendChild(script);
@@ -692,7 +692,7 @@ export default function EnhancedAlarmReportsPage() {
 					</TabsList>
 
 					<TabsContent value="ACTIVE" className="space-y-4">
-						{criticalAlarms.length > 0 && (
+						{/* {criticalAlarms.length > 0 && (
 							<Card className="border-4 border-red-500 bg-gradient-to-r from-red-900/60 to-red-800/40 shadow-2xl shadow-red-500/20 animate-critical-pulse">
 								<CardHeader className="bg-red-900/60 border-b border-red-500/50">
 									<CardTitle className="text-red-200 flex items-center text-xl font-mono">
@@ -704,7 +704,7 @@ export default function EnhancedAlarmReportsPage() {
 									</CardTitle>
 								</CardHeader>
 							</Card>
-						)}
+						)} */}
 
 						<div className="grid gap-4">
 							{activeAlarms.map((alarm, index) => (

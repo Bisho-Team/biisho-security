@@ -50,6 +50,8 @@ import {
 	Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import axios from "axios";
+import Image from "next/image";
 
 interface Company {
 	id: string;
@@ -99,6 +101,7 @@ export default function CompaniesPage() {
 	const [filterStatus, setFilterStatus] = useState("all");
 	const { toast } = useToast();
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+	const NEXT_PUBLIC_API_URL = "http://8436insight.et:3003";
 
 	const [newCompany, setNewCompany] = useState({
 		name: "",
@@ -155,7 +158,15 @@ export default function CompaniesPage() {
 				formData.append("logo", newCompany.logo);
 			}
 
-			await apiService.post("/companies", formData);
+			const token = localStorage.getItem("authToken");
+
+			// await apiService.post("/companies", formData);
+			await axios.post("http://8436insight.et:3003/api/companies", formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+					...(token && { Authorization: `Bearer ${token}` }),
+				},
+			});
 
 			toast({
 				title: "Success",
@@ -694,10 +705,35 @@ export default function CompaniesPage() {
 						<CardContent className="p-6">
 							<div className="flex items-start justify-between">
 								<div className="flex items-start space-x-4">
-									<div className="relative">
+									{/* <div className="relative">
 										<div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
 											<Building className="h-8 w-8 text-white" />
 										</div>
+										<div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
+									</div> */}
+									{/* <div>
+										`{NEXT_PUBLIC_API_URL}
+										{company.logo.replace(
+											"/var/www/html/koppa-security-api",
+											""
+										)}
+										`
+									</div> */}
+									<div className="relative">
+										{company.logo ? (
+											<img
+												src={`${NEXT_PUBLIC_API_URL}${company.logo.replace(
+													"/var/www/html/koppa-security-api",
+													""
+												)}`}
+												alt={`${company.name} logo`}
+												className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
+											/>
+										) : (
+											<div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+												<Building className="h-8 w-8 text-white" />
+											</div>
+										)}
 										<div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
 									</div>
 									<div className="space-y-3">

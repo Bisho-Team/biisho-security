@@ -1,16 +1,22 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
-	Bell,
 	AlertTriangle,
 	Clock,
 	CheckCircle,
 	Volume2,
 	VolumeX,
+	Eye,
+	Shield,
+	Activity,
+	Zap,
 } from "lucide-react";
 import { persistentNotificationService } from "@/lib/persistent-notification-service";
 import { cn } from "@/lib/utils";
@@ -21,42 +27,92 @@ interface EnhancedAlarmIndicatorsProps {
 	onViewDetails: (alarmId: string) => void;
 }
 
+interface AlarmSeverityConfig {
+	icon: React.ComponentType<any>;
+	color: string;
+	bgColor: string;
+	borderColor: string;
+	textColor: string;
+	badgeColor: string;
+	animation?: string;
+}
+
+const severityConfig: Record<string, AlarmSeverityConfig> = {
+	CRITICAL: {
+		icon: Shield,
+		color: "text-red-600",
+		bgColor: "bg-gradient-to-br from-red-50 via-red-100 to-red-200",
+		borderColor: "border-red-500",
+		textColor: "text-red-900",
+		badgeColor: "bg-red-600 text-white",
+		animation: "animate-pulse",
+	},
+	HIGH: {
+		icon: AlertTriangle,
+		color: "text-orange-600",
+		bgColor: "bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200",
+		borderColor: "border-orange-500",
+		textColor: "text-orange-900",
+		badgeColor: "bg-orange-600 text-white",
+		animation: "animate-bounce",
+	},
+	MEDIUM: {
+		icon: Clock,
+		color: "text-yellow-600",
+		bgColor: "bg-gradient-to-br from-yellow-50 via-yellow-100 to-yellow-200",
+		borderColor: "border-yellow-500",
+		textColor: "text-yellow-900",
+		badgeColor: "bg-yellow-600 text-white",
+	},
+	LOW: {
+		icon: CheckCircle,
+		color: "text-blue-600",
+		bgColor: "bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200",
+		borderColor: "border-blue-500",
+		textColor: "text-blue-900",
+		badgeColor: "bg-blue-600 text-white",
+	},
+};
+
 export function EnhancedAlarmIndicators({
 	alarms,
 	onAcknowledge,
 	onViewDetails,
 }: EnhancedAlarmIndicatorsProps) {
 	const [activeAlarms, setActiveAlarms] = useState<any[]>([]);
-	const [criticalCount, setCriticalCount] = useState(0);
-	const [highCount, setHighCount] = useState(0);
-	const [mediumCount, setMediumCount] = useState(0);
-	const [lowCount, setLowCount] = useState(0);
+	const [severityCounts, setSeverityCounts] = useState({
+		CRITICAL: 0,
+		HIGH: 0,
+		MEDIUM: 0,
+		LOW: 0,
+	});
 	const [soundEnabled, setSoundEnabled] = useState(true);
 	const [isAnimating, setIsAnimating] = useState(false);
+	const [acknowledging, setAcknowledging] = useState(false);
 
 	useEffect(() => {
 		// Filter active alarms and count by severity
 		const active = alarms.filter((alarm) => alarm.status === "ACTIVE");
 		setActiveAlarms(active);
 
-		const critical = active.filter(
-			(alarm) => alarm.severity === "CRITICAL"
-		).length;
-		const high = active.filter((alarm) => alarm.severity === "HIGH").length;
-		const medium = active.filter((alarm) => alarm.severity === "MEDIUM").length;
-		const low = active.filter((alarm) => alarm.severity === "LOW").length;
+		const newCounts = {
+			CRITICAL: active.filter((alarm) => alarm.severity === "CRITICAL").length,
+			HIGH: active.filter((alarm) => alarm.severity === "HIGH").length,
+			MEDIUM: active.filter((alarm) => alarm.severity === "MEDIUM").length,
+			LOW: active.filter((alarm) => alarm.severity === "LOW").length,
+		};
 
 		// Animate if critical or high count increases
-		if (critical > criticalCount || high > highCount) {
+		if (
+			newCounts.CRITICAL > severityCounts.CRITICAL ||
+			newCounts.HIGH > severityCounts.HIGH
+		) {
 			setIsAnimating(true);
-			setTimeout(() => setIsAnimating(false), 2000);
+			setTimeout(() => setIsAnimating(false), 3000);
 		}
 
-		setCriticalCount(critical);
-		setHighCount(high);
-		setMediumCount(medium);
-		setLowCount(low);
-	}, [alarms, criticalCount, highCount]);
+		setSeverityCounts(newCounts);
+	}, [alarms, severityCounts.CRITICAL, severityCounts.HIGH]);
 
 	const toggleSound = () => {
 		if (soundEnabled) {
@@ -73,174 +129,235 @@ export function EnhancedAlarmIndicators({
 		setSoundEnabled(!soundEnabled);
 	};
 
+	const handleAcknowledge = async () => {
+		setAcknowledging(true);
+		try {
+			// Find the most critical active alarm
+			const mostCritical = activeAlarms.sort((a, b) => {
+				const severityOrder: any = {
+					CRITICAL: 0,
+					HIGH: 1,
+					MEDIUM: 2,
+					LOW: 3,
+				};
+				return severityOrder[a.severity] - severityOrder[b.severity];
+			})[0];
+
+			if (mostCritical) {
+				await onAcknowledge(mostCritical.id);
+			}
+		} finally {
+			setAcknowledging(false);
+		}
+	};
+
+	const totalAlarms = activeAlarms.length;
+	const criticalAndHigh = severityCounts.CRITICAL + severityCounts.HIGH;
+
 	// If no active alarms, don't show the component
-	if (activeAlarms.length === 0) return null;
+	if (totalAlarms === 0) return null;
+
+	const getMainSeverity = () => {
+		if (severityCounts.CRITICAL > 0) return "CRITICAL";
+		if (severityCounts.HIGH > 0) return "HIGH";
+		if (severityCounts.MEDIUM > 0) return "MEDIUM";
+		return "LOW";
+	};
+
+	const mainSeverity = getMainSeverity();
+	const config = severityConfig[mainSeverity];
 
 	return (
-		<div className={cn("space-y-4", isAnimating ? "animate-shake" : "")}>
-			{(criticalCount > 0 || highCount > 0) && (
-				<Card
-					className={cn(
-						"border-4 transition-all duration-300",
-						criticalCount > 0
-							? "border-red-500 bg-gradient-to-r from-red-50 to-red-100"
-							: "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100"
-					)}>
-					<CardContent className="p-4">
-						<div className="flex items-center justify-between">
-							<div className="flex items-center space-x-4">
-								<div className="relative">
-									<Bell
-										className={cn(
-											"h-12 w-12",
-											criticalCount > 0
-												? "text-red-600 animate-bounce"
-												: highCount > 0
-												? "text-orange-600 animate-pulse"
-												: "text-yellow-600"
-										)}
+		<div
+			className={cn(
+				"space-y-4 animate-fade-in",
+				isAnimating && "animate-pulse"
+			)}>
+			<Card
+				className={cn(
+					"border-2 shadow-lg transition-all duration-500 hover:shadow-xl",
+					config.borderColor,
+					config.bgColor,
+					isAnimating && "animate-glow"
+				)}>
+				<CardHeader className="pb-3">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-4">
+							<div className="relative">
+								<div
+									className={cn(
+										"p-3 rounded-full bg-white/50 backdrop-blur-sm border-2",
+										config.borderColor
+									)}>
+									<config.icon
+										className={cn("h-8 w-8", config.color, config.animation)}
 									/>
-									{criticalCount > 0 && (
-										<div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full animate-ping" />
-									)}
 								</div>
-								<div>
-									<h3 className="text-xl font-bold">
-										{criticalCount > 0
-											? "CRITICAL SECURITY ALERTS"
-											: highCount > 0
-											? "HIGH PRIORITY ALERTS"
-											: "ACTIVE ALERTS"}
-									</h3>
-									<p className="text-gray-700">
-										{activeAlarms.length} active alarm
-										{activeAlarms.length !== 1 ? "s" : ""} require
-										{activeAlarms.length === 1 ? "s" : ""} your attention
+								{criticalAndHigh > 0 && (
+									<div className="absolute -top-1 -right-1">
+										<div className="h-4 w-4 bg-red-500 rounded-full animate-ping" />
+										<div className="absolute top-0 right-0 h-4 w-4 bg-red-600 rounded-full flex items-center justify-center">
+											<span className="text-xs text-white font-bold">
+												{criticalAndHigh > 9 ? "9+" : criticalAndHigh}
+											</span>
+										</div>
+									</div>
+								)}
+							</div>
+							<div>
+								<h3 className={cn("text-2xl font-bold", config.textColor)}>
+									{mainSeverity === "CRITICAL"
+										? "🚨 CRITICAL SECURITY BREACH"
+										: mainSeverity === "HIGH"
+										? "⚠️ HIGH PRIORITY ALERTS"
+										: mainSeverity === "MEDIUM"
+										? "📋 MEDIUM PRIORITY ALERTS"
+										: "ℹ️ LOW PRIORITY ALERTS"}
+								</h3>
+								<div className="flex items-center space-x-2 mt-1">
+									<Activity className="h-4 w-4 text-gray-600" />
+									<p className={cn("text-sm font-medium", config.textColor)}>
+										{totalAlarms} active alarm{totalAlarms !== 1 ? "s" : ""}{" "}
+										requiring immediate attention
 									</p>
 								</div>
 							</div>
-							<div className="flex items-center space-x-2">
-								<Button
-									variant="outline"
-									size="icon"
-									onClick={toggleSound}
-									className={cn(
-										"rounded-full",
-										soundEnabled
-											? "bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
-											: "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
-									)}>
-									{soundEnabled ? (
-										<Volume2 className="h-4 w-4" />
-									) : (
-										<VolumeX className="h-4 w-4" />
-									)}
-									<span className="sr-only">
-										{soundEnabled ? "Mute" : "Unmute"}
-									</span>
-								</Button>
-							</div>
 						</div>
-
-						<div className="grid grid-cols-4 gap-4 mt-4">
-							{criticalCount > 0 && (
-								<div className="bg-red-200 p-3 rounded-lg border border-red-300 flex items-center justify-between">
-									<div className="flex items-center">
-										<AlertTriangle className="h-5 w-5 text-red-700 mr-2 animate-pulse" />
-										<span className="font-medium text-red-800">Critical</span>
-									</div>
-									<Badge className="bg-red-600">{criticalCount}</Badge>
-								</div>
-							)}
-
-							{highCount > 0 && (
-								<div className="bg-orange-200 p-3 rounded-lg border border-orange-300 flex items-center justify-between">
-									<div className="flex items-center">
-										<AlertTriangle className="h-5 w-5 text-orange-700 mr-2" />
-										<span className="font-medium text-orange-800">High</span>
-									</div>
-									<Badge className="bg-orange-600">{highCount}</Badge>
-								</div>
-							)}
-
-							{mediumCount > 0 && (
-								<div className="bg-yellow-200 p-3 rounded-lg border border-yellow-300 flex items-center justify-between">
-									<div className="flex items-center">
-										<Clock className="h-5 w-5 text-yellow-700 mr-2" />
-										<span className="font-medium text-yellow-800">Medium</span>
-									</div>
-									<Badge className="bg-yellow-600">{mediumCount}</Badge>
-								</div>
-							)}
-
-							{lowCount > 0 && (
-								<div className="bg-green-200 p-3 rounded-lg border border-green-300 flex items-center justify-between">
-									<div className="flex items-center">
-										<CheckCircle className="h-5 w-5 text-green-700 mr-2" />
-										<span className="font-medium text-green-800">Low</span>
-									</div>
-									<Badge className="bg-green-600">{lowCount}</Badge>
-								</div>
-							)}
-						</div>
-
-						<div className="flex justify-end mt-4 space-x-2">
+						<div className="flex items-center space-x-3">
 							<Button
-								onClick={() => {
-									// Find the most critical active alarm
-									const mostCritical = activeAlarms.sort((a: any, b: any) => {
-										const severityOrder: any = {
-											CRITICAL: 0,
-											HIGH: 1,
-											MEDIUM: 2,
-											LOW: 3,
-										};
-										return (
-											severityOrder[a.severity] - severityOrder[b.severity]
-										);
-									})[0];
-
-									if (mostCritical) {
-										onViewDetails(mostCritical.id);
-									}
-								}}
 								variant="outline"
-								className="border-blue-300 text-blue-700 hover:bg-blue-50">
-								View Details
-							</Button>
-							<Button
-								onClick={() => {
-									// Find the most critical active alarm
-									const mostCritical = activeAlarms.sort((a, b) => {
-										const severityOrder: any = {
-											critical: 0,
-											high: 1,
-											medium: 2,
-											low: 3,
-										};
-										return (
-											severityOrder[a.severity] - severityOrder[b.severity]
-										);
-									})[0];
-
-									if (mostCritical) {
-										onAcknowledge(mostCritical.id);
-									}
-								}}
+								size="sm"
+								onClick={toggleSound}
 								className={cn(
-									criticalCount > 0
-										? "bg-red-600 hover:bg-red-700"
-										: highCount > 0
-										? "bg-orange-600 hover:bg-orange-700"
-										: "bg-yellow-600 hover:bg-yellow-700",
-									"text-white"
+									"rounded-full transition-all duration-200 hover:scale-105",
+									soundEnabled
+										? "bg-red-100 text-red-700 hover:bg-red-200 border-red-300 shadow-md"
+										: "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
 								)}>
-								Acknowledge Most Critical
+								{soundEnabled ? (
+									<Volume2 className="h-4 w-4 mr-2" />
+								) : (
+									<VolumeX className="h-4 w-4 mr-2" />
+								)}
+								{soundEnabled ? "Mute" : "Unmute"}
 							</Button>
 						</div>
-					</CardContent>
-				</Card>
-			)}
+					</div>
+				</CardHeader>
+
+				<CardContent className="space-y-4">
+					{/* Severity Progress Bar */}
+					<div className="space-y-2">
+						<div className="flex justify-between text-sm font-medium">
+							<span className={config.textColor}>
+								Alert Severity Distribution
+							</span>
+							<span className={config.textColor}>{totalAlarms} Total</span>
+						</div>
+						<Progress
+							value={(criticalAndHigh / totalAlarms) * 100}
+							className="h-2"
+						/>
+					</div>
+
+					{/* Severity Cards Grid */}
+					<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+						{Object.entries(severityCounts).map(([severity, count]) => {
+							if (count === 0) return null;
+
+							const severityConfigValue = severityConfig[severity];
+							const SeverityIcon = severityConfigValue.icon;
+
+							return (
+								<div
+									key={severity}
+									className={cn(
+										"p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-md",
+										severityConfigValue.bgColor,
+										severityConfigValue.borderColor,
+										"backdrop-blur-sm bg-white/30"
+									)}>
+									<div className="flex items-center justify-between">
+										<div className="flex items-center space-x-2">
+											<SeverityIcon
+												className={cn(
+													"h-5 w-5",
+													severityConfigValue.color,
+													severityConfigValue.animation
+												)}
+											/>
+											<span
+												className={cn(
+													"font-semibold text-sm",
+													severityConfigValue.textColor
+												)}>
+												{severity.charAt(0) + severity.slice(1).toLowerCase()}
+											</span>
+										</div>
+										<Badge
+											className={cn(
+												"font-bold text-sm px-2 py-1",
+												severityConfigValue.badgeColor
+											)}>
+											{count}
+										</Badge>
+									</div>
+								</div>
+							);
+						})}
+					</div>
+
+					{/* Action Buttons */}
+					<div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-white/20">
+						<Button
+							onClick={() => {
+								const mostCritical = activeAlarms.sort((a, b) => {
+									const severityOrder: any = {
+										CRITICAL: 0,
+										HIGH: 1,
+										MEDIUM: 2,
+										LOW: 3,
+									};
+									return severityOrder[a.severity] - severityOrder[b.severity];
+								})[0];
+
+								if (mostCritical) {
+									onViewDetails(mostCritical.id);
+								}
+							}}
+							variant="outline"
+							className="bg-white/50 backdrop-blur-sm border-2 border-blue-300 text-blue-700 hover:bg-blue-50 hover:scale-105 transition-all duration-200 font-semibold">
+							<Eye className="h-4 w-4 mr-2" />
+							View Details
+						</Button>
+						<Button
+							onClick={handleAcknowledge}
+							disabled={acknowledging}
+							className={cn(
+								"font-semibold transition-all duration-200 hover:scale-105 shadow-lg",
+								mainSeverity === "CRITICAL"
+									? "bg-red-600 hover:bg-red-700 text-white"
+									: mainSeverity === "HIGH"
+									? "bg-orange-600 hover:bg-orange-700 text-white"
+									: mainSeverity === "MEDIUM"
+									? "bg-yellow-600 hover:bg-yellow-700 text-white"
+									: "bg-blue-600 hover:bg-blue-700 text-white"
+							)}>
+							{acknowledging ? (
+								<>
+									<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+									Acknowledging...
+								</>
+							) : (
+								<>
+									<Zap className="h-4 w-4 mr-2" />
+									Acknowledge Most Critical
+								</>
+							)}
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

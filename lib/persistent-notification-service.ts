@@ -14,6 +14,8 @@ import { audioService } from "./audio-service";
 class PersistentNotificationService {
 	private registration: ServiceWorkerRegistration | null = null;
 	private persistentAlarms: Map<string, PersistentAlarm> = new Map();
+	private activeSirens: Map<string, HTMLAudioElement> = new Map();
+	private sirenIntervals: Map<string, NodeJS.Timeout> = new Map();
 	// private notificationQueue: PersistentAlarm[] = new Map();
 	private isInitialized = false;
 	private checkInterval: NodeJS.Timeout | null = null;
@@ -131,6 +133,35 @@ class PersistentNotificationService {
 				audioService.playNotificationSound();
 			}
 		}
+	}
+
+	// Stop all sirens (useful for logout)
+	stopAllSirens() {
+		for (const [alarmId] of this.activeSirens) {
+			this.stopSiren(alarmId);
+		}
+		console.log("Stopped all sirens");
+	}
+
+	stopSiren(alarmId: string) {
+		// Stop and remove audio
+		const audio = this.activeSirens.get(alarmId);
+		if (audio) {
+			// Properly clean up the audio element
+			audio.pause();
+			audio.src = "";
+			audio.load(); // This clears the audio buffer
+			this.activeSirens.delete(alarmId);
+		}
+
+		// Clear interval
+		const interval = this.sirenIntervals.get(alarmId);
+		if (interval) {
+			clearInterval(interval);
+			this.sirenIntervals.delete(alarmId);
+		}
+
+		console.log(`Stopped siren for alarm ${alarmId}`);
 	}
 
 	private showNotification(alarm: PersistentAlarm) {
