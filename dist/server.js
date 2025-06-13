@@ -17,7 +17,6 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const client_1 = require("@prisma/client");
-// Import routes
 const auth_1 = __importDefault(require("./routes/auth"));
 const users_1 = __importDefault(require("./routes/users"));
 const companies_1 = __importDefault(require("./routes/companies"));
@@ -25,24 +24,22 @@ const branches_1 = __importDefault(require("./routes/branches"));
 const alarms_1 = __importDefault(require("./routes/alarms"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const analytics_1 = __importDefault(require("./routes/analytics"));
-// Load environment variables
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const prisma = new client_1.PrismaClient();
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT;
 // Middleware
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || "http://167.235.24.44:3002",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
 }));
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ extended: true }));
-// Health check
+// check api test
 app.get("/health", (req, res) => {
     res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
-// API Routes
 app.use("/api/auth", auth_1.default);
 app.use("/api/users", users_1.default);
 app.use("/api/companies", companies_1.default);
@@ -50,7 +47,7 @@ app.use("/api/branches", branches_1.default);
 app.use("/api/alarms", alarms_1.default);
 app.use("/api/reports", reports_1.default);
 app.use("/api/analytics", analytics_1.default);
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
     console.error("Error:", err);
     if (err.name === "ValidationError") {

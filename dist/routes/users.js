@@ -40,6 +40,7 @@ const createUserSchema = zod_1.z.object({
 });
 const updateUserSchema = zod_1.z.object({
     name: zod_1.z.string().min(1).optional(),
+    companyId: zod_1.z.string().optional(),
     status: zod_1.z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
     assignedBranches: zod_1.z.array(zod_1.z.string()).optional(),
 });
@@ -68,7 +69,7 @@ router.get("/", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN"), (req,
                 _count: {
                     select: {
                         managedUsers: true,
-                        assignedBranches: true,
+                        // assignedBranches: true,
                     },
                 },
             },
@@ -103,13 +104,13 @@ router.get("/my-operators", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_M
                 managedById: req.user.id,
                 role: "OPERATOR",
             },
-            include: {
-                assignedBranches: {
-                    include: {
-                        branch: true,
-                    },
-                },
-            },
+            // include: {
+            // 	assignedBranches: {
+            // 		include: {
+            // 			branch: true,
+            // 		},
+            // 	},
+            // },
             orderBy: { createdAt: "desc" },
         });
         const operatorsWithoutPasswords = operators.map((_a) => {
@@ -129,13 +130,13 @@ router.get("/police-managers", auth_1.authenticate, (0, auth_1.authorize)("OFFIC
             where: {
                 role: "POLICE_MANAGER",
             },
-            include: {
-                assignedBranches: {
-                    include: {
-                        branch: true,
-                    },
-                },
-            },
+            // include: {
+            // 	assignedBranches: {
+            // 		include: {
+            // 			branch: true,
+            // 		},
+            // 	},
+            // },
             orderBy: { createdAt: "desc" },
         });
         const operatorsWithoutPasswords = operators.map((_a) => {
@@ -150,7 +151,7 @@ router.get("/police-managers", auth_1.authenticate, (0, auth_1.authorize)("OFFIC
 }));
 // Create user
 router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     try {
         const data = createUserSchema.parse(req.body);
         console.log("Creating user with data:", data);
@@ -176,6 +177,7 @@ router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, vo
             role: data.role,
             companyId: data.companyId || ((_d = req.user) === null || _d === void 0 ? void 0 : _d.companyId),
         };
+        console.log("User data before creating:", userData);
         // Set manager for operators
         if (data.role === "OPERATOR") {
             userData.managedById = req.user.id;
@@ -191,12 +193,18 @@ router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, vo
             },
         });
         // Assign branches to operator
-        if (data.role === "OPERATOR" && ((_e = data.assignedBranches) === null || _e === void 0 ? void 0 : _e.length)) {
-            yield prisma.branchOperator.createMany({
-                data: data.assignedBranches.map((branchId) => ({
-                    userId: user.id,
-                    branchId,
-                })),
+        if (data.role === "OPERATOR" && data.companyId) {
+            // await prisma.branchOperator.createMany({
+            // 	data: data.assignedBranches.map((branchId) => ({
+            // 		userId: user.id,
+            // 		branchId,
+            // 	})),
+            // });
+            yield prisma.companyOperator.create({
+                data: {
+                    operatorId: user.id,
+                    companyId: data.companyId,
+                },
             });
         }
         const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
@@ -211,6 +219,7 @@ router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, vo
                 .status(400)
                 .json({ error: "Validation failed", details: error.errors });
         }
+        console.error("Error creating user:", error);
         res.status(500).json({ error: "Failed to create user" });
     }
 }));
@@ -248,20 +257,36 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                 },
             },
         });
-        // Update branch assignments for operators
-        if (data.assignedBranches && existingUser.role === "OPERATOR") {
-            yield prisma.branchOperator.deleteMany({
-                where: { userId: id },
+        // Update company assignment for operator
+        if (existingUser.role === "OPERATOR") {
+            // Remove existing company assignment
+            yield prisma.companyOperator.deleteMany({
+                where: { operatorId: id },
             });
-            if (data.assignedBranches.length > 0) {
-                yield prisma.branchOperator.createMany({
-                    data: data.assignedBranches.map((branchId) => ({
-                        userId: id,
-                        branchId,
-                    })),
+            // Assign new company (if provided)
+            if (data.companyId) {
+                yield prisma.companyOperator.create({
+                    data: {
+                        operatorId: id,
+                        companyId: data.companyId,
+                    },
                 });
             }
         }
+        // // Update branch assignments for operators
+        // if (data.assignedBranches && existingUser.role === "OPERATOR") {
+        // 	await prisma.branchOperator.deleteMany({
+        // 		where: { userId: id },
+        // 	});
+        // 	if (data.assignedBranches.length > 0) {
+        // 		await prisma.branchOperator.createMany({
+        // 			data: data.assignedBranches.map((branchId) => ({
+        // 				userId: id,
+        // 				branchId,
+        // 			})),
+        // 		});
+        // 	}
+        // }
         const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
         res.json({
             message: "User updated successfully",

@@ -129,12 +129,12 @@ async function main() {
 	});
 
 	// Assign operators to branches
-	await prisma.branchOperator.createMany({
-		data: [
-			{ branchId: branch1.id, userId: operator1.id },
-			{ branchId: branch2.id, userId: operator1.id },
-		],
-	});
+	// await prisma.branchOperator.createMany({
+	// 	data: [
+	// 		{ branchId: branch1.id, userId: operator1.id },
+	// 		{ branchId: branch2.id, userId: operator1.id },
+	// 	],
+	// });
 
 	// Create sample alarms
 	const alarm1 = await prisma.alarm.create({

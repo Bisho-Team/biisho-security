@@ -147,14 +147,36 @@ router.get(
 				prisma.branch.findMany({
 					where: { createdById: req.user!.id },
 					include: {
-						_count: {
+					  company: {
+						select: {
+						  id: true,
+						  name: true,
+						  _count: {
 							select: {
-								operators: true,
-								alarms: true,
+							  CompanyOperator: true, // ✅ Count of operators assigned to this branch's company
 							},
+						  },
 						},
+					  },
+					  _count: {
+						select: {
+						  alarms: true,
+						},
+					  },
 					},
-				}),
+				  })
+				
+				// prisma.branch.findMany({
+				// 	where: { createdById: req.user!.id },
+				// 	include: {
+				// 		_count: {
+				// 			select: {
+				// 				operators: true,
+				// 				alarms: true,
+				// 			},
+				// 		},
+				// 	},
+				// }),
 			]);
 
 			res.json({

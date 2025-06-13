@@ -24,7 +24,7 @@ function main() {
         });
         const company2 = yield prisma.company.create({
             data: {
-                name: "Hibert Bank",
+                name: "SafeGuard Ethiopia",
                 description: "Comprehensive security services",
             },
         });
@@ -82,7 +82,7 @@ function main() {
                 subCity: "Bole",
                 woreda: "Woreda 03",
                 country: "Ethiopia",
-                managerName: "Abebe Tesfaye",
+                managerName: "John Doe",
                 phoneNumber: "+251911123456",
                 description: "Main headquarters office",
                 companyId: company1.id,
@@ -91,7 +91,7 @@ function main() {
         });
         const branch2 = yield prisma.branch.create({
             data: {
-                name: "North AA Branch",
+                name: "North Branch",
                 locationType: "Retail Store",
                 city: "Addis Ababa",
                 subCity: "Yeka",
@@ -108,7 +108,7 @@ function main() {
         const operator1 = yield prisma.user.create({
             data: {
                 email: "operator1@koppa.com",
-                name: "Ayele Tesfaye",
+                name: "Security Operator 1",
                 password: yield (0, auth_1.hashPassword)("password123"),
                 role: "OPERATOR",
                 operatorType: "OFFICE",
@@ -119,7 +119,7 @@ function main() {
         const operator2 = yield prisma.user.create({
             data: {
                 email: "operator2@koppa.com",
-                name: "Kebede Tesfaye",
+                name: "Police Operator 1",
                 password: yield (0, auth_1.hashPassword)("password123"),
                 role: "OPERATOR",
                 operatorType: "POLICE",
@@ -127,12 +127,12 @@ function main() {
             },
         });
         // Assign operators to branches
-        yield prisma.branchOperator.createMany({
-            data: [
-                { branchId: branch1.id, userId: operator1.id },
-                { branchId: branch2.id, userId: operator1.id },
-            ],
-        });
+        // await prisma.branchOperator.createMany({
+        // 	data: [
+        // 		{ branchId: branch1.id, userId: operator1.id },
+        // 		{ branchId: branch2.id, userId: operator1.id },
+        // 	],
+        // });
         // Create sample alarms
         const alarm1 = yield prisma.alarm.create({
             data: {

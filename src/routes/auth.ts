@@ -125,11 +125,11 @@ router.get("/me", authenticate, async (req: AuthRequest, res) => {
 				managedBy: {
 					select: { id: true, name: true, email: true },
 				},
-				assignedBranches: {
-					include: {
-						branch: true,
-					},
-				},
+				// assignedBranches: {
+				// 	include: {
+				// 		branch: true,
+				// 	},
+				// },
 			},
 		});
 

@@ -38,9 +38,10 @@ model User {
   createdReports  AlarmReport[]
   
   // Assigned branches (for operators)
-  assignedBranches BranchOperator[]
+  // assignedBranches BranchOperator[]
 
   @@map("users")
+  CompanyOperator CompanyOperator[]
 }
 
 model Company {
@@ -63,6 +64,8 @@ model Company {
   branches    Branch[]
 
   @@map("companies")
+  CompanyOperator CompanyOperator[]
+  Alarm Alarm[]
 }
 
 
@@ -92,36 +95,55 @@ model Branch {
   createdBy   User   @relation(fields: [createdById], references: [id])
   
   // Assigned operators
-  operators BranchOperator[]
+  // operators BranchOperator[]
   alarms    Alarm[]
 
   @@map("branches")
 }
 
-model BranchOperator {
-  id       String @id @default(cuid())
-  branchId String
-  userId   String
-  
-  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+model CompanyOperator {
+  id         String   @id @default(cuid())
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String
+
+  operator   User     @relation(fields: [operatorId], references: [id])
+  operatorId String
+
   assignedAt DateTime @default(now())
 
-  @@unique([branchId, userId])
-  @@map("branch_operators")
+  @@unique([companyId, operatorId]) // optional: avoid duplicate entries
 }
+
+// model BranchOperator {
+//   id       String @id @default(cuid())
+//   branchId String
+//   userId   String
+  
+//   // branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+//   // user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+//   assignedAt DateTime @default(now())
+
+//   @@unique([branchId, userId])
+//   @@map("branch_operators")
+// }
 
 model Alarm {
   id          String   @id @default(cuid())
   type        String
   location    String?
+  longitude    String?
+  latitude    String?
   severity    AlarmSeverity
   description String
   additionalNotes String?
   status      AlarmStatus @default(ACTIVE)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Relations
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 
   // Relations
   branchId String

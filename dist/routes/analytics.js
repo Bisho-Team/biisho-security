@@ -65,7 +65,7 @@ router.get("/system", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN"),
 // Get police manager analytics
 router.get("/police", auth_1.authenticate, (0, auth_1.authorize)("POLICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const [totalReports, pendingReports, completedReports, avgResponseTime, reportsByStatus] = yield Promise.all([
+        const [totalReports, pendingReports, completedReports, avgResponseTime, reportsByStatus,] = yield Promise.all([
             prisma.alarmReport.count({
                 where: { assignedToId: req.user.id },
             }),
@@ -100,7 +100,7 @@ router.get("/police", auth_1.authenticate, (0, auth_1.authorize)("POLICE_MANAGER
 // Get office manager analytics
 router.get("/office", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const [totalBranches, totalOperators, totalAlarms, activeAlarms, branchesData] = yield Promise.all([
+        const [totalBranches, totalOperators, totalAlarms, activeAlarms, branchesData,] = yield Promise.all([
             prisma.branch.count({
                 where: { createdById: req.user.id },
             }),
@@ -121,14 +121,35 @@ router.get("/office", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER
             prisma.branch.findMany({
                 where: { createdById: req.user.id },
                 include: {
+                    company: {
+                        select: {
+                            id: true,
+                            name: true,
+                            _count: {
+                                select: {
+                                    CompanyOperator: true, // ✅ Count of operators assigned to this branch's company
+                                },
+                            },
+                        },
+                    },
                     _count: {
                         select: {
-                            operators: true,
                             alarms: true,
                         },
                     },
                 },
-            }),
+            })
+            // prisma.branch.findMany({
+            // 	where: { createdById: req.user!.id },
+            // 	include: {
+            // 		_count: {
+            // 			select: {
+            // 				operators: true,
+            // 				alarms: true,
+            // 			},
+            // 		},
+            // 	},
+            // }),
         ]);
         res.json({
             overview: {

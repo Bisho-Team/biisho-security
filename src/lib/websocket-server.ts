@@ -89,7 +89,7 @@ export function broadcastAlarmUpdate(alarm: unknown) {
 	});
 
 	clients.forEach(({ ws, user }) => {
-		if (user.role === "police_manager" && ws.readyState === WebSocket.OPEN) {
+		if (user.role === "POLICE_MANAGER" && ws.readyState === WebSocket.OPEN) {
 			ws.send(message);
 		}
 	});

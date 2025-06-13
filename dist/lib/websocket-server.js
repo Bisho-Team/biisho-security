@@ -101,7 +101,7 @@ function broadcastAlarmUpdate(alarm) {
         alarm,
     });
     clients.forEach(({ ws, user }) => {
-        if (user.role === "police_manager" && ws.readyState === ws_1.default.OPEN) {
+        if (user.role === "POLICE_MANAGER" && ws.readyState === ws_1.default.OPEN) {
             ws.send(message);
         }
     });

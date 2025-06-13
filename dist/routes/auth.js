@@ -72,7 +72,9 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
     catch (error) {
         if (error instanceof zod_1.z.ZodError) {
-            return res.status(400).json({ error: "Validation failed", details: error.errors });
+            return res
+                .status(400)
+                .json({ error: "Validation failed", details: error.errors });
         }
         res.status(500).json({ error: "Login failed" });
     }
@@ -83,7 +85,9 @@ router.post("/register", auth_1.authenticate, (req, res) => __awaiter(void 0, vo
     try {
         // Only super admin can register new managers
         if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "SUPER_ADMIN") {
-            return res.status(403).json({ error: "Only super admin can create new managers" });
+            return res
+                .status(403)
+                .json({ error: "Only super admin can create new managers" });
         }
         const { email, name, password, role, companyId } = registerSchema.parse(req.body);
         const hashedPassword = yield (0, auth_1.hashPassword)(password);
@@ -107,7 +111,9 @@ router.post("/register", auth_1.authenticate, (req, res) => __awaiter(void 0, vo
     }
     catch (error) {
         if (error instanceof zod_1.z.ZodError) {
-            return res.status(400).json({ error: "Validation failed", details: error.errors });
+            return res
+                .status(400)
+                .json({ error: "Validation failed", details: error.errors });
         }
         res.status(500).json({ error: "Registration failed" });
     }
@@ -122,11 +128,11 @@ router.get("/me", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, v
                 managedBy: {
                     select: { id: true, name: true, email: true },
                 },
-                assignedBranches: {
-                    include: {
-                        branch: true,
-                    },
-                },
+                // assignedBranches: {
+                // 	include: {
+                // 		branch: true,
+                // 	},
+                // },
             },
         });
         if (!user) {

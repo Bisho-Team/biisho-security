@@ -59,11 +59,19 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
         }
         else if (((_c = req.user) === null || _c === void 0 ? void 0 : _c.role) === "OPERATOR") {
             // Get branches assigned to this operator
-            const assignments = yield prisma.branchOperator.findMany({
-                where: { userId: req.user.id },
-                select: { branchId: true },
+            // const assignments = await prisma.branchOperator.findMany({
+            // 	where: { userId: req.user.id },
+            // 	select: { branchId: true },
+            // });
+            // where.id = { in: assignments.map((a) => a.branchId) };
+            const companyAssignment = yield prisma.companyOperator.findFirst({
+                where: { operatorId: req.user.id },
+                select: { companyId: true },
             });
-            where.id = { in: assignments.map((a) => a.branchId) };
+            if (!companyAssignment) {
+                return res.status(403).json({ error: "No company assigned to this operator" });
+            }
+            where.companyId = companyAssignment.companyId;
         }
         else if (((_d = req.user) === null || _d === void 0 ? void 0 : _d.role) !== "SUPER_ADMIN" &&
             ((_e = req.user) === null || _e === void 0 ? void 0 : _e.role) !== "POLICE_MANAGER") {
@@ -76,22 +84,34 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
         const branches = yield prisma.branch.findMany({
             where,
             include: {
+                // company: {
+                // 	select: { id: true, name: true },
+                // },
                 company: {
-                    select: { id: true, name: true },
+                    select: {
+                        id: true,
+                        name: true,
+                        _count: {
+                            select: {
+                                CompanyOperator: true, // ✅ Count company-level assigned operators
+                            },
+                        },
+                    },
                 },
                 createdBy: {
                     select: { id: true, name: true, email: true },
                 },
                 _count: {
                     select: {
-                        operators: true,
+                        // operators: true,
                         alarms: true,
                     },
                 },
             },
             orderBy: { createdAt: "desc" },
         });
-        console.log("Branches fetched:", branches);
+        const formattedBranch = branches.map(branch => (Object.assign(Object.assign({}, branch), { operatorCount: branch.company._count.CompanyOperator })));
+        console.log("Branches fetched:", formattedBranch);
         res.json(branches);
     }
     catch (error) {
@@ -106,15 +126,31 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
         const branch = yield prisma.branch.findUnique({
             where: { id },
             include: {
-                company: true,
+                // company: true,
+                company: {
+                    select: {
+                        id: true,
+                        name: true,
+                        _count: {
+                            select: {
+                                CompanyOperator: true,
+                            },
+                        },
+                    },
+                },
                 createdBy: {
                     select: { id: true, name: true, email: true },
                 },
-                operators: {
-                    include: {
-                        user: {
-                            select: { id: true, name: true, email: true, status: true },
-                        },
+                // operators: {
+                // 	include: {
+                // 		user: {
+                // 			select: { id: true, name: true, email: true, status: true },
+                // 		},
+                // 	},
+                // },
+                _count: {
+                    select: {
+                        alarms: true,
                     },
                 },
                 alarms: {

@@ -49,11 +49,21 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 			where.createdById = req.user.id;
 		} else if (req.user?.role === "OPERATOR") {
 			// Get branches assigned to this operator
-			const assignments = await prisma.branchOperator.findMany({
-				where: { userId: req.user.id },
-				select: { branchId: true },
+			// const assignments = await prisma.branchOperator.findMany({
+			// 	where: { userId: req.user.id },
+			// 	select: { branchId: true },
+			// });
+			// where.id = { in: assignments.map((a) => a.branchId) };
+			const companyAssignment = await prisma.companyOperator.findFirst({
+				where: { operatorId: req.user.id },
+				select: { companyId: true },
 			});
-			where.id = { in: assignments.map((a) => a.branchId) };
+
+			if (!companyAssignment) {
+				return res.status(403).json({ error: "No company assigned to this operator" });
+			}
+
+			where.companyId = companyAssignment.companyId;
 		} else if (
 			req.user?.role !== "SUPER_ADMIN" &&
 			req.user?.role !== "POLICE_MANAGER"
@@ -69,15 +79,26 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 		const branches = await prisma.branch.findMany({
 			where,
 			include: {
+				// company: {
+				// 	select: { id: true, name: true },
+				// },
 				company: {
-					select: { id: true, name: true },
+					select: {
+						id: true,
+						name: true,
+						_count: {
+							select: {
+								CompanyOperator: true, // ✅ Count company-level assigned operators
+							},
+						},
+					},
 				},
 				createdBy: {
 					select: { id: true, name: true, email: true },
 				},
 				_count: {
 					select: {
-						operators: true,
+						// operators: true,
 						alarms: true,
 					},
 				},
@@ -85,7 +106,12 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 			orderBy: { createdAt: "desc" },
 		});
 
-		console.log("Branches fetched:", branches);
+		const formattedBranch = branches.map(branch => ({
+			...branch,
+			operatorCount: branch.company._count.CompanyOperator,
+		}));
+
+		console.log("Branches fetched:", formattedBranch);
 
 		res.json(branches);
 	} catch (error) {
@@ -101,17 +127,33 @@ router.get("/:id", authenticate, async (req: AuthRequest, res) => {
 		const branch = await prisma.branch.findUnique({
 			where: { id },
 			include: {
-				company: true,
+				// company: true,
+				company: {
+					select: {
+					  id: true,
+					  name: true,
+					  _count: {
+						select: {
+						  CompanyOperator: true,
+						},
+					  },
+					},
+				  },
 				createdBy: {
 					select: { id: true, name: true, email: true },
 				},
-				operators: {
-					include: {
-						user: {
-							select: { id: true, name: true, email: true, status: true },
-						},
+				// operators: {
+				// 	include: {
+				// 		user: {
+				// 			select: { id: true, name: true, email: true, status: true },
+				// 		},
+				// 	},
+				// },
+				_count: {
+					select: {
+					  alarms: true,
 					},
-				},
+				  },
 				alarms: {
 					orderBy: { createdAt: "desc" },
 					take: 10,

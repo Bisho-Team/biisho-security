@@ -23,6 +23,7 @@ const createUserSchema = z.object({
 
 const updateUserSchema = z.object({
 	name: z.string().min(1).optional(),
+	companyId: z.string().optional(),
 	status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
 	assignedBranches: z.array(z.string()).optional(),
 });
@@ -57,7 +58,7 @@ router.get(
 					_count: {
 						select: {
 							managedUsers: true,
-							assignedBranches: true,
+							// assignedBranches: true,
 						},
 					},
 				},
@@ -97,13 +98,13 @@ router.get(
 					managedById: req.user!.id,
 					role: "OPERATOR",
 				},
-				include: {
-					assignedBranches: {
-						include: {
-							branch: true,
-						},
-					},
-				},
+				// include: {
+				// 	assignedBranches: {
+				// 		include: {
+				// 			branch: true,
+				// 		},
+				// 	},
+				// },
 				orderBy: { createdAt: "desc" },
 			});
 
@@ -129,13 +130,13 @@ router.get(
 				where: {
 					role: "POLICE_MANAGER",
 				},
-				include: {
-					assignedBranches: {
-						include: {
-							branch: true,
-						},
-					},
-				},
+				// include: {
+				// 	assignedBranches: {
+				// 		include: {
+				// 			branch: true,
+				// 		},
+				// 	},
+				// },
 				orderBy: { createdAt: "desc" },
 			});
 
@@ -182,6 +183,8 @@ router.post("/", authenticate, async (req: AuthRequest, res) => {
 			companyId: data.companyId || req.user?.companyId,
 		};
 
+		console.log("User data before creating:", userData);
+
 		// Set manager for operators
 		if (data.role === "OPERATOR") {
 			userData.managedById = req.user!.id;
@@ -199,12 +202,18 @@ router.post("/", authenticate, async (req: AuthRequest, res) => {
 		});
 
 		// Assign branches to operator
-		if (data.role === "OPERATOR" && data.assignedBranches?.length) {
-			await prisma.branchOperator.createMany({
-				data: data.assignedBranches.map((branchId) => ({
-					userId: user.id,
-					branchId,
-				})),
+		if (data.role === "OPERATOR" && data.companyId) {
+			// await prisma.branchOperator.createMany({
+			// 	data: data.assignedBranches.map((branchId) => ({
+			// 		userId: user.id,
+			// 		branchId,
+			// 	})),
+			// });
+			await prisma.companyOperator.create({
+				data: {
+					operatorId: user.id,
+					companyId: data.companyId,
+				},
 			});
 		}
 
@@ -220,6 +229,7 @@ router.post("/", authenticate, async (req: AuthRequest, res) => {
 				.status(400)
 				.json({ error: "Validation failed", details: error.errors });
 		}
+		console.error("Error creating user:", error);
 		res.status(500).json({ error: "Failed to create user" });
 	}
 });
@@ -262,21 +272,39 @@ router.put("/:id", authenticate, async (req: AuthRequest, res) => {
 			},
 		});
 
-		// Update branch assignments for operators
-		if (data.assignedBranches && existingUser.role === "OPERATOR") {
-			await prisma.branchOperator.deleteMany({
-				where: { userId: id },
+		// Update company assignment for operator
+		if (existingUser.role === "OPERATOR") {
+			// Remove existing company assignment
+			await prisma.companyOperator.deleteMany({
+				where: { operatorId: id },
 			});
 
-			if (data.assignedBranches.length > 0) {
-				await prisma.branchOperator.createMany({
-					data: data.assignedBranches.map((branchId) => ({
-						userId: id,
-						branchId,
-					})),
+			// Assign new company (if provided)
+			if (data.companyId) {
+				await prisma.companyOperator.create({
+					data: {
+						operatorId: id,
+						companyId: data.companyId,
+					},
 				});
 			}
 		}
+
+		// // Update branch assignments for operators
+		// if (data.assignedBranches && existingUser.role === "OPERATOR") {
+		// 	await prisma.branchOperator.deleteMany({
+		// 		where: { userId: id },
+		// 	});
+
+		// 	if (data.assignedBranches.length > 0) {
+		// 		await prisma.branchOperator.createMany({
+		// 			data: data.assignedBranches.map((branchId) => ({
+		// 				userId: id,
+		// 				branchId,
+		// 			})),
+		// 		});
+		// 	}
+		// }
 
 		const { password: _, ...userWithoutPassword } = user;
 
