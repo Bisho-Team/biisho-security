@@ -12,6 +12,8 @@ import { Loader2 } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { ThemeProvider } from "@/components/theme-provider";
+import { persistentNotificationService } from "@/lib/persistent-notification-service";
+import { audioService } from "@/lib/audio-service";
 
 export default function DashboardLayout({
 	children,
@@ -35,6 +37,32 @@ export default function DashboardLayout({
 			router.push("/");
 		}
 	}, [user, loading, router]);
+
+	useEffect(() => {
+		// Initialize notification service
+		persistentNotificationService.initialize();
+
+		// Initialize audio service
+		audioService.initialize();
+
+		// Handle user interaction to enable audio
+		const enableAudio = () => {
+			// audioService.resumeAudioContext();
+			document.removeEventListener("click", enableAudio);
+			document.removeEventListener("touchstart", enableAudio);
+		};
+
+		document.addEventListener("click", enableAudio);
+		document.addEventListener("touchstart", enableAudio);
+
+		return () => {
+			// Clean up
+			document.removeEventListener("click", enableAudio);
+			document.removeEventListener("touchstart", enableAudio);
+			persistentNotificationService.stopAllSirens();
+			audioService.stopAllSounds();
+		};
+	}, []);
 
 	if (loading) {
 		return (

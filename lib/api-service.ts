@@ -1,5 +1,4 @@
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 import { persistentNotificationService } from "./persistent-notification-service";
 
 interface ApiResponse<T = any> {
@@ -144,6 +143,8 @@ class ApiService {
 	async logout() {
 		try {
 			await this.post("/auth/logout");
+			// Stop all sirens before logout
+			persistentNotificationService.stopAllSirens();
 		} catch (error) {
 			// Continue with logout even if API call fails
 			console.warn("Logout API call failed:", error);

@@ -141,6 +141,9 @@ export default function UsersPage() {
 	const fetchCompanies = async () => {
 		try {
 			const response = await apiService.get("/companies");
+			console.log({
+				companies: response,
+			});
 			setCompanies(response as any);
 		} catch (error) {
 			toast({
@@ -328,11 +331,11 @@ export default function UsersPage() {
 
 	const getStatusColor = (status: string) => {
 		switch (status) {
-			case "active":
+			case "ACTIVE":
 				return "bg-green-100 text-green-800";
-			case "inactive":
+			case "INACTIVE":
 				return "bg-gray-100 text-gray-800";
-			case "suspended":
+			case "SUSPENDED":
 				return "bg-red-100 text-red-800";
 			default:
 				return "bg-gray-100 text-gray-800";
@@ -341,9 +344,9 @@ export default function UsersPage() {
 
 	const getRoleColor = (role: string) => {
 		switch (role) {
-			case "office_manager":
+			case "OFFICE_MANAGER":
 				return "bg-blue-100 text-blue-800";
-			case "police_manager":
+			case "POLICE_MANAGER":
 				return "bg-green-100 text-green-800";
 			default:
 				return "bg-gray-100 text-gray-800";
@@ -466,29 +469,31 @@ export default function UsersPage() {
 								</div>
 							</div>
 
-							{newUser.role === "OFFICE_MANAGER" && (
-								<div className="space-y-2">
-									<Label htmlFor="company">Company</Label>
-									<Select
-										value={newUser.companyId}
-										onValueChange={(value) =>
-											setNewUser({ ...newUser, companyId: value })
-										}>
-										<SelectTrigger>
-											<SelectValue placeholder="Select company" />
-										</SelectTrigger>
-										<SelectContent>
-											{companies
-												.filter((c) => c.status === "ACTIVE")
-												.map((company) => (
-													<SelectItem key={company.id} value={company.id}>
-														{company.name} ({company.type})
-													</SelectItem>
-												))}
-										</SelectContent>
-									</Select>
-								</div>
-							)}
+							{/* {newUser.role === "OFFICE_MANAGER" && (
+								
+							)} */}
+
+							<div className="space-y-2">
+								<Label htmlFor="company">Company</Label>
+								<Select
+									value={newUser.companyId}
+									onValueChange={(value) =>
+										setNewUser({ ...newUser, companyId: value })
+									}>
+									<SelectTrigger>
+										<SelectValue placeholder="Select company" />
+									</SelectTrigger>
+									<SelectContent>
+										{companies
+											.filter((c: any) => c.status === "active")
+											.map((company) => (
+												<SelectItem key={company.id} value={company.id}>
+													{company.name} ({company.type})
+												</SelectItem>
+											))}
+									</SelectContent>
+								</Select>
+							</div>
 
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
@@ -643,8 +648,8 @@ export default function UsersPage() {
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">All Roles</SelectItem>
-							<SelectItem value="office_manager">Office Manager</SelectItem>
-							<SelectItem value="police_manager">Police Manager</SelectItem>
+							<SelectItem value="OFFICE_MANAGER">Office Manager</SelectItem>
+							<SelectItem value="POLICE_MANAGER">Police Manager</SelectItem>
 						</SelectContent>
 					</Select>
 					<Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -653,9 +658,9 @@ export default function UsersPage() {
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">All Status</SelectItem>
-							<SelectItem value="active">Active</SelectItem>
-							<SelectItem value="inactive">Inactive</SelectItem>
-							<SelectItem value="suspended">Suspended</SelectItem>
+							<SelectItem value="ACTIVE">Active</SelectItem>
+							<SelectItem value="INACTIVE">Inactive</SelectItem>
+							<SelectItem value="SUSPENDED">Suspended</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
@@ -667,11 +672,11 @@ export default function UsersPage() {
 					<TabsTrigger value="all">
 						All Users ({filteredUsers.length})
 					</TabsTrigger>
-					<TabsTrigger value="office_managers">
+					<TabsTrigger value="OFFICE_MANAGER">
 						Office Managers (
 						{filteredUsers.filter((u) => u.role === "OFFICE_MANAGER").length})
 					</TabsTrigger>
-					<TabsTrigger value="police_managers">
+					<TabsTrigger value="POLICE_MANAGER">
 						Police Managers (
 						{filteredUsers.filter((u) => u.role === "POLICE_MANAGER").length})
 					</TabsTrigger>
@@ -681,6 +686,7 @@ export default function UsersPage() {
 					<div className="grid gap-4">
 						{filteredUsers.map((user) => (
 							<Card key={user.id}>
+								{/* {JSON.stringify(user)} */}
 								<CardContent className="p-6">
 									<div className="flex items-center justify-between">
 										<div className="flex items-center space-x-4">
@@ -796,7 +802,7 @@ export default function UsersPage() {
 					</div>
 				</TabsContent>
 
-				<TabsContent value="office_managers" className="space-y-4">
+				<TabsContent value="OFFICE_MANAGER" className="space-y-4">
 					<div className="grid gap-4">
 						{filteredUsers
 							.filter((u) => u.role === "OFFICE_MANAGER")
@@ -891,7 +897,7 @@ export default function UsersPage() {
 					</div>
 				</TabsContent>
 
-				<TabsContent value="police_managers" className="space-y-4">
+				<TabsContent value="POLICE_MANAGER" className="space-y-4">
 					<div className="grid gap-4">
 						{filteredUsers
 							.filter((u) => u.role === "POLICE_MANAGER")
@@ -1045,9 +1051,9 @@ export default function UsersPage() {
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="active">Active</SelectItem>
-											<SelectItem value="inactive">Inactive</SelectItem>
-											<SelectItem value="suspended">Suspended</SelectItem>
+											<SelectItem value="ACTIVE">Active</SelectItem>
+											<SelectItem value="INACTIVE">Inactive</SelectItem>
+											<SelectItem value="SUSPENDED">Suspended</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
@@ -1082,7 +1088,7 @@ export default function UsersPage() {
 								</div>
 							)}
 
-							<div className="space-y-2">
+							{/* <div className="space-y-2">
 								<Label>Permissions</Label>
 								<div className="flex flex-wrap gap-2">
 									{selectedUser.permissions.map((permission) => (
@@ -1094,7 +1100,7 @@ export default function UsersPage() {
 										</Badge>
 									))}
 								</div>
-							</div>
+							</div> */}
 						</div>
 					)}
 					<div className="flex justify-end space-x-2">

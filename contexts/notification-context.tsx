@@ -19,11 +19,11 @@ interface AlarmNotification {
 	branchId: string;
 	branchName: string;
 	location: string;
-	severity: "low" | "medium" | "high" | "critical";
+	severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 	description: string;
 	createdBy: string;
 	createdAt: string;
-	status: "ACTIVE" | "acknowledged" | "completed";
+	status: "ACTIVE" | "ACKNOWLEDGED" | "RESOLVED";
 }
 
 interface NotificationContextType {
@@ -114,7 +114,7 @@ export function NotificationProvider({
 			);
 
 			// Play alarm sound for critical and high severity alarms
-			if (alarm.severity === "critical" || alarm.severity === "high") {
+			if (alarm.severity === "CRITICAL" || alarm.severity === "HIGH") {
 				try {
 					await audioService.playAlarmSiren();
 				} catch (error) {
@@ -133,10 +133,10 @@ export function NotificationProvider({
 				title: `🚨 ${alarm.severity.toUpperCase()} ALARM`,
 				description: `${alarm.type} at ${alarm.branchName} - ${alarm.location}`,
 				variant:
-					alarm.severity === "critical" || alarm.severity === "high"
+					alarm.severity === "CRITICAL" || alarm.severity === "HIGH"
 						? "destructive"
 						: "default",
-				duration: alarm.severity === "critical" ? 0 : 8000, // Critical alarms don't auto-dismiss
+				duration: alarm.severity === "CRITICAL" ? 0 : 8000, // Critical alarms don't auto-dismiss
 			});
 		},
 		[toast]
@@ -150,7 +150,7 @@ export function NotificationProvider({
 		});
 
 		// If alarm is acknowledged, remove from persistent notifications
-		if (alarm.status === "acknowledged" || alarm.status === "completed") {
+		if (alarm.status === "ACKNOWLEDGED" || alarm.status === "RESOLVED") {
 			persistentNotificationService.acknowledgeAlarm(alarm.id);
 			setPersistentAlarmCount(
 				persistentNotificationService.getUnacknowledgedCount()

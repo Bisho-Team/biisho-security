@@ -1,5 +1,4 @@
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface ApiResponse<T> {
 	data?: T;
@@ -66,6 +65,8 @@ class ApiClient {
 	}
 
 	async logout() {
+		// Stop all sirens before logout
+		persistentNotificationService.stopAllSirens();
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("currentUser");
 	}

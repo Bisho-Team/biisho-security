@@ -75,7 +75,7 @@ self.addEventListener("push", (event: any) => {
 	);
 
 	// Play alarm sound even when app is closed
-	if (alarm.severity === "critical" || alarm.severity === "high") {
+	if (alarm.severity === "CRITICAL" || alarm.severity === "HIGH") {
 		playAlarmSound();
 	}
 });
@@ -107,12 +107,12 @@ self.addEventListener("notificationclick", (event: any) => {
 			sw.clients.matchAll({ type: "window" }).then((clients) => {
 				// Check if app is already open
 				for (const client of clients) {
-					if (client.url.includes("/dashboard/police-manager/alarm-reports")) {
+					if (client.url.includes("/dashboard/alarm-reports")) {
 						return client.focus();
 					}
 				}
 				// Open new window
-				return sw.clients.openWindow("/dashboard/police-manager/alarm-reports");
+				return sw.clients.openWindow("/dashboard/alarm-reports");
 			})
 		);
 	}
@@ -147,23 +147,23 @@ function getStoredToken() {
 	return localStorage.getItem("authToken");
 }
 
-// async function syncAlarms() {
-// 	try {
-// 		const response = await fetch("/api/alarms?status=ACTIVE");
-// 		const alarms = await response.json();
+async function syncAlarms() {
+	try {
+		const response = await fetch("/api/alarms?status=ACTIVE");
+		const alarms = await response.json();
 
-// 		// Store in IndexedDB for offline access
-// 		const db = await openDB();
-// 		const transaction = db.transaction(["alarms"], "readwrite");
-// 		const store = transaction.objectStore("alarms");
+		// Store in IndexedDB for offline access
+		const db = await openDB();
+		const transaction = db.transaction(["alarms"], "readwrite");
+		const store = transaction.objectStore("alarms");
 
-// 		for (const alarm of alarms) {
-// 			await store.put(alarm);
-// 		}
-// 	} catch (error) {
-// 		console.error("Failed to sync alarms:", error);
-// 	}
-// }
+		for (const alarm of alarms) {
+			await store.put(alarm);
+		}
+	} catch (error) {
+		console.error("Failed to sync alarms:", error);
+	}
+}
 
 function openDB(): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {

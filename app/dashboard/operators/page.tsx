@@ -26,6 +26,7 @@ import {
 	Phone,
 } from "lucide-react";
 import { apiService } from "@/lib/api-service";
+import { apiClient } from "@/lib/api";
 
 interface User {
 	role: string;
@@ -41,10 +42,13 @@ interface Operator {
 	name: string;
 	email: string;
 	phone: string;
+	password: string;
 	status: "ACTIVE" | "INACTIVE";
 	createdBy: string;
+	managedById?: string;
+	operatorType?: string;
 	companyId: string;
-	assignedBranches: string[];
+	role: "OPERATOR";
 	createdAt: string;
 }
 
@@ -56,55 +60,6 @@ interface Branch {
 	companyId: string;
 }
 
-// const mockBranches: Branch[] = [
-// 	{
-// 		id: "1",
-// 		name: "Main Office",
-// 		location: "Downtown",
-// 		managerId: "2",
-// 		companyId: "comp1",
-// 	},
-// 	{
-// 		id: "2",
-// 		name: "North Branch",
-// 		location: "North District",
-// 		managerId: "2",
-// 		companyId: "comp1",
-// 	},
-// 	{
-// 		id: "3",
-// 		name: "South Branch",
-// 		location: "South District",
-// 		managerId: "2",
-// 		companyId: "comp1",
-// 	},
-// ];
-
-// const mockOperators: Operator[] = [
-// 	{
-// 		id: "1",
-// 		name: "John Smith",
-// 		email: "john@koppa.com",
-// 		phone: "+251911123456",
-// 		status: "active",
-// 		createdBy: "2",
-// 		companyId: "comp1",
-// 		assignedBranches: ["1", "2"],
-// 		createdAt: "2024-01-15",
-// 	},
-// 	{
-// 		id: "2",
-// 		name: "Sarah Johnson",
-// 		email: "sarah@koppa.com",
-// 		phone: "+251911123457",
-// 		status: "active",
-// 		createdBy: "2",
-// 		companyId: "comp1",
-// 		assignedBranches: ["3"],
-// 		createdAt: "2024-01-20",
-// 	},
-// ];
-
 export default function OperatorsPage() {
 	const [user, setUser] = useState<User | null>(null);
 	const [operators, setOperators] = useState<Operator[]>([]);
@@ -115,14 +70,14 @@ export default function OperatorsPage() {
 		name: "",
 		email: "",
 		phone: "",
-		assignedBranches: [] as string[],
+		password: "",
 	});
 
 	useEffect(() => {
 		const userData = localStorage.getItem("currentUser");
 		if (userData) {
 			const parsedUser = JSON.parse(userData);
-			setUser({ ...parsedUser, companyId: "comp1" }); // Mock company assignment
+			setUser({ ...parsedUser }); // Mock company assignment
 		}
 		fetchBranches();
 		fetchOperators();
@@ -157,7 +112,7 @@ export default function OperatorsPage() {
 		}
 	};
 
-	const handleCreateOperator = () => {
+	const handleCreateOperator = async () => {
 		if (!user) return;
 
 		const operator: Operator = {
@@ -166,14 +121,20 @@ export default function OperatorsPage() {
 			email: newOperator.email,
 			phone: newOperator.phone,
 			status: "ACTIVE",
+			role: "OPERATOR",
+			password: newOperator.password,
+			managedById: user.id,
+			operatorType: user.role === "OFFICE_MANAGER" ? "OFFICE" : "POLICE",
 			createdBy: user.id,
-			companyId: user.companyId || "comp1",
-			assignedBranches: newOperator.assignedBranches,
+			companyId: user.companyId as string,
 			createdAt: new Date().toISOString().split("T")[0],
 		};
 
+		await apiService.post("/users", operator);
+		console.log("Created Operator:", operator);
+
 		setOperators([...operators, operator]);
-		setNewOperator({ name: "", email: "", phone: "", assignedBranches: [] });
+		setNewOperator({ name: "", email: "", phone: "", password: "" });
 		setIsCreateDialogOpen(false);
 	};
 
@@ -259,6 +220,18 @@ export default function OperatorsPage() {
 								/>
 							</div>
 							<div className="space-y-2">
+								<Label htmlFor="password">Password</Label>
+								<Input
+									id="password"
+									value={newOperator.password}
+									onChange={(e) =>
+										setNewOperator({ ...newOperator, password: e.target.value })
+									}
+									placeholder="12345678"
+									type="password"
+								/>
+							</div>
+							{/* <div className="space-y-2">
 								<Label>Assign Branches</Label>
 								<div className="space-y-2">
 									{userBranches.map((branch) => (
@@ -300,7 +273,7 @@ export default function OperatorsPage() {
 										</div>
 									))}
 								</div>
-							</div>
+							</div> */}
 						</div>
 						<div className="flex justify-end space-x-2">
 							<Button
@@ -405,7 +378,7 @@ export default function OperatorsPage() {
 												</div>
 											</div>
 											<div className="flex items-center space-x-2">
-												<div className="text-right">
+												{/* <div className="text-right">
 													<p className="text-sm font-medium">
 														Assigned Branches
 													</p>
@@ -419,7 +392,7 @@ export default function OperatorsPage() {
 															</Badge>
 														))}
 													</div>
-												</div>
+												</div> */}
 												<Button variant="outline" size="sm">
 													<Eye className="h-4 w-4" />
 												</Button>
@@ -538,7 +511,7 @@ export default function OperatorsPage() {
 											</div>
 										</div>
 										<div className="flex items-center space-x-2">
-											<div className="text-right">
+											{/* <div className="text-right">
 												<p className="text-sm font-medium">Assigned Branches</p>
 												<div className="flex flex-wrap gap-1 mt-1">
 													{operator.assignedBranches.map((branchId) => (
@@ -550,7 +523,7 @@ export default function OperatorsPage() {
 														</Badge>
 													))}
 												</div>
-											</div>
+											</div> */}
 											<Button variant="outline" size="sm">
 												<Eye className="h-4 w-4" />
 											</Button>

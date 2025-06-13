@@ -1,34 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-	AlertTriangle,
-	CheckCircle,
-	Clock,
-	Shield,
 	Bell,
-	Zap,
+	AlertTriangle,
+	Clock,
+	CheckCircle,
 	Volume2,
+	VolumeX,
 } from "lucide-react";
+import { persistentNotificationService } from "@/lib/persistent-notification-service";
 import { cn } from "@/lib/utils";
 
-interface Alarm {
-	id: string;
-	type: string;
-	branchName: string;
-	location: string;
-	status: "ACTIVE" | "acknowledged" | "completed";
-	severity: "low" | "medium" | "high" | "critical";
-	description: string;
-	createdAt: string;
-}
-
 interface EnhancedAlarmIndicatorsProps {
-	alarms: Alarm[];
-	onAcknowledge: (alarmId: string) => void;
+	alarms: any[];
+	onAcknowledge: (alarmId: string) => Promise<boolean>;
 	onViewDetails: (alarmId: string) => void;
 }
 
@@ -37,299 +26,225 @@ export function EnhancedAlarmIndicators({
 	onAcknowledge,
 	onViewDetails,
 }: EnhancedAlarmIndicatorsProps) {
-	const [currentTime, setCurrentTime] = useState(new Date());
+	const [activeAlarms, setActiveAlarms] = useState<any[]>([]);
+	const [criticalCount, setCriticalCount] = useState(0);
+	const [highCount, setHighCount] = useState(0);
+	const [mediumCount, setMediumCount] = useState(0);
+	const [lowCount, setLowCount] = useState(0);
+	const [soundEnabled, setSoundEnabled] = useState(true);
+	const [isAnimating, setIsAnimating] = useState(false);
 
 	useEffect(() => {
-		const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-		return () => clearInterval(timer);
-	}, []);
+		// Filter active alarms and count by severity
+		const active = alarms.filter((alarm) => alarm.status === "active");
+		setActiveAlarms(active);
 
-	const activeAlarms = alarms.filter((alarm) => alarm.status === "ACTIVE");
-	const acknowledgedAlarms = alarms.filter(
-		(alarm) => alarm.status === "acknowledged"
-	);
-	const completedAlarms = alarms.filter(
-		(alarm) => alarm.status === "completed"
-	);
-	const criticalAlarms = activeAlarms.filter(
-		(alarm) => alarm.severity === "critical"
-	);
-	const highAlarms = activeAlarms.filter((alarm) => alarm.severity === "high");
+		const critical = active.filter(
+			(alarm) => alarm.severity === "critical"
+		).length;
+		const high = active.filter((alarm) => alarm.severity === "high").length;
+		const medium = active.filter((alarm) => alarm.severity === "medium").length;
+		const low = active.filter((alarm) => alarm.severity === "low").length;
 
-	const getTimeAgo = (dateString: string) => {
-		const now = new Date();
-		const date = new Date(dateString);
-		const diffInMinutes = Math.floor(
-			(now.getTime() - date.getTime()) / (1000 * 60)
-		);
+		// Animate if critical or high count increases
+		if (critical > criticalCount || high > highCount) {
+			setIsAnimating(true);
+			setTimeout(() => setIsAnimating(false), 2000);
+		}
 
-		if (diffInMinutes < 1) return "Just now";
-		if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-		return `${Math.floor(diffInMinutes / 60)}h ago`;
+		setCriticalCount(critical);
+		setHighCount(high);
+		setMediumCount(medium);
+		setLowCount(low);
+	}, [alarms, criticalCount, highCount]);
+
+	const toggleSound = () => {
+		if (soundEnabled) {
+			persistentNotificationService.stopAllSirens();
+		} else {
+			// Restart sirens for critical and high alarms
+			const criticalAndHighAlarms = activeAlarms.filter(
+				(alarm) => alarm.severity === "critical" || alarm.severity === "high"
+			);
+			criticalAndHighAlarms.forEach((alarm) => {
+				persistentNotificationService.playAlarmSoundManually(alarm.id);
+			});
+		}
+		setSoundEnabled(!soundEnabled);
 	};
 
+	// If no active alarms, don't show the component
+	if (activeAlarms.length === 0) return null;
+
 	return (
-		<div className="space-y-6">
-			{/* Critical Alarm Banner */}
-			{criticalAlarms.length > 0 && (
-				<div className="relative overflow-hidden">
-					<Card className="border-4 border-red-500 bg-gradient-to-r from-red-100 via-red-50 to-red-100 shadow-2xl">
-						<div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-transparent to-red-500/10 animate-pulse" />
-						<CardContent className="p-6 relative z-10">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center space-x-4">
-									<div className="relative">
-										<Bell className="h-12 w-12 text-red-600 animate-bounce" />
+		<div className={cn("space-y-4", isAnimating ? "animate-shake" : "")}>
+			{(criticalCount > 0 || highCount > 0) && (
+				<Card
+					className={cn(
+						"border-4 transition-all duration-300",
+						criticalCount > 0
+							? "border-red-500 bg-gradient-to-r from-red-50 to-red-100"
+							: "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100"
+					)}>
+					<CardContent className="p-4">
+						<div className="flex items-center justify-between">
+							<div className="flex items-center space-x-4">
+								<div className="relative">
+									<Bell
+										className={cn(
+											"h-12 w-12",
+											criticalCount > 0
+												? "text-red-600 animate-bounce"
+												: highCount > 0
+												? "text-orange-600 animate-pulse"
+												: "text-yellow-600"
+										)}
+									/>
+									{criticalCount > 0 && (
 										<div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full animate-ping" />
-										<Volume2 className="absolute -bottom-1 -right-1 h-4 w-4 text-red-600 animate-pulse" />
-									</div>
-									<div>
-										<h2 className="text-2xl font-bold text-red-800 animate-pulse">
-											🚨 CRITICAL SECURITY ALERT
-										</h2>
-										<p className="text-red-700 font-medium">
-											{criticalAlarms.length} critical alarm
-											{criticalAlarms.length > 1 ? "s" : ""} requiring immediate
-											response
-										</p>
-										<p className="text-red-600 text-sm">
-											Latest: {criticalAlarms[0]?.type} at{" "}
-											{criticalAlarms[0]?.branchName} •{" "}
-											{getTimeAgo(criticalAlarms[0]?.createdAt)}
-										</p>
-									</div>
+									)}
 								</div>
-								<div className="flex flex-col space-y-2">
-									<Button
-										onClick={() => onAcknowledge(criticalAlarms[0]?.id)}
-										className="bg-red-600 hover:bg-red-700 text-white font-bold animate-pulse"
-										size="lg">
-										<Clock className="h-5 w-5 mr-2" />
-										ACKNOWLEDGE NOW
-									</Button>
-									<Button
-										onClick={() => onViewDetails(criticalAlarms[0]?.id)}
-										variant="outline"
-										className="border-red-300 text-red-700 hover:bg-red-50">
-										View Details
-									</Button>
+								<div>
+									<h3 className="text-xl font-bold">
+										{criticalCount > 0
+											? "CRITICAL SECURITY ALERTS"
+											: highCount > 0
+											? "HIGH PRIORITY ALERTS"
+											: "ACTIVE ALERTS"}
+									</h3>
+									<p className="text-gray-700">
+										{activeAlarms.length} active alarm
+										{activeAlarms.length !== 1 ? "s" : ""} require
+										{activeAlarms.length === 1 ? "s" : ""} your attention
+									</p>
 								</div>
 							</div>
-						</CardContent>
-					</Card>
-				</div>
-			)}
+							<div className="flex items-center space-x-2">
+								<Button
+									variant="outline"
+									size="icon"
+									onClick={toggleSound}
+									className={cn(
+										"rounded-full",
+										soundEnabled
+											? "bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
+											: "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+									)}>
+									{soundEnabled ? (
+										<Volume2 className="h-4 w-4" />
+									) : (
+										<VolumeX className="h-4 w-4" />
+									)}
+									<span className="sr-only">
+										{soundEnabled ? "Mute" : "Unmute"}
+									</span>
+								</Button>
+							</div>
+						</div>
 
-			{/* Enhanced Overview Cards */}
-			<div className="grid gap-4 md:grid-cols-4">
-				{/* Active Alarms Card */}
-				<Card
-					className={cn(
-						"transition-all duration-300 hover:shadow-lg",
-						activeAlarms.length > 0
-							? "border-red-300 bg-red-50"
-							: "border-green-300 bg-green-50"
-					)}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Active Alarms</CardTitle>
-						<div className="relative">
-							<AlertTriangle
+						<div className="grid grid-cols-4 gap-4 mt-4">
+							{criticalCount > 0 && (
+								<div className="bg-red-200 p-3 rounded-lg border border-red-300 flex items-center justify-between">
+									<div className="flex items-center">
+										<AlertTriangle className="h-5 w-5 text-red-700 mr-2 animate-pulse" />
+										<span className="font-medium text-red-800">Critical</span>
+									</div>
+									<Badge className="bg-red-600">{criticalCount}</Badge>
+								</div>
+							)}
+
+							{highCount > 0 && (
+								<div className="bg-orange-200 p-3 rounded-lg border border-orange-300 flex items-center justify-between">
+									<div className="flex items-center">
+										<AlertTriangle className="h-5 w-5 text-orange-700 mr-2" />
+										<span className="font-medium text-orange-800">High</span>
+									</div>
+									<Badge className="bg-orange-600">{highCount}</Badge>
+								</div>
+							)}
+
+							{mediumCount > 0 && (
+								<div className="bg-yellow-200 p-3 rounded-lg border border-yellow-300 flex items-center justify-between">
+									<div className="flex items-center">
+										<Clock className="h-5 w-5 text-yellow-700 mr-2" />
+										<span className="font-medium text-yellow-800">Medium</span>
+									</div>
+									<Badge className="bg-yellow-600">{mediumCount}</Badge>
+								</div>
+							)}
+
+							{lowCount > 0 && (
+								<div className="bg-green-200 p-3 rounded-lg border border-green-300 flex items-center justify-between">
+									<div className="flex items-center">
+										<CheckCircle className="h-5 w-5 text-green-700 mr-2" />
+										<span className="font-medium text-green-800">Low</span>
+									</div>
+									<Badge className="bg-green-600">{lowCount}</Badge>
+								</div>
+							)}
+						</div>
+
+						<div className="flex justify-end mt-4 space-x-2">
+							<Button
+								onClick={() => {
+									// Find the most critical active alarm
+									const mostCritical = activeAlarms.sort((a: any, b: any) => {
+										const severityOrder: any = {
+											CRITICAL: 0,
+											HIGH: 1,
+											MEDIUM: 2,
+											LOW: 3,
+										};
+										return (
+											severityOrder[a.severity] - severityOrder[b.severity]
+										);
+									})[0];
+
+									if (mostCritical) {
+										onViewDetails(mostCritical.id);
+									}
+								}}
+								variant="outline"
+								className="border-blue-300 text-blue-700 hover:bg-blue-50">
+								View Details
+							</Button>
+							<Button
+								onClick={() => {
+									// Find the most critical active alarm
+									const mostCritical = activeAlarms.sort((a, b) => {
+										const severityOrder: any = {
+											critical: 0,
+											high: 1,
+											medium: 2,
+											low: 3,
+										};
+										return (
+											severityOrder[a.severity] - severityOrder[b.severity]
+										);
+									})[0];
+
+									if (mostCritical) {
+										onAcknowledge(mostCritical.id);
+									}
+								}}
 								className={cn(
-									"h-4 w-4",
-									activeAlarms.length > 0
-										? "text-red-500 animate-pulse"
-										: "text-green-500"
-								)}
-							/>
-							{activeAlarms.length > 0 && (
-								<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-ping" />
-							)}
+									criticalCount > 0
+										? "bg-red-600 hover:bg-red-700"
+										: highCount > 0
+										? "bg-orange-600 hover:bg-orange-700"
+										: "bg-yellow-600 hover:bg-yellow-700",
+									"text-white"
+								)}>
+								Acknowledge Most Critical
+							</Button>
 						</div>
-					</CardHeader>
-					<CardContent>
-						<div
-							className={cn(
-								"text-2xl font-bold",
-								activeAlarms.length > 0 ? "text-red-600" : "text-green-600"
-							)}>
-							{activeAlarms.length}
-						</div>
-						<p className="text-xs text-muted-foreground">
-							{activeAlarms.length > 0
-								? "Require immediate attention"
-								: "All systems secure"}
-						</p>
-						{criticalAlarms.length > 0 && (
-							<Badge className="mt-2 bg-red-600 text-white animate-pulse">
-								{criticalAlarms.length} CRITICAL
-							</Badge>
-						)}
-						{highAlarms.length > 0 && (
-							<Badge className="mt-2 ml-1 bg-orange-600 text-white">
-								{highAlarms.length} HIGH
-							</Badge>
-						)}
-					</CardContent>
-				</Card>
-
-				{/* Acknowledged Alarms Card */}
-				<Card
-					className={cn(
-						"transition-all duration-300 hover:shadow-lg",
-						acknowledgedAlarms.length > 0
-							? "border-yellow-300 bg-yellow-50"
-							: ""
-					)}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Acknowledged</CardTitle>
-						<Clock
-							className={cn(
-								"h-4 w-4",
-								acknowledgedAlarms.length > 0
-									? "text-yellow-500 animate-spin"
-									: "text-gray-400"
-							)}
-						/>
-					</CardHeader>
-					<CardContent>
-						<div
-							className={cn(
-								"text-2xl font-bold",
-								acknowledgedAlarms.length > 0
-									? "text-yellow-600"
-									: "text-gray-600"
-							)}>
-							{acknowledgedAlarms.length}
-						</div>
-						<p className="text-xs text-muted-foreground">In progress</p>
-						{acknowledgedAlarms.length > 0 && (
-							<div className="mt-2 w-full bg-yellow-200 rounded-full h-2">
-								<div
-									className="bg-yellow-600 h-2 rounded-full animate-pulse"
-									style={{ width: "60%" }}
-								/>
-							</div>
-						)}
-					</CardContent>
-				</Card>
-
-				{/* Completed Today Card */}
-				<Card className="transition-all duration-300 hover:shadow-lg">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
-							Completed Today
-						</CardTitle>
-						<CheckCircle className="h-4 w-4 text-green-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-600">
-							{completedAlarms.length}
-						</div>
-						<p className="text-xs text-muted-foreground">
-							Successfully resolved
-						</p>
-						{completedAlarms.length > 0 && (
-							<div className="mt-2 flex items-center text-xs text-green-600">
-								<CheckCircle className="h-3 w-3 mr-1" />
-								Latest: {getTimeAgo(completedAlarms[0]?.createdAt)}
-							</div>
-						)}
-					</CardContent>
-				</Card>
-
-				{/* System Status Card */}
-				<Card
-					className={cn(
-						"transition-all duration-300 hover:shadow-lg",
-						activeAlarms.length === 0
-							? "border-green-300 bg-green-50"
-							: "border-gray-300"
-					)}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">System Status</CardTitle>
-						<Shield
-							className={cn(
-								"h-4 w-4",
-								activeAlarms.length === 0 ? "text-green-500" : "text-gray-400"
-							)}
-						/>
-					</CardHeader>
-					<CardContent>
-						<div
-							className={cn(
-								"text-lg font-bold",
-								activeAlarms.length === 0 ? "text-green-600" : "text-gray-600"
-							)}>
-							{activeAlarms.length === 0 ? "SECURE" : "ALERT"}
-						</div>
-						<p className="text-xs text-muted-foreground">
-							{activeAlarms.length === 0
-								? "All systems operational"
-								: `${activeAlarms.length} active alerts`}
-						</p>
-						<div className="mt-2 text-xs text-gray-500">
-							Last updated: {currentTime.toLocaleTimeString()}
-						</div>
-					</CardContent>
-				</Card>
-			</div>
-
-			{/* Quick Action Panel for Active Alarms */}
-			{activeAlarms.length > 0 && (
-				<Card className="border-orange-300 bg-orange-50">
-					<CardHeader>
-						<CardTitle className="text-orange-800 flex items-center">
-							<Zap className="h-5 w-5 mr-2 animate-pulse" />
-							Quick Actions - Active Alarms
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-							{activeAlarms.slice(0, 6).map((alarm) => (
-								<div
-									key={alarm.id}
-									className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium text-gray-900 truncate">
-											{alarm.type}
-										</p>
-										<p className="text-xs text-gray-500 truncate">
-											{alarm.branchName}
-										</p>
-										<Badge
-											className={cn(
-												"text-xs mt-1",
-												alarm.severity === "critical"
-													? "bg-red-100 text-red-800"
-													: alarm.severity === "high"
-													? "bg-orange-100 text-orange-800"
-													: alarm.severity === "medium"
-													? "bg-yellow-100 text-yellow-800"
-													: "bg-green-100 text-green-800"
-											)}>
-											{alarm.severity}
-										</Badge>
-									</div>
-									<Button
-										size="sm"
-										onClick={() => onAcknowledge(alarm.id)}
-										className="ml-2 bg-yellow-600 hover:bg-yellow-700 text-white">
-										ACK
-									</Button>
-								</div>
-							))}
-						</div>
-						{activeAlarms.length > 6 && (
-							<p className="text-center text-sm text-gray-500 mt-3">
-								+{activeAlarms.length - 6} more active alarms
-							</p>
-						)}
 					</CardContent>
 				</Card>
 			)}
 		</div>
 	);
 }
+
 // "use client";
 
 // import { useEffect, useState } from "react";

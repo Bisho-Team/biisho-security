@@ -4,11 +4,11 @@ interface AlarmNotification {
 	branchId: string;
 	branchName: string;
 	location: string;
-	severity: "low" | "medium" | "high" | "critical";
+	severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 	description: string;
 	createdBy: string;
 	createdAt: string;
-	status: "ACTIVE" | "acknowledged" | "completed";
+	status: "ACTIVE" | "ACKNOWLEDGED" | "RESOLVED";
 }
 
 interface WebSocketMessage {
