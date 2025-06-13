@@ -36,15 +36,15 @@ export function EnhancedAlarmIndicators({
 
 	useEffect(() => {
 		// Filter active alarms and count by severity
-		const active = alarms.filter((alarm) => alarm.status === "active");
+		const active = alarms.filter((alarm) => alarm.status === "ACTIVE");
 		setActiveAlarms(active);
 
 		const critical = active.filter(
-			(alarm) => alarm.severity === "critical"
+			(alarm) => alarm.severity === "CRITICAL"
 		).length;
-		const high = active.filter((alarm) => alarm.severity === "high").length;
-		const medium = active.filter((alarm) => alarm.severity === "medium").length;
-		const low = active.filter((alarm) => alarm.severity === "low").length;
+		const high = active.filter((alarm) => alarm.severity === "HIGH").length;
+		const medium = active.filter((alarm) => alarm.severity === "MEDIUM").length;
+		const low = active.filter((alarm) => alarm.severity === "LOW").length;
 
 		// Animate if critical or high count increases
 		if (critical > criticalCount || high > highCount) {
@@ -64,7 +64,7 @@ export function EnhancedAlarmIndicators({
 		} else {
 			// Restart sirens for critical and high alarms
 			const criticalAndHighAlarms = activeAlarms.filter(
-				(alarm) => alarm.severity === "critical" || alarm.severity === "high"
+				(alarm) => alarm.severity === "CRITICAL" || alarm.severity === "HIGH"
 			);
 			criticalAndHighAlarms.forEach((alarm) => {
 				persistentNotificationService.playAlarmSoundManually(alarm.id);

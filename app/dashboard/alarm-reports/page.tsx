@@ -30,6 +30,7 @@ import { persistentNotificationService } from "@/lib/persistent-notification-ser
 import { EnhancedAlarmIndicators } from "@/components/enhanced-alarm-indicators";
 import { PersistentAlarmBanner } from "@/components/persistent-alarm-banner";
 import { AlarmReminderDialog } from "@/components/alarm-reminder-dialog";
+import { audioService } from "@/lib/audio-service";
 import {
 	AlertTriangle,
 	CheckCircle,
@@ -209,13 +210,37 @@ export default function EnhancedAlarmReportsPage() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [severityFilter, setSeverityFilter] = useState<string>("all");
 	const [statusFilter, setStatusFilter] = useState<string>("all");
+	const [userInteracted, setUserInteracted] = useState(false);
+
+	const [audioEnabled, setAudioEnabled] = useState(true);
 	const { toast } = useToast();
 
 	useEffect(() => {
+		// Handle user interaction to enable audio
+		const handleUserInteraction = () => {
+			setUserInteracted(true);
+			audioService.initialize();
+
+			// Remove event listeners
+			window.removeEventListener("click", handleUserInteraction);
+			window.removeEventListener("touchstart", handleUserInteraction);
+			window.removeEventListener("keydown", handleUserInteraction);
+		};
+
+		window.addEventListener("click", handleUserInteraction);
+		window.addEventListener("touchstart", handleUserInteraction);
+		window.addEventListener("keydown", handleUserInteraction);
+
 		fetchAlarms();
 		persistentNotificationService.initialize();
 		// Preload audio files to avoid loading issues
 		preloadAudioFiles();
+
+		return () => {
+			window.removeEventListener("click", handleUserInteraction);
+			window.removeEventListener("touchstart", handleUserInteraction);
+			window.removeEventListener("keydown", handleUserInteraction);
+		};
 	}, []);
 
 	const preloadAudioFiles = () => {
@@ -391,6 +416,19 @@ export default function EnhancedAlarmReportsPage() {
 
 		return matchesSearch && matchesSeverity && matchesStatus;
 	});
+
+	const toggleAudio = () => {
+		const newState = !audioEnabled;
+		setAudioEnabled(newState);
+		persistentNotificationService.setAudioEnabled(newState);
+
+		toast({
+			title: newState ? "Audio Enabled" : "Audio Disabled",
+			description: newState
+				? "Alarm sounds will now play"
+				: "Alarm sounds are now muted",
+		});
+	};
 
 	const activeAlarms = filteredAlarms.filter(
 		(alarm) => alarm.status === "ACTIVE"
