@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface User {
 	id: string;
@@ -25,7 +26,7 @@ interface User {
 interface AuthContextType {
 	user: User | null;
 	loading: boolean;
-	login: (email: string, password: string) => Promise<void>;
+	login: (email: string, password: string) => Promise<any>;
 	logout: () => void;
 	refreshUser: () => Promise<void>;
 }
@@ -35,11 +36,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
+	const router = useRouter();
 
 	const login = async (email: string, password: string) => {
 		try {
-			const response = await apiClient.login(email, password);
-			setUser(response.user);
+			const { user } = await apiClient.login(email, password);
+			console.log({ user });
+			setUser(user);
+			// ✅ Redirect based on role
+			if (user.role === "OFFICE_MANAGER") {
+				router.push("/dashboard/alarms");
+			} else if (user.role === "POLICE_MANAGER") {
+				router.push("/dashboard/alarm-reports");
+			} else {
+				router.push("/dashboard");
+			}
 		} catch (error) {
 			throw error;
 		}

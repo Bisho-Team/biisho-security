@@ -101,7 +101,7 @@ export default function CompaniesPage() {
 	const [filterStatus, setFilterStatus] = useState("all");
 	const { toast } = useToast();
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-	const NEXT_PUBLIC_API_URL = "http://8436insight.et:3003";
+	const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
 
 	const [newCompany, setNewCompany] = useState({
 		name: "",
@@ -711,14 +711,7 @@ export default function CompaniesPage() {
 										</div>
 										<div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
 									</div> */}
-									{/* <div>
-										`{NEXT_PUBLIC_API_URL}
-										{company.logo.replace(
-											"/var/www/html/koppa-security-api",
-											""
-										)}
-										`
-									</div> */}
+
 									<div className="relative">
 										{company.logo ? (
 											<img
@@ -901,9 +894,24 @@ export default function CompaniesPage() {
 					{selectedCompany && (
 						<div className="space-y-6 py-4">
 							<div className="flex items-start gap-4">
-								<div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
-									<Building className="h-8 w-8 text-white" />
+								<div className="p-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+									{/* <Building className="h-8 w-8 text-white" /> */}
+									{selectedCompany.logo ? (
+										<img
+											src={`${NEXT_PUBLIC_API_URL}${selectedCompany.logo.replace(
+												"/var/www/html/koppa-security-api",
+												""
+											)}`}
+											alt={`${selectedCompany.name} logo`}
+											className="h-20 w-20 object-cover rounded-xl shadow-lg border border-border"
+										/>
+									) : (
+										<div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+											<Building className="h-8 w-8 text-white" />
+										</div>
+									)}
 								</div>
+
 								<div className="flex-1">
 									<h3 className="text-2xl font-bold">{selectedCompany.name}</h3>
 									<p className="text-muted-foreground">

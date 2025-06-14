@@ -35,6 +35,7 @@ import {
 	ChevronDown,
 	LogOut,
 	UserIcon,
+	User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -106,8 +107,13 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 					},
 					{
 						title: "Reports",
-						url: "/dashboard/reports",
+						url: "/dashboard/analytics",
 						icon: FileText,
+					},
+					{
+						title: "Profile",
+						url: "/dashboard/profile",
+						icon: UserIcon,
 					},
 				];
 
@@ -121,14 +127,19 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 					},
 					{
 						title: "Officers",
-						url: "/dashboard/officers",
+						url: "/dashboard/operators",
 						icon: Shield,
 					},
 					{
-						title: "Analytics",
-						url: "/dashboard/analytics",
-						icon: BarChart3,
+						title: "Profile",
+						url: "/dashboard/profile",
+						icon: UserIcon,
 					},
+					// {
+					// 	title: "Analytics",
+					// 	url: "/dashboard/analytics",
+					// 	icon: BarChart3,
+					// },
 				];
 
 			case "OPERATOR":
@@ -264,18 +275,6 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 			<SidebarHeader className="border-b-[1px]">
 				<div className="flex items-center space-x-3 animate-fade-in">
 					<img src="/logo-shield.png" alt="" />
-					{/* <div className="relative">
-						<Shield className="h-10 w-10 text-primary" />
-						<div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
-					</div>
-					<div>
-						<h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-							Koppa
-						</h2>
-						<p className="text-sm text-muted-foreground font-medium">
-							Security System
-						</p>
-					</div> */}
 				</div>
 			</SidebarHeader>
 
