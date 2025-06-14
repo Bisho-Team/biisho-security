@@ -82,18 +82,19 @@ export default function LoginPage() {
 
 			<div className="w-full max-w-md space-y-8 relative z-10">
 				{/* Logo and Header */}
-				<div className="text-center space-y-6 animate-fade-in">
-					<div className="relative mx-auto w-20 h-20 mb-8">
-						<div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl rotate-6 animate-pulse"></div>
-						<div className="relative bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-4 shadow-2xl">
+				<div className="text-center space-y-2 animate-fade-in">
+					<div className="relative mx-auto w-72 h-48">
+						{/* <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl rotate-6 animate-pulse"></div> */}
+						{/* <div className="relative bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-4 shadow-2xl">
 							<Shield className="h-12 w-12 text-white mx-auto" />
-						</div>
-						<div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white animate-ping"></div>
+						</div> */}
+						<img src="/logo-shield.png" className="h-48 w-72 " alt="" />
+						<div className="absolute top-5 right-4 w-6 h-6 bg-green-500 rounded-full border-4 border-white animate-ping"></div>
 					</div>
 					<div className="space-y-2">
-						<h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
+						{/* <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
 							Koppa Security
-						</h1>
+						</h1> */}
 						<p className="text-slate-300 text-lg font-medium">
 							Advanced Security Management System
 						</p>
