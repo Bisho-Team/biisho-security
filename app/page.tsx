@@ -100,7 +100,7 @@ export default function LoginPage() {
 						</p>
 						<div className="flex items-center justify-center gap-2 text-sm text-slate-400">
 							<Sparkles className="h-4 w-4" />
-							<span>Secure • Reliable • Professional</span>
+							<span>Secure • Reliable • Available</span>
 							<Sparkles className="h-4 w-4" />
 						</div>
 					</div>
