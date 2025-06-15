@@ -142,9 +142,9 @@ export default function UsersPage() {
 		try {
 			const response = await apiService.get("/companies");
 			console.log({
-				companies: response,
+				companies: (response as any).companies,
 			});
-			setCompanies(response as any);
+			setCompanies((response as any).companies);
 		} catch (error) {
 			toast({
 				title: "Error",
@@ -473,6 +473,8 @@ export default function UsersPage() {
 								
 							)} */}
 
+							{/* {JSON.stringify(companies)} */}
+
 							<div className="space-y-2">
 								<Label htmlFor="company">Company</Label>
 								<Select
@@ -485,7 +487,7 @@ export default function UsersPage() {
 									</SelectTrigger>
 									<SelectContent>
 										{companies
-											.filter((c: any) => c.status === "active")
+											.filter((c: any) => c.status === "ACTIVE")
 											.map((company) => (
 												<SelectItem key={company.id} value={company.id}>
 													{company.name} ({company.type})

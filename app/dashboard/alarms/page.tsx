@@ -156,7 +156,7 @@ const AlarmLocationMap = ({
 		// Load Google Maps API if not already loaded
 		if (typeof (window as any).google === "undefined") {
 			const script = document.createElement("script");
-			script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap`;
+			script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&callback=initMap`;
 			script.async = true;
 			script.defer = true;
 			(window as any).initMap = initMap;
@@ -423,7 +423,7 @@ export default function EnhancedAlarmsPage() {
 						Alarm Management
 					</h1>
 					<p className="text-muted-foreground mt-2">
-						Monitor and manage security alarms across all branches
+						Monitor and manage security alarms across all locations
 					</p>
 				</div>
 				<Link href="/dashboard/configure-alarm">
@@ -575,7 +575,7 @@ export default function EnhancedAlarmsPage() {
 								<SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
 							</SelectContent>
 						</Select>
-						<Select value={filterSeverity} onValueChange={setFilterSeverity}>
+						{/* <Select value={filterSeverity} onValueChange={setFilterSeverity}>
 							<SelectTrigger className="w-32">
 								<SelectValue placeholder="Severity" />
 							</SelectTrigger>
@@ -586,7 +586,7 @@ export default function EnhancedAlarmsPage() {
 								<SelectItem value="MEDIUM">Medium</SelectItem>
 								<SelectItem value="LOW">Low</SelectItem>
 							</SelectContent>
-						</Select>
+						</Select> */}
 					</div>
 				</div>
 
@@ -654,13 +654,13 @@ export default function EnhancedAlarmsPage() {
 											<div className="flex items-center space-x-3">
 												<div className="text-right space-y-2">
 													<div className="flex gap-2">
-														<Badge
+														{/* <Badge
 															className={cn(
 																"text-xs font-medium shadow-sm",
 																getSeverityColor(alarm.severity)
 															)}>
 															{alarm.severity}
-														</Badge>
+														</Badge> */}
 														<Badge
 															className={cn(
 																"text-xs font-medium shadow-sm",
@@ -831,7 +831,7 @@ export default function EnhancedAlarmsPage() {
 													INCIDENT ID
 												</Label>
 												<p className="text-sm text-white font-mono bg-slate-900/50 p-2 rounded border">
-													{selectedAlarm.id}
+													{selectedAlarm.id.slice(-7)}
 												</p>
 											</div>
 											<div>
@@ -842,7 +842,7 @@ export default function EnhancedAlarmsPage() {
 													{selectedAlarm.type}
 												</p>
 											</div>
-											<div>
+											{/* <div>
 												<Label className="text-sm font-medium text-slate-400 font-mono">
 													SEVERITY LEVEL
 												</Label>
@@ -859,7 +859,7 @@ export default function EnhancedAlarmsPage() {
 													)}>
 													{selectedAlarm.severity}
 												</Badge>
-											</div>
+											</div> */}
 											<div>
 												<Label className="text-sm font-medium text-slate-400 font-mono">
 													STATUS
@@ -877,9 +877,9 @@ export default function EnhancedAlarmsPage() {
 													{selectedAlarm.status === "ACTIVE"
 														? "ACTIVE ALARM"
 														: selectedAlarm.status === "ACKNOWLEDGED"
-														? "UNDER INVESTIGATION"
-														: selectedAlarm.status === "DISPATCHED"
-														? "TEAM DISPATCHED"
+														? "ACKNOWLEDGED"
+														: selectedAlarm.status === "RESOLVED"
+														? "RESOLVED"
 														: "RESOLVED"}
 												</Badge>
 											</div>
@@ -888,10 +888,10 @@ export default function EnhancedAlarmsPage() {
 													TIMESTAMP
 												</Label>
 												<p className="text-sm text-white font-mono bg-slate-900/50 p-2 rounded border">
-													{formatDateTime(selectedAlarm.time)}
+													{formatDateTime((selectedAlarm as any)?.createdAt)}
 												</p>
 											</div>
-											<div>
+											{/* <div>
 												<Label className="text-sm font-medium text-slate-400 font-mono">
 													PRIORITY
 												</Label>
@@ -904,7 +904,7 @@ export default function EnhancedAlarmsPage() {
 														? "P2 - HIGH"
 														: "P3 - NORMAL"}
 												</p>
-											</div>
+											</div> */}
 										</div>
 									</CardContent>
 								</Card>
@@ -919,7 +919,7 @@ export default function EnhancedAlarmsPage() {
 									<CardContent className="space-y-4">
 										<div>
 											<Label className="text-sm font-medium text-slate-400 font-mono">
-												BRANCH
+												LOCATION
 											</Label>
 											<p className="text-white font-mono bg-slate-900/50 p-2 rounded border flex items-center">
 												<Radio className="h-4 w-4 mr-2 text-blue-400" />
@@ -928,7 +928,7 @@ export default function EnhancedAlarmsPage() {
 										</div>
 										<div>
 											<Label className="text-sm font-medium text-slate-400 font-mono">
-												SPECIFIC LOCATION
+												SUB-CITY
 											</Label>
 											<p className="text-white font-mono bg-slate-900/50 p-2 rounded border flex items-center">
 												<MapPin className="h-4 w-4 mr-2 text-red-400" />
@@ -965,7 +965,7 @@ export default function EnhancedAlarmsPage() {
 									<CardHeader>
 										<CardTitle className="text-lg font-mono text-slate-200 flex items-center">
 											<Navigation className="h-5 w-5 mr-2 text-blue-400" />
-											TACTICAL MAP OVERLAY
+											MAP
 										</CardTitle>
 									</CardHeader>
 									<CardContent>
@@ -1018,7 +1018,7 @@ export default function EnhancedAlarmsPage() {
 							</Card>
 
 							{/* Response Metrics */}
-							<Card className="bg-slate-800/50 border-slate-700">
+							{/* <Card className="bg-slate-800/50 border-slate-700">
 								<CardHeader>
 									<CardTitle className="text-lg font-mono text-slate-200 flex items-center">
 										<BarChart4 className="h-5 w-5 mr-2 text-purple-400" />
@@ -1083,7 +1083,7 @@ export default function EnhancedAlarmsPage() {
 										</div>
 									</div>
 								</CardContent>
-							</Card>
+							</Card> */}
 
 							{/* Timeline */}
 							<Card className="bg-slate-800/50 border-slate-700">
@@ -1174,7 +1174,7 @@ export default function EnhancedAlarmsPage() {
 							className="border-slate-600 text-slate-200 hover:bg-slate-800 font-mono">
 							CLOSE REPORT
 						</Button>
-						{selectedAlarm?.status === "ACTIVE" && (
+						{/* {selectedAlarm?.status === "ACTIVE" && (
 							<Button
 								onClick={() => {
 									setIsViewDialogOpen(false);
@@ -1188,8 +1188,8 @@ export default function EnhancedAlarmsPage() {
 								<Clock className="h-4 w-4 mr-2" />
 								ACKNOWLEDGE ALARM
 							</Button>
-						)}
-						{selectedAlarm?.status === "ACKNOWLEDGED" && (
+						)} */}
+						{/* {selectedAlarm?.status === "ACKNOWLEDGED" && (
 							<Button
 								onClick={() => {
 									setIsViewDialogOpen(false);
@@ -1203,7 +1203,7 @@ export default function EnhancedAlarmsPage() {
 								<CheckCircle className="h-4 w-4 mr-2" />
 								MARK RESOLVED
 							</Button>
-						)}
+						)} */}
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
@@ -1245,7 +1245,7 @@ export default function EnhancedAlarmsPage() {
 										</SelectContent>
 									</Select>
 								</div>
-								<div className="space-y-2">
+								{/* <div className="space-y-2">
 									<Label htmlFor="editSeverity">Severity</Label>
 									<Select
 										value={selectedAlarm.severity}
@@ -1264,7 +1264,7 @@ export default function EnhancedAlarmsPage() {
 											<SelectItem value="CRITICAL">Critical</SelectItem>
 										</SelectContent>
 									</Select>
-								</div>
+								</div> */}
 							</div>
 
 							<div className="space-y-2">

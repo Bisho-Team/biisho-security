@@ -48,6 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				router.push("/dashboard/alarms");
 			} else if (user.role === "POLICE_MANAGER") {
 				router.push("/dashboard/alarm-reports");
+			} else if (user.role === "OPERATOR" && user.operatorType === "POLICE") {
+				router.push("/dashboard/alarm-reports");
+			} else if (user.role === "OPERATOR" && user.operatorType === "OFFICE") {
+				router.push("/dashboard/alarms");
 			} else {
 				router.push("/dashboard");
 			}

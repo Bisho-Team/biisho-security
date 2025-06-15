@@ -119,15 +119,15 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 
 			case "POLICE_MANAGER":
 				return [
-					...baseItems,
+					// ...baseItems,
 					{
 						title: "Alarm Reports",
 						url: "/dashboard/alarm-reports",
 						icon: AlertTriangle,
 					},
 					{
-						title: "Officers",
-						url: "/dashboard/operators",
+						title: "Operators",
+						url: "/dashboard/police-operators",
 						icon: Shield,
 					},
 					{
@@ -135,11 +135,6 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						url: "/dashboard/profile",
 						icon: UserIcon,
 					},
-					// {
-					// 	title: "Analytics",
-					// 	url: "/dashboard/analytics",
-					// 	icon: BarChart3,
-					// },
 				];
 
 			case "OPERATOR":
@@ -155,6 +150,19 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							title: "Tasks",
 							url: "/dashboard/tasks",
 							icon: FileText,
+						},
+						{
+							title: "Profile",
+							url: "/dashboard/profile",
+							icon: UserIcon,
+						},
+					];
+				} else if (user.operatorType === "POLICE") {
+					return [
+						{
+							title: "Alarms",
+							url: "/dashboard/alarm-reports",
+							icon: AlertTriangle,
 						},
 						{
 							title: "Profile",
@@ -273,7 +281,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 	return (
 		<Sidebar className="sidebar-enhanced">
 			<SidebarHeader className="border-b-[1px]">
-				<div className="flex items-center space-x-3 animate-fade-in">
+				<div className="flex items-center space-x-3 p-8 animate-fade-in">
 					<img src="/logo-shield.png" alt="" />
 				</div>
 			</SidebarHeader>

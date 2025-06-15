@@ -126,7 +126,7 @@ export default function CompaniesPage() {
 			setLoading(true);
 			const response = await apiService.get("/companies");
 			console.log("Fetched companies:", response);
-			setCompanies(response as any);
+			setCompanies((response as any).companies as any);
 		} catch (error) {
 			toast({
 				title: "Error",
