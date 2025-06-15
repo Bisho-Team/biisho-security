@@ -132,7 +132,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 					},
 					{
 						title: "Profile",
-						url: "/dashboard/profile",
+						url: "/dashboard/account-profile",
 						icon: UserIcon,
 					},
 				];

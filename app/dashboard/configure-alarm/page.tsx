@@ -109,7 +109,7 @@ export default function CreateAlarmPage() {
 
 	// Simplified form data - removed unnecessary fields
 	const [formData, setFormData] = useState<AlarmFormData>({
-		type: "BURGLARY", // Fixed value
+		type: "ACTIVE BURGLARY ALERT", // Fixed value
 		branchId: "",
 		companyId: "",
 		location: "",
@@ -206,7 +206,7 @@ export default function CreateAlarmPage() {
 	};
 
 	// Get current location
-	const getCurrentLocation = useCallback(() => {
+	const getCurrentLocation = useCallback(async () => {
 		if (!navigator.geolocation) {
 			toast({
 				title: "Error",
@@ -216,7 +216,27 @@ export default function CreateAlarmPage() {
 			return;
 		}
 
+		try {
+			// Check permission status
+			const permission = await navigator.permissions?.query({
+				name: "geolocation" as PermissionName,
+			});
+
+			if (permission?.state === "denied") {
+				toast({
+					title: "Permission Denied",
+					description:
+						"Location access was denied. Please enable it in browser settings.",
+					variant: "destructive",
+				});
+				return;
+			}
+		} catch (err) {
+			console.warn("Permission API not available", err);
+		}
+
 		setLocationLoading(true);
+
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
 				const { latitude, longitude } = position.coords;
@@ -227,20 +247,20 @@ export default function CreateAlarmPage() {
 					location:
 						prev.location || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
 				}));
-				setLocationLoading(false);
 				toast({
 					title: "Location Updated",
 					description: "GPS coordinates have been captured",
 				});
+				setLocationLoading(false);
 			},
 			(error) => {
 				console.error("Geolocation error:", error);
-				setLocationLoading(false);
 				toast({
 					title: "Location Error",
-					description: "Unable to get current location",
+					description: error.message || "Unable to get current location",
 					variant: "destructive",
 				});
+				setLocationLoading(false);
 			},
 			{
 				enableHighAccuracy: true,
@@ -249,6 +269,50 @@ export default function CreateAlarmPage() {
 			}
 		);
 	}, [toast]);
+
+	// const getCurrentLocation = useCallback(() => {
+	// 	if (!navigator.geolocation) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Geolocation is not supported by this browser",
+	// 			variant: "destructive",
+	// 		});
+	// 		return;
+	// 	}
+
+	// 	setLocationLoading(true);
+	// 	navigator.geolocation.getCurrentPosition(
+	// 		(position) => {
+	// 			const { latitude, longitude } = position.coords;
+	// 			setFormData((prev) => ({
+	// 				...prev,
+	// 				latitude: latitude.toString(),
+	// 				longitude: longitude.toString(),
+	// 				location:
+	// 					prev.location || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+	// 			}));
+	// 			setLocationLoading(false);
+	// 			toast({
+	// 				title: "Location Updated",
+	// 				description: "GPS coordinates have been captured",
+	// 			});
+	// 		},
+	// 		(error) => {
+	// 			console.error("Geolocation error:", error);
+	// 			setLocationLoading(false);
+	// 			toast({
+	// 				title: "Location Error",
+	// 				description: "Unable to get current location",
+	// 				variant: "destructive",
+	// 			});
+	// 		},
+	// 		{
+	// 			enableHighAccuracy: true,
+	// 			timeout: 10000,
+	// 			maximumAge: 60000,
+	// 		}
+	// 	);
+	// }, [toast]);
 
 	// Handle form field changes
 	const handleInputChange = (field: keyof AlarmFormData, value: string) => {
@@ -301,14 +365,14 @@ export default function CreateAlarmPage() {
 			const response = await apiClient.createAlarm(formData);
 
 			toast({
-				title: "🚨 BURGLARY ALARM DISPATCHED!",
+				title: "🚨 ACTIVE BURGLARY ALARM DISPATCHED!",
 				description: "Critical alarm sent to police personnel immediately",
 				duration: 5000,
 			});
 
 			// Reset form
 			setFormData({
-				type: "BURGLARY",
+				type: "ACTIVE BURGLARY",
 				branchId: "",
 				companyId: currentUser?.companyId || "",
 				location: "",
@@ -425,11 +489,11 @@ export default function CreateAlarmPage() {
 									</div>
 									<div className="text-center">
 										<h3 className="text-2xl font-bold text-white">
-											BURGLARY ALARM
+											ACTIVE BURGLARY ALARM
 										</h3>
-										<Badge className="bg-red-600 text-white text-lg px-4 py-1 mt-2">
+										{/* <Badge className="bg-red-600 text-white text-lg px-4 py-1 mt-2">
 											CRITICAL PRIORITY
-										</Badge>
+										</Badge> */}
 									</div>
 								</div>
 							</CardContent>

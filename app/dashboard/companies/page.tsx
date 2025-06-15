@@ -598,7 +598,7 @@ export default function CompaniesPage() {
 							<Users className="h-4 w-4 text-green-500" />
 						</div>
 					</CardHeader>
-					<CardContent>
+					{/* <CardContent>
 						<div className="text-2xl font-bold text-green-600">
 							{companies.reduce(
 								(sum, company) => sum + company.officeManagersCount,
@@ -608,7 +608,7 @@ export default function CompaniesPage() {
 						<p className="text-xs text-muted-foreground">
 							Across all companies
 						</p>
-					</CardContent>
+					</CardContent> */}
 				</Card>
 				<Card
 					className="animate-slide-up glass"

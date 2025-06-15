@@ -12,8 +12,9 @@ import { Loader2 } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 // import { NotificationProvider } from "@/contexts/notification-context";
 import { ThemeProvider } from "@/components/theme-provider";
-import { persistentNotificationService } from "@/lib/persistent-notification-service";
 import { audioService } from "@/lib/audio-service";
+import { GlobalAlarmProvider } from "@/components/global-alarm-provider";
+import { GlobalAlarmStatusBar } from "@/components/global-alarm-status-bar";
 
 export default function DashboardLayout({
 	children,

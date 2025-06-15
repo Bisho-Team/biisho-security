@@ -16,10 +16,7 @@ import {
 	Loader2,
 	X,
 	Minimize2,
-	Volume2,
-	Eye,
 	Map,
-	Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +27,7 @@ interface Alarm {
 	branch: {
 		id: string;
 		name: string;
-		company: {
+		company?: {
 			id: string;
 			name: string;
 			logo: string;
@@ -108,7 +105,8 @@ export function PersistentAlarmModal({
 	// Stable computation of active alarms
 	const activeAlarms = useMemo(() => {
 		return alarms.filter(
-			(alarm) => alarm.status === "ACTIVE" && !dismissedAlarms.has(alarm.id)
+			(alarm: any) =>
+				alarm.status === "ACTIVE" && !dismissedAlarms.has(alarm.id)
 		);
 	}, [alarms, dismissedAlarms]);
 
@@ -152,8 +150,8 @@ export function PersistentAlarmModal({
 	useEffect(() => {
 		const activeAlarmIds = new Set(
 			alarms
-				.filter((alarm) => alarm.status === "ACTIVE")
-				.map((alarm) => alarm.id)
+				.filter((alarm: any) => alarm.status === "ACTIVE")
+				.map((alarm: any) => alarm.id)
 		);
 		setDismissedAlarms((prev) => {
 			const filtered = new Set(
@@ -386,7 +384,7 @@ export function PersistentAlarmModal({
 							{/* Company and Branch Header */}
 							<div className="bg-slate-800 rounded-lg p-4">
 								<div className="flex items-center space-x-4">
-									{currentAlarm.branch.company.logo && (
+									{currentAlarm?.branch?.company?.logo && (
 										<div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center">
 											<img
 												src={`http://8436insight.et:3003${currentAlarm?.branch?.company?.logo.replace(
@@ -395,19 +393,12 @@ export function PersistentAlarmModal({
 												)}`}
 												alt={`${currentAlarm.branch.company?.name} logo`}
 												className="h-14 w-14 object-cover rounded-xl shadow-lg border border-slate-600"
-												// onError={(e) => {
-												// 	console.error(
-												// 		"Failed to load company logo:",
-												// 		currentAlarm.branch.company.logo
-												// 	);
-												// 	e.currentTarget.style.display = "none";
-												// }}
 											/>
 										</div>
 									)}
 									<div className="flex-1">
 										<h3 className="text-xl font-bold text-white">
-											{currentAlarm.branch.company.name ||
+											{currentAlarm?.branch?.company?.name ||
 												currentAlarm.branch.name ||
 												"Emergency Location"}
 										</h3>
@@ -442,20 +433,39 @@ export function PersistentAlarmModal({
 								{/* <p className="text-white font-bold text-xl mt-2">
 									{currentAlarm.type}
 								</p> */}
-								{/* {currentAlarm.severity === "CRITICAL" && (
-									<div className="flex items-center justify-center space-x-2 mt-2">
-										<Volume2 className="h-4 w-4 text-red-400 animate-pulse" />
-										<span className="text-red-400 text-sm">
-											AUDIO ALERT ACTIVE
-										</span>
-									</div>
-								)} */}
+								<div className="flex items-center justify-center space-x-2 mt-2">
+									<span className="text-red-400 text-sm">
+										{currentAlarm.status}
+									</span>
+								</div>
 							</div>
 
-							{/* Main Content Grid */}
-							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-								{/* Left Column - Alarm Details */}
-								<div className="space-y-4">
+							{/* Main Content - Full Width Map Layout */}
+							<div className="space-y-6">
+								{/* Full Width Google Map */}
+								{currentAlarm.latitude && currentAlarm.longitude && (
+									<Card className="bg-slate-800 border-slate-700">
+										<CardContent className="p-4">
+											<div className="flex items-center space-x-2 mb-3">
+												<Map className="h-4 w-4 text-purple-400" />
+												<span className="text-white font-medium">
+													Location Map
+												</span>
+											</div>
+											<GoogleMap
+												latitude={Number.parseFloat(currentAlarm.latitude)}
+												longitude={Number.parseFloat(currentAlarm.longitude)}
+												title={`${currentAlarm.type} - ${currentAlarm.branch.name}`}
+											/>
+										</CardContent>
+										{currentAlarm.severity === "CRITICAL" && (
+											<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+										)}
+									</Card>
+								)}
+
+								{/* Alarm Details Grid */}
+								<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 									{/* Time and Creator Info */}
 									<Card className="bg-slate-800 border-slate-700">
 										<CardContent className="p-4 space-y-3">
@@ -490,32 +500,6 @@ export function PersistentAlarmModal({
 										)}
 									</Card>
 
-									{/* Description */}
-									<Card className="bg-slate-800 border-slate-700">
-										<CardContent className="p-4">
-											<h4 className="text-white font-medium mb-2">
-												Incident Description
-											</h4>
-											<p className="text-slate-300">
-												{currentAlarm.description}
-											</p>
-											{currentAlarm.additionalNotes && (
-												<>
-													<Separator className="my-3 bg-slate-600" />
-													<h4 className="text-white font-medium mb-2">
-														Additional Notes
-													</h4>
-													<p className="text-slate-300">
-														{currentAlarm.additionalNotes}
-													</p>
-												</>
-											)}
-										</CardContent>
-										{currentAlarm.severity === "CRITICAL" && (
-											<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-										)}
-									</Card>
-
 									{/* Location Details */}
 									{currentAlarm.location && (
 										<Card className="bg-slate-800 border-slate-700">
@@ -529,31 +513,6 @@ export function PersistentAlarmModal({
 												<p className="text-slate-300">
 													{currentAlarm.location}
 												</p>
-											</CardContent>
-											{currentAlarm.severity === "CRITICAL" && (
-												<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-											)}
-										</Card>
-									)}
-								</div>
-
-								{/* Right Column - Map and Coordinates */}
-								<div className="space-y-4">
-									{/* Large Google Map */}
-									{currentAlarm.latitude && currentAlarm.longitude && (
-										<Card className="bg-slate-800 border-slate-700">
-											<CardContent className="p-4">
-												<div className="flex items-center space-x-2 mb-3">
-													<Map className="h-4 w-4 text-purple-400" />
-													<span className="text-white font-medium">
-														Location Map
-													</span>
-												</div>
-												<GoogleMap
-													latitude={Number.parseFloat(currentAlarm.latitude)}
-													longitude={Number.parseFloat(currentAlarm.longitude)}
-													title={`${currentAlarm.type} - ${currentAlarm.branch.name}`}
-												/>
 											</CardContent>
 											{currentAlarm.severity === "CRITICAL" && (
 												<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
@@ -584,6 +543,30 @@ export function PersistentAlarmModal({
 										</Card>
 									)}
 								</div>
+
+								{/* Description - Full Width */}
+								<Card className="bg-slate-800 border-slate-700">
+									<CardContent className="p-4">
+										<h4 className="text-white font-medium mb-2">
+											Incident Description
+										</h4>
+										<p className="text-slate-300">{currentAlarm.description}</p>
+										{currentAlarm.additionalNotes && (
+											<>
+												<Separator className="my-3 bg-slate-600" />
+												<h4 className="text-white font-medium mb-2">
+													Additional Notes
+												</h4>
+												<p className="text-slate-300">
+													{currentAlarm.additionalNotes}
+												</p>
+											</>
+										)}
+									</CardContent>
+									{currentAlarm.severity === "CRITICAL" && (
+										<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+									)}
+								</Card>
 							</div>
 
 							{/* Enhanced Action Buttons */}
@@ -660,7 +643,6 @@ export function PersistentAlarmModal({
 		</>
 	);
 }
-
 // "use client";
 
 // import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -682,6 +664,7 @@ export function PersistentAlarmModal({
 // 	Volume2,
 // 	Eye,
 // 	Map,
+// 	Target,
 // } from "lucide-react";
 // import { cn } from "@/lib/utils";
 
@@ -692,6 +675,11 @@ export function PersistentAlarmModal({
 // 	branch: {
 // 		id: string;
 // 		name: string;
+// 		company?: {
+// 			id: string;
+// 			name: string;
+// 			logo: string;
+// 		};
 // 	};
 // 	location: string;
 // 	latitude: string;
@@ -712,10 +700,14 @@ export function PersistentAlarmModal({
 // 	alarms: Alarm[];
 // 	onAcknowledge: (alarmId: string) => Promise<void>;
 // 	onViewDetails: (alarmId: string) => void;
+// 	onStatusChange?: (
+// 		alarmId: string,
+// 		status: "ACTIVE" | "ACKNOWLEDGED" | "RESOLVED"
+// 	) => Promise<void>;
 // 	isAcknowledging: boolean;
 // }
 
-// // Google Maps Component
+// // Enhanced Google Maps Component
 // interface GoogleMapProps {
 // 	latitude: number;
 // 	longitude: number;
@@ -723,91 +715,27 @@ export function PersistentAlarmModal({
 // }
 
 // function GoogleMap({ latitude, longitude, title }: GoogleMapProps) {
-// 	const mapRef = useRef<HTMLDivElement>(null);
-// 	const mapInstanceRef = useRef<any>(null);
-// 	const markerRef = useRef<any>(null);
-
-// 	useEffect(() => {
-// 		if (!mapRef.current) return;
-
-// 		// Load Google Maps script if not already loaded
-// 		if (!window.google) {
-// 			const script = document.createElement("script");
-// 			script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-// 			script.async = true;
-// 			script.onload = initializeMap;
-// 			document.head.appendChild(script);
-// 		} else {
-// 			initializeMap();
-// 		}
-
-// 		function initializeMap() {
-// 			if (!mapRef.current || !window.google) return;
-
-// 			const mapOptions = {
-// 				center: { lat: latitude, lng: longitude },
-// 				zoom: 15,
-// 				mapTypeId: window.google.maps.MapTypeId.ROADMAP,
-// 				styles: [
-// 					{
-// 						elementType: "geometry" as google.maps.MapTypeStyleElementType,
-// 						stylers: [{ color: "#1f2937" }],
-// 					},
-// 					{
-// 						elementType:
-// 							"labels.text.stroke" as google.maps.MapTypeStyleElementType,
-// 						stylers: [{ color: "#1f2937" }],
-// 					},
-// 					{
-// 						elementType:
-// 							"labels.text.fill" as google.maps.MapTypeStyleElementType,
-// 						stylers: [{ color: "#8b5cf6" }],
-// 					},
-// 					{
-// 						featureType: "road" as google.maps.MapTypeStyleFeatureType,
-// 						elementType: "geometry" as google.maps.MapTypeStyleElementType,
-// 						stylers: [{ color: "#374151" }],
-// 					},
-// 					{
-// 						featureType: "water" as google.maps.MapTypeStyleFeatureType,
-// 						elementType: "geometry" as google.maps.MapTypeStyleElementType,
-// 						stylers: [{ color: "#0f172a" }],
-// 					},
-// 				] as google.maps.MapTypeStyle[],
-// 			};
-
-// 			mapInstanceRef.current = new window.google.maps.Map(
-// 				mapRef.current,
-// 				mapOptions
-// 			);
-
-// 			const position = { lat: latitude, lng: longitude };
-// 			markerRef.current = new window.google.maps.Marker({
-// 				position,
-// 				map: mapInstanceRef.current,
-// 				title,
-// 				icon: {
-// 					url:
-// 						"data:image/svg+xml;charset=UTF-8," +
-// 						encodeURIComponent(`
-//             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-//               <circle cx="16" cy="16" r="12" fill="#ef4444" stroke="#ffffff" strokeWidth="2"/>
-//               <path d="M16 8l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z" fill="#ffffff"/>
-//             </svg>
-//           `),
-// 					scaledSize: new window.google.maps.Size(32, 32),
-// 				},
-// 			});
-// 		}
-// 	}, [latitude, longitude, title]);
-
-// 	return <div ref={mapRef} className="w-full h-64 rounded-lg bg-slate-700" />;
+// 	return (
+// 		<div className="w-full h-80 rounded-lg overflow-hidden bg-slate-700">
+// 			<iframe
+// 				src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&q=${latitude},${longitude}&zoom=16&maptype=roadmap`}
+// 				width="100%"
+// 				height="100%"
+// 				style={{ border: 0 }}
+// 				allowFullScreen
+// 				loading="lazy"
+// 				referrerPolicy="no-referrer-when-downgrade"
+// 				title={title}
+// 			/>
+// 		</div>
+// 	);
 // }
 
 // export function PersistentAlarmModal({
 // 	alarms,
 // 	onAcknowledge,
 // 	onViewDetails,
+// 	onStatusChange,
 // 	isAcknowledging,
 // }: PersistentAlarmModalProps) {
 // 	// Core state - keep minimal and stable
@@ -825,7 +753,8 @@ export function PersistentAlarmModal({
 // 	// Stable computation of active alarms
 // 	const activeAlarms = useMemo(() => {
 // 		return alarms.filter(
-// 			(alarm) => alarm.status === "ACTIVE" && !dismissedAlarms.has(alarm.id)
+// 			(alarm: any) =>
+// 				alarm.status === "ACTIVE" && !dismissedAlarms.has(alarm.id)
 // 		);
 // 	}, [alarms, dismissedAlarms]);
 
@@ -869,8 +798,8 @@ export function PersistentAlarmModal({
 // 	useEffect(() => {
 // 		const activeAlarmIds = new Set(
 // 			alarms
-// 				.filter((alarm) => alarm.status === "ACTIVE")
-// 				.map((alarm) => alarm.id)
+// 				.filter((alarm: any) => alarm.status === "ACTIVE")
+// 				.map((alarm: any) => alarm.id)
 // 		);
 // 		setDismissedAlarms((prev) => {
 // 			const filtered = new Set(
@@ -880,7 +809,7 @@ export function PersistentAlarmModal({
 // 		});
 // 	}, [alarms]);
 
-// 	// Re-show dismissed alarms after 2 minutes
+// 	// Re-show dismissed alarms after 1 minutes
 // 	useEffect(() => {
 // 		if (dismissTimer.current) {
 // 			clearTimeout(dismissTimer.current);
@@ -890,7 +819,7 @@ export function PersistentAlarmModal({
 // 		if (dismissedAlarms.size > 0) {
 // 			dismissTimer.current = setTimeout(() => {
 // 				setDismissedAlarms(new Set());
-// 			}, 120000);
+// 			}, 60000);
 // 		}
 
 // 		return () => {
@@ -1001,8 +930,7 @@ export function PersistentAlarmModal({
 // 					<Card
 // 						className={cn(
 // 							"bg-slate-900 border-2 cursor-pointer transition-all duration-300 hover:scale-105 shadow-2xl",
-// 							getSeverityBorderColor(currentAlarm.severity),
-// 							currentAlarm.severity === "CRITICAL" && "animate-pulse"
+// 							getSeverityBorderColor(currentAlarm.severity)
 // 						)}
 // 						onClick={handleRestore}>
 // 						<CardContent className="p-4">
@@ -1035,9 +963,8 @@ export function PersistentAlarmModal({
 // 					{/* Modal Content */}
 // 					<div
 // 						className={cn(
-// 							"relative bg-slate-900 border-2 text-white max-w-6xl max-h-[95vh] overflow-y-auto rounded-xl shadow-2xl m-4",
-// 							getSeverityBorderColor(currentAlarm.severity),
-// 							currentAlarm.severity === "CRITICAL" && "animate-pulse"
+// 							"relative bg-slate-900 border-2 text-white max-w-6xl max-h-[95vh] overflow-y-auto rounded-xl shadow-2xl m-4 z-[9999]",
+// 							getSeverityBorderColor(currentAlarm.severity)
 // 						)}>
 // 						{/* Header */}
 // 						<div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 z-10">
@@ -1072,7 +999,7 @@ export function PersistentAlarmModal({
 // 							</div>
 // 						</div>
 
-// 						{/* Content */}
+// 						{/* Enhanced Content */}
 // 						<div className="p-6 space-y-6">
 // 							{/* Multiple Alarms Navigation */}
 // 							{activeAlarms.length > 1 && (
@@ -1102,6 +1029,37 @@ export function PersistentAlarmModal({
 // 								</div>
 // 							)}
 
+// 							{/* Company and Branch Header */}
+// 							<div className="bg-slate-800 rounded-lg p-4">
+// 								<div className="flex items-center space-x-4">
+// 									{currentAlarm?.branch?.company?.logo && (
+// 										<div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center">
+// 											<img
+// 												src={`http://8436insight.et:3003${currentAlarm?.branch?.company?.logo.replace(
+// 													"/var/www/html/koppa-security-api",
+// 													""
+// 												)}`}
+// 												alt={`${currentAlarm.branch.company?.name} logo`}
+// 												className="h-14 w-14 object-cover rounded-xl shadow-lg border border-slate-600"
+// 											/>
+// 										</div>
+// 									)}
+// 									<div className="flex-1">
+// 										<h3 className="text-xl font-bold text-white">
+// 											{currentAlarm?.branch?.company?.name ||
+// 												currentAlarm.branch.name ||
+// 												"Emergency Location"}
+// 										</h3>
+// 										<div className="flex items-center space-x-2 mt-1">
+// 											<Building className="h-4 w-4 text-blue-400" />
+// 											<span className="text-slate-300">
+// 												{currentAlarm.branch.name}
+// 											</span>
+// 										</div>
+// 									</div>
+// 								</div>
+// 							</div>
+
 // 							{/* Alarm Priority Banner */}
 // 							<div
 // 								className={cn(
@@ -1117,55 +1075,44 @@ export function PersistentAlarmModal({
 // 										getSeverityColor(currentAlarm.severity),
 // 										"text-lg px-4 py-2"
 // 									)}>
-// 									{currentAlarm.severity} PRIORITY
-// 								</Badge>
-// 								<p className="text-white font-bold text-xl mt-2">
+// 									{/* {currentAlarm.severity} PRIORITY */}
 // 									{currentAlarm.type}
-// 								</p>
-// 								{currentAlarm.severity === "CRITICAL" && (
-// 									<div className="flex items-center justify-center space-x-2 mt-2">
-// 										<Volume2 className="h-4 w-4 text-red-400 animate-pulse" />
-// 										<span className="text-red-400 text-sm">
-// 											AUDIO ALERT ACTIVE
-// 										</span>
-// 									</div>
-// 								)}
+// 								</Badge>
+// 								{/* <p className="text-white font-bold text-xl mt-2">
+// 									{currentAlarm.type}
+// 								</p> */}
+// 								<div className="flex items-center justify-center space-x-2 mt-2">
+// 									<span className="text-red-400 text-sm">
+// 										{currentAlarm.status}
+// 									</span>
+// 								</div>
 // 							</div>
 
 // 							{/* Main Content Grid */}
 // 							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 // 								{/* Left Column - Alarm Details */}
 // 								<div className="space-y-4">
-// 									{/* Location Info */}
-// 									<Card className="bg-slate-800 border-slate-700">
-// 										<CardContent className="p-4 space-y-3">
-// 											<div className="flex items-center space-x-2">
-// 												<Building className="h-4 w-4 text-blue-400" />
-// 												<span className="text-slate-300 font-medium">
-// 													Location
-// 												</span>
-// 											</div>
-// 											<p className="text-white">{currentAlarm.branch.name}</p>
-// 											{currentAlarm.location && (
-// 												<div className="flex items-center space-x-2">
-// 													<Navigation className="h-4 w-4 text-slate-400" />
-// 													<span className="text-slate-300 text-sm">
-// 														{currentAlarm.location}
-// 													</span>
-// 												</div>
-// 											)}
-// 										</CardContent>
-// 									</Card>
-
-// 									{/* Time Info */}
+// 									{/* Time and Creator Info */}
 // 									<Card className="bg-slate-800 border-slate-700">
 // 										<CardContent className="p-4 space-y-3">
 // 											<div className="flex items-center space-x-2">
 // 												<Clock className="h-4 w-4 text-green-400" />
-// 												<span className="text-slate-300 font-medium">Time</span>
+// 												<span className="text-slate-300 font-medium">
+// 													Incident Time
+// 												</span>
 // 											</div>
 // 											<p className="text-white">
-// 												{new Date(currentAlarm.createdAt).toLocaleString()}
+// 												{new Date(currentAlarm.createdAt).toLocaleDateString(
+// 													"en-US",
+// 													{
+// 														year: "numeric",
+// 														month: "short",
+// 														day: "numeric",
+// 														hour: "2-digit",
+// 														minute: "2-digit",
+// 														hour12: true,
+// 													}
+// 												)}
 // 											</p>
 // 											<div className="flex items-center space-x-2">
 // 												<User className="h-4 w-4 text-slate-400" />
@@ -1174,6 +1121,9 @@ export function PersistentAlarmModal({
 // 												</span>
 // 											</div>
 // 										</CardContent>
+// 										{currentAlarm.severity === "CRITICAL" && (
+// 											<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+// 										)}
 // 									</Card>
 
 // 									{/* Description */}
@@ -1197,12 +1147,35 @@ export function PersistentAlarmModal({
 // 												</>
 // 											)}
 // 										</CardContent>
+// 										{currentAlarm.severity === "CRITICAL" && (
+// 											<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+// 										)}
 // 									</Card>
+
+// 									{/* Location Details */}
+// 									{currentAlarm.location && (
+// 										<Card className="bg-slate-800 border-slate-700">
+// 											<CardContent className="p-4">
+// 												<div className="flex items-center space-x-2 mb-2">
+// 													<Navigation className="h-4 w-4 text-purple-400" />
+// 													<span className="text-white font-medium">
+// 														Sub City
+// 													</span>
+// 												</div>
+// 												<p className="text-slate-300">
+// 													{currentAlarm.location}
+// 												</p>
+// 											</CardContent>
+// 											{currentAlarm.severity === "CRITICAL" && (
+// 												<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+// 											)}
+// 										</Card>
+// 									)}
 // 								</div>
 
 // 								{/* Right Column - Map and Coordinates */}
 // 								<div className="space-y-4">
-// 									{/* Google Map */}
+// 									{/* Large Google Map */}
 // 									{currentAlarm.latitude && currentAlarm.longitude && (
 // 										<Card className="bg-slate-800 border-slate-700">
 // 											<CardContent className="p-4">
@@ -1218,10 +1191,13 @@ export function PersistentAlarmModal({
 // 													title={`${currentAlarm.type} - ${currentAlarm.branch.name}`}
 // 												/>
 // 											</CardContent>
+// 											{currentAlarm.severity === "CRITICAL" && (
+// 												<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+// 											)}
 // 										</Card>
 // 									)}
 
-// 									{/* Coordinates */}
+// 									{/* GPS Coordinates */}
 // 									{(currentAlarm.latitude || currentAlarm.longitude) && (
 // 										<Card className="bg-slate-800 border-slate-700">
 // 											<CardContent className="p-4">
@@ -1238,12 +1214,15 @@ export function PersistentAlarmModal({
 // 													Lng: {currentAlarm.longitude || "N/A"}
 // 												</p>
 // 											</CardContent>
+// 											{currentAlarm.severity === "CRITICAL" && (
+// 												<div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+// 											)}
 // 										</Card>
 // 									)}
 // 								</div>
 // 							</div>
 
-// 							{/* Action Buttons */}
+// 							{/* Enhanced Action Buttons */}
 // 							<div className="flex flex-col sm:flex-row gap-3">
 // 								<Button
 // 									onClick={handleAcknowledge}
@@ -1262,13 +1241,23 @@ export function PersistentAlarmModal({
 // 									)}
 // 								</Button>
 
+// 								{/* {onStatusChange && (
+// 									<Button
+// 										onClick={() => onStatusChange(currentAlarm.id, "RESOLVED")}
+// 										disabled={isAcknowledging}
+// 										className="bg-blue-600 hover:bg-blue-700 text-white">
+// 										<Target className="h-4 w-4 mr-2" />
+// 										Mark Resolved
+// 									</Button>
+// 								)}
+
 // 								<Button
 // 									variant="outline"
 // 									onClick={handleViewDetails}
 // 									className="border-slate-600 bg-slate-600/20 text-slate-300 hover:bg-slate-600/40">
 // 									<Eye className="h-4 w-4 mr-2" />
 // 									View Full Details
-// 								</Button>
+// 								</Button> */}
 // 							</div>
 
 // 							{/* Persistence Warning */}
