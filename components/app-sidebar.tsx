@@ -140,7 +140,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 			case "OPERATOR":
 				if (user.operatorType === "OFFICE") {
 					return [
-						...baseItems,
+						// ...baseItems,
 						{
 							title: "Alarms",
 							url: "/dashboard/alarms",
