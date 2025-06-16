@@ -213,8 +213,8 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							"bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700",
 					},
 					{
-						title: "Add Branch",
-						url: "/dashboard/add-branch",
+						title: "Add Location",
+						url: "/dashboard/add-location",
 						icon: Plus,
 						color:
 							"bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
