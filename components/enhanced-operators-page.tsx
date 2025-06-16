@@ -391,7 +391,7 @@ export default function EnhancedOperatorsPage() {
 				name: newOperator.name,
 				email: newOperator.email,
 				phone: newOperator.phone,
-				password: newOperator.phone,
+				password: newOperator.password,
 				status: "ACTIVE",
 				role: "OPERATOR",
 				managedById: user.id,
