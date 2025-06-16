@@ -139,12 +139,6 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						description: "Analytics & reports",
 					},
 					{
-						title: "Schedule",
-						url: "/dashboard/schedule",
-						icon: Calendar,
-						description: "Shift planning",
-					},
-					{
 						title: "Profile",
 						url: "/dashboard/profile",
 						icon: UserIcon,
@@ -168,12 +162,6 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						description: "Police personnel",
 					},
 					{
-						title: "Activity Log",
-						url: "/dashboard/activity",
-						icon: Activity,
-						description: "System activity",
-					},
-					{
 						title: "Profile",
 						url: "/dashboard/account-profile",
 						icon: UserIcon,
@@ -191,18 +179,13 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							description: "Active alerts",
 							badge: "Live",
 						},
-						{
-							title: "Tasks",
-							url: "/dashboard/tasks",
-							icon: FileText,
-							description: "Assigned tasks",
-						},
-						{
-							title: "Locations",
-							url: "/dashboard/locations",
-							icon: MapPin,
-							description: "Site locations",
-						},
+						// {
+						// 	title: "Tasks",
+						// 	url: "/dashboard/tasks",
+						// 	icon: FileText,
+						// 	description: "Assigned tasks",
+						// },
+
 						{
 							title: "Profile",
 							url: "/dashboard/profile",
@@ -234,18 +217,6 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							url: "/dashboard/reports",
 							icon: AlertTriangle,
 							description: "Incident reports",
-						},
-						{
-							title: "Cases",
-							url: "/dashboard/cases",
-							icon: FileText,
-							description: "Case management",
-						},
-						{
-							title: "Evidence",
-							url: "/dashboard/evidence",
-							icon: Shield,
-							description: "Evidence tracking",
 						},
 						{
 							title: "Profile",
@@ -394,7 +365,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						Navigation
 					</SidebarGroupLabel>
 					<SidebarGroupContent>
-						<SidebarMenu className="space-y-1">
+						<SidebarMenu className="">
 							{menuItems.map((item, index) => (
 								<SidebarMenuItem
 									key={item.title}
@@ -422,26 +393,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 													<span className="font-medium text-sidebar-foreground">
 														{item.title}
 													</span>
-													{/* {item.badge && (
-														<Badge
-															className={cn(
-																"text-xs px-2 py-0.5 ml-2",
-																item.badge === "Live" &&
-																	"bg-red-500/20 text-red-400 border-red-500/30 dark:text-red-300",
-																item.badge === "Admin" &&
-																	"bg-purple-500/20 text-purple-400 border-purple-500/30 dark:text-purple-300",
-																item.badge === "Priority" &&
-																	"bg-orange-500/20 text-orange-400 border-orange-500/30 dark:text-orange-300"
-															)}>
-															{item.badge}
-														</Badge>
-													)} */}
 												</div>
-												{/* {item.description && (
-													<p className="text-xs text-muted-foreground truncate mt-0.5">
-														{item.description}
-													</p>
-												)} */}
 											</div>
 										</Link>
 									</SidebarMenuButton>
@@ -459,13 +411,13 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							Quick Actions
 						</SidebarGroupLabel>
 						<SidebarGroupContent>
-							<div className="space-y-2">
+							<div className="space-y-4">
 								{quickActions.map((action, index) => (
 									<Link key={action.title} href={action.url}>
 										<Button
 											size="sm"
 											className={cn(
-												"w-full justify-start h-11 font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] rounded-xl",
+												"w-full justify-start h-11 mb-2 font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] rounded-xl",
 												action.color
 											)}
 											style={{
@@ -476,40 +428,15 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 											</div>
 											<div className="flex-1 text-left">
 												<div className="font-medium">{action.title}</div>
-												{/* {action.description && (
-													<div className="text-xs opacity-90">
-														{action.description}
-													</div>
-												)} */}
 											</div>
 										</Button>
 									</Link>
 								))}
+								<br />
 							</div>
 						</SidebarGroupContent>
 					</SidebarGroup>
 				)}
-
-				{/* Status Section */}
-				{/* <SidebarGroup className="mt-6">
-					<SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2 flex items-center">
-						<Activity className="h-3 w-3 mr-2" />
-						System Status
-					</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<div className="glass rounded-xl p-3 border border-green-500/20">
-							<div className="flex items-center space-x-2">
-								<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-								<span className="text-sm font-medium text-green-600 dark:text-green-400">
-									All Systems Operational
-								</span>
-							</div>
-							<p className="text-xs text-muted-foreground mt-1">
-								Last updated: 2 minutes ago
-							</p>
-						</div>
-					</SidebarGroupContent>
-				</SidebarGroup> */}
 			</SidebarContent>
 
 			{/* Enhanced Footer */}

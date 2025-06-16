@@ -1610,7 +1610,7 @@ export default function EnhancedOperatorsPage() {
 								</Card> */}
 							</div>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							{/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<Card>
 									<CardHeader className="flex flex-row items-center justify-between">
 										<CardTitle className="text-lg flex items-center gap-2">
@@ -1699,7 +1699,7 @@ export default function EnhancedOperatorsPage() {
 										)}
 									</CardContent>
 								</Card>
-							</div>
+							</div> */}
 
 							<div className="flex justify-between border-t pt-4">
 								<div className="text-sm text-muted-foreground">
