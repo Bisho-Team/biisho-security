@@ -747,17 +747,64 @@ export default function EnhancedAlarmReportsPage() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
 			<div className="space-y-6 p-6">
-				{/* Persistent Alarm Modal */}
-				{/* {modalEnabled && (
-					<PersistentAlarmModal
-						alarms={alarms}
-						onAcknowledge={acknowledgeAlarm}
-						onViewDetails={viewAlarmDetails}
-						onStatusChange={changeAlarmStatus}
-						isAcknowledging={updating}
-					/>
-				)} */}
+				{/* Statistics Cards */}
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+					<Card className="bg-slate-900/50 border-slate-700">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-2">
+								<Activity className="h-5 w-5 text-blue-400" />
+								<div>
+									<p className="text-sm text-slate-400">Total Alarms</p>
+									<p className="text-2xl font-bold text-white">
+										{alarmStats.total}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
 
+					<Card className="bg-red-900/20 border-red-500/30">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-2">
+								<AlertTriangle className="h-5 w-5 text-red-400" />
+								<div>
+									<p className="text-sm text-red-300">Active</p>
+									<p className="text-2xl font-bold text-red-400">
+										{alarmStats.active}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					<Card className="bg-yellow-900/20 border-yellow-500/30">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-2">
+								<Eye className="h-5 w-5 text-yellow-400" />
+								<div>
+									<p className="text-sm text-yellow-300">Acknowledged</p>
+									<p className="text-2xl font-bold text-yellow-400">
+										{alarmStats.acknowledged}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					<Card className="bg-green-900/20 border-green-500/30">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-2">
+								<CheckCircle className="h-5 w-5 text-green-400" />
+								<div>
+									<p className="text-sm text-green-300">Resolved</p>
+									<p className="text-2xl font-bold text-green-400">
+										{alarmStats.resolved}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
 				{/* Header Section */}
 				<div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-900/20 via-slate-900/40 to-red-900/20 border border-red-500/20 p-8">
 					<div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzM3NDE1MSIgZmlsbC1vcGFjaXR5PSIwLjMiLz4KPC9zdmc+')] opacity-20" />
@@ -801,7 +848,7 @@ export default function EnhancedAlarmReportsPage() {
 									<>
 										<Wifi className="h-4 w-4 text-green-400" />
 										<span className="text-green-400 font-mono text-sm">
-											REAL-TIME CONNECTED
+											CONNECTED
 										</span>
 									</>
 								) : (
@@ -934,110 +981,23 @@ export default function EnhancedAlarmReportsPage() {
 							</div>
 						</div>
 					)} */}
+				</div>
 
-					{/* Ready Status */}
-					{audioEnabled && modalEnabled && alarmStats.active === 0 && (
-						<div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 md:col-span-2">
-							<div className="flex items-center space-x-2">
-								{/* <Volume2 className="h-5 w-5 text-green-400" />
+				{/* Ready Status */}
+				{audioEnabled && modalEnabled && alarmStats.active === 0 && (
+					<div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 md:col-span-2">
+						<div className="flex items-center space-x-2">
+							{/* <Volume2 className="h-5 w-5 text-green-400" />
 								<Monitor className="h-5 w-5 text-green-400" /> */}
-								<span className="text-green-400 font-medium">
-									ALERT SYSTEMS READY
-								</span>
-								<span className="text-green-300 text-sm">
-									- Alerts will activate for all new active alarms
-								</span>
-							</div>
+							<span className="text-green-400 font-medium">
+								ALERT SYSTEMS READY
+							</span>
+							<span className="text-green-300 text-sm">
+								- Alerts will activate for all new active alarms
+							</span>
 						</div>
-					)}
-				</div>
-
-				{/* Statistics Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-					<Card className="bg-slate-900/50 border-slate-700">
-						<CardContent className="p-4">
-							<div className="flex items-center space-x-2">
-								<Activity className="h-5 w-5 text-blue-400" />
-								<div>
-									<p className="text-sm text-slate-400">Total Alarms</p>
-									<p className="text-2xl font-bold text-white">
-										{alarmStats.total}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-
-					<Card className="bg-red-900/20 border-red-500/30">
-						<CardContent className="p-4">
-							<div className="flex items-center space-x-2">
-								<AlertTriangle className="h-5 w-5 text-red-400" />
-								<div>
-									<p className="text-sm text-red-300">Active</p>
-									<p className="text-2xl font-bold text-red-400">
-										{alarmStats.active}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-
-					<Card className="bg-yellow-900/20 border-yellow-500/30">
-						<CardContent className="p-4">
-							<div className="flex items-center space-x-2">
-								<Eye className="h-5 w-5 text-yellow-400" />
-								<div>
-									<p className="text-sm text-yellow-300">Acknowledged</p>
-									<p className="text-2xl font-bold text-yellow-400">
-										{alarmStats.acknowledged}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-
-					<Card className="bg-green-900/20 border-green-500/30">
-						<CardContent className="p-4">
-							<div className="flex items-center space-x-2">
-								<CheckCircle className="h-5 w-5 text-green-400" />
-								<div>
-									<p className="text-sm text-green-300">Resolved</p>
-									<p className="text-2xl font-bold text-green-400">
-										{alarmStats.resolved}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-
-					{/* <Card className="bg-purple-900/20 border-purple-500/30">
-						<CardContent className="p-4">
-							<div className="flex items-center space-x-2">
-								<Zap className="h-5 w-5 text-purple-400" />
-								<div>
-									<p className="text-sm text-purple-300">Critical</p>
-									<p className="text-2xl font-bold text-purple-400">
-										{alarmStats.critical}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card> */}
-
-					{/* <Card className="bg-cyan-900/20 border-cyan-500/30">
-						<CardContent className="p-4">
-							<div className="flex items-center space-x-2">
-								<Radio className="h-5 w-5 text-cyan-400" />
-								<div>
-									<p className="text-sm text-cyan-300">Real-time</p>
-									<p className="text-2xl font-bold text-cyan-400">
-										{alarmStats.realTime}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card> */}
-				</div>
+					</div>
+				)}
 
 				{/* Filters */}
 				<Card className="bg-slate-900/50 border-slate-700">
@@ -1063,18 +1023,6 @@ export default function EnhancedAlarmReportsPage() {
 									<SelectItem value="ACTIVE">Active</SelectItem>
 									<SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
 									<SelectItem value="RESOLVED">Resolved</SelectItem>
-								</SelectContent>
-							</Select>
-							<Select value={severityFilter} onValueChange={setSeverityFilter}>
-								<SelectTrigger className="w-full md:w-48 bg-slate-800 border-slate-600 text-white">
-									<SelectValue placeholder="Filter by severity" />
-								</SelectTrigger>
-								<SelectContent className="bg-slate-800 border-slate-600">
-									<SelectItem value="all">All Severity</SelectItem>
-									<SelectItem value="CRITICAL">Critical</SelectItem>
-									<SelectItem value="HIGH">High</SelectItem>
-									<SelectItem value="MEDIUM">Medium</SelectItem>
-									<SelectItem value="LOW">Low</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>

@@ -45,6 +45,10 @@ class ApiClient {
 
 	// Authentication
 	async login(email: string, password: string) {
+		console.log({
+			email,
+			password,
+		});
 		const response = await this.request<{ token: string; user: any }>(
 			"/auth/login",
 			{
