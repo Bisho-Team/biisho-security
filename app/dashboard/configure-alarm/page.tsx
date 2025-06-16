@@ -79,11 +79,8 @@ interface AlarmFormData {
 	type: string;
 	branchId: string;
 	companyId?: string;
-	location: string;
-	longitude: string;
-	latitude: string;
 	severity: "CRITICAL";
-	description: string;
+	description?: string;
 	assignedToId: string;
 }
 
@@ -112,9 +109,6 @@ export default function CreateAlarmPage() {
 		type: "ACTIVE BURGLARY ALERT", // Fixed value
 		branchId: "",
 		companyId: "",
-		location: "",
-		longitude: "",
-		latitude: "",
 		severity: "CRITICAL", // Fixed value
 		description: "",
 		assignedToId: "",
@@ -206,69 +200,69 @@ export default function CreateAlarmPage() {
 	};
 
 	// Get current location
-	const getCurrentLocation = useCallback(async () => {
-		if (!navigator.geolocation) {
-			toast({
-				title: "Error",
-				description: "Geolocation is not supported by this browser",
-				variant: "destructive",
-			});
-			return;
-		}
+	// const getCurrentLocation = useCallback(async () => {
+	// 	if (!navigator.geolocation) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Geolocation is not supported by this browser",
+	// 			variant: "destructive",
+	// 		});
+	// 		return;
+	// 	}
 
-		try {
-			// Check permission status
-			const permission = await navigator.permissions?.query({
-				name: "geolocation" as PermissionName,
-			});
+	// 	try {
+	// 		// Check permission status
+	// 		const permission = await navigator.permissions?.query({
+	// 			name: "geolocation" as PermissionName,
+	// 		});
 
-			if (permission?.state === "denied") {
-				toast({
-					title: "Permission Denied",
-					description:
-						"Location access was denied. Please enable it in browser settings.",
-					variant: "destructive",
-				});
-				return;
-			}
-		} catch (err) {
-			console.warn("Permission API not available", err);
-		}
+	// 		if (permission?.state === "denied") {
+	// 			toast({
+	// 				title: "Permission Denied",
+	// 				description:
+	// 					"Location access was denied. Please enable it in browser settings.",
+	// 				variant: "destructive",
+	// 			});
+	// 			return;
+	// 		}
+	// 	} catch (err) {
+	// 		console.warn("Permission API not available", err);
+	// 	}
 
-		setLocationLoading(true);
+	// 	setLocationLoading(true);
 
-		navigator.geolocation.getCurrentPosition(
-			(position) => {
-				const { latitude, longitude } = position.coords;
-				setFormData((prev) => ({
-					...prev,
-					latitude: latitude.toString(),
-					longitude: longitude.toString(),
-					location:
-						prev.location || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-				}));
-				toast({
-					title: "Location Updated",
-					description: "GPS coordinates have been captured",
-				});
-				setLocationLoading(false);
-			},
-			(error) => {
-				console.error("Geolocation error:", error);
-				toast({
-					title: "Location Error",
-					description: error.message || "Unable to get current location",
-					variant: "destructive",
-				});
-				setLocationLoading(false);
-			},
-			{
-				enableHighAccuracy: true,
-				timeout: 10000,
-				maximumAge: 60000,
-			}
-		);
-	}, [toast]);
+	// 	navigator.geolocation.getCurrentPosition(
+	// 		(position) => {
+	// 			const { latitude, longitude } = position.coords;
+	// 			setFormData((prev) => ({
+	// 				...prev,
+	// 				latitude: latitude.toString(),
+	// 				longitude: longitude.toString(),
+	// 				location:
+	// 					prev.location || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+	// 			}));
+	// 			toast({
+	// 				title: "Location Updated",
+	// 				description: "GPS coordinates have been captured",
+	// 			});
+	// 			setLocationLoading(false);
+	// 		},
+	// 		(error) => {
+	// 			console.error("Geolocation error:", error);
+	// 			toast({
+	// 				title: "Location Error",
+	// 				description: error.message || "Unable to get current location",
+	// 				variant: "destructive",
+	// 			});
+	// 			setLocationLoading(false);
+	// 		},
+	// 		{
+	// 			enableHighAccuracy: true,
+	// 			timeout: 10000,
+	// 			maximumAge: 60000,
+	// 		}
+	// 	);
+	// }, [toast]);
 
 	// const getCurrentLocation = useCallback(() => {
 	// 	if (!navigator.geolocation) {
@@ -328,8 +322,8 @@ export default function CreateAlarmPage() {
 		const newErrors: Partial<AlarmFormData> = {};
 
 		if (!formData.branchId) newErrors.branchId = "Branch selection is required";
-		if (!formData.description.trim())
-			newErrors.description = "Description is required";
+		// if (!formData.description.trim())
+		// 	newErrors.description = "Description is required";
 		if (!formData.assignedToId)
 			newErrors.assignedToId = "Police assignment is required";
 
@@ -375,9 +369,6 @@ export default function CreateAlarmPage() {
 				type: "ACTIVE BURGLARY",
 				branchId: "",
 				companyId: currentUser?.companyId || "",
-				location: "",
-				longitude: "",
-				latitude: "",
 				severity: "CRITICAL",
 				description: "",
 				assignedToId: "",
@@ -540,7 +531,7 @@ export default function CreateAlarmPage() {
 									)}
 								</div>
 
-								<div>
+								{/* <div>
 									<Label htmlFor="location" className="text-slate-300">
 										Sub City (Optional)
 									</Label>
@@ -553,9 +544,9 @@ export default function CreateAlarmPage() {
 										placeholder="e.g., Main entrance, 2nd floor, parking area..."
 										className="bg-slate-800 border-slate-600 text-white mt-2 h-12"
 									/>
-								</div>
+								</div> */}
 
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+								{/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 									<div>
 										<Label htmlFor="latitude" className="text-slate-300">
 											Latitude
@@ -599,7 +590,7 @@ export default function CreateAlarmPage() {
 											Get GPS
 										</Button>
 									</div>
-								</div>
+								</div> */}
 							</CardContent>
 						</Card>
 
@@ -616,7 +607,7 @@ export default function CreateAlarmPage() {
 									<Label
 										htmlFor="description"
 										className="text-slate-300 text-lg">
-										Describe the burglary incident *
+										Describe the burglary incident
 									</Label>
 									<Textarea
 										id="description"
@@ -759,7 +750,7 @@ export default function CreateAlarmPage() {
 								)}
 
 								{/* GPS Coordinates */}
-								{(formData.latitude || formData.longitude) && (
+								{/* {(formData.latitude || formData.longitude) && (
 									<div className="p-3 bg-slate-800 rounded-lg">
 										<div className="flex items-center space-x-2 mb-1">
 											<MapPin className="h-4 w-4 text-purple-400" />
@@ -773,7 +764,7 @@ export default function CreateAlarmPage() {
 											{formData.longitude && `Lng: ${formData.longitude}`}
 										</p>
 									</div>
-								)}
+								)} */}
 
 								<Separator className="bg-slate-700" />
 

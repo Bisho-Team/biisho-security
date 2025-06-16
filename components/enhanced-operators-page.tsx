@@ -251,10 +251,10 @@ export default function EnhancedOperatorsPage() {
 					.map((_, i) => ({
 						id: `alarm-${i}`,
 						type: [
-							"Motion Detection",
-							"Door Breach",
-							"Window Break",
-							"Fire Alarm",
+							"Active Burglary Alert",
+							"Active Burglary Alert",
+							"Active Burglary Alert",
+							"Active Burglary Alert",
 						][Math.floor(Math.random() * 4)],
 						status: ["ACTIVE", "RESOLVED", "ACKNOWLEDGED"][
 							Math.floor(Math.random() * 3)
@@ -305,8 +305,8 @@ export default function EnhancedOperatorsPage() {
 			filtered = filtered.filter(
 				(operator) =>
 					operator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					operator.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					operator.phone.toLowerCase().includes(searchTerm.toLowerCase())
+					operator.email.toLowerCase().includes(searchTerm.toLowerCase())
+				// operator.phone.toLowerCase().includes(searchTerm.toLowerCase())
 			);
 		}
 
@@ -391,6 +391,7 @@ export default function EnhancedOperatorsPage() {
 				name: newOperator.name,
 				email: newOperator.email,
 				phone: newOperator.phone,
+				password: newOperator.phone,
 				status: "ACTIVE",
 				role: "OPERATOR",
 				managedById: user.id,
@@ -403,7 +404,7 @@ export default function EnhancedOperatorsPage() {
 			};
 
 			// In a real app, you would call the API here
-			// await apiService.post("/users", operator)
+			await apiService.post("/users", operator);
 
 			setOperators([operator, ...operators]);
 			setNewOperator({
@@ -690,7 +691,7 @@ export default function EnhancedOperatorsPage() {
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="OFFICE">Office Operator</SelectItem>
-											<SelectItem value="FIELD">Field Operator</SelectItem>
+
 											<SelectItem value="POLICE">Police Operator</SelectItem>
 										</SelectContent>
 									</Select>
@@ -742,7 +743,7 @@ export default function EnhancedOperatorsPage() {
 								</div>
 							</div>
 
-							<div className="space-y-2">
+							{/* <div className="space-y-2">
 								<Label>Assign Branches</Label>
 								<div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
 									{userBranches.length > 0 ? (
@@ -790,7 +791,7 @@ export default function EnhancedOperatorsPage() {
 										</p>
 									)}
 								</div>
-							</div>
+							</div> */}
 						</div>
 						<DialogFooter>
 							<Button
@@ -869,7 +870,7 @@ export default function EnhancedOperatorsPage() {
 						)}
 					</CardContent>
 				</Card>
-				<Card className="hover:shadow-md transition-all duration-300">
+				{/* <Card className="hover:shadow-md transition-all duration-300">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Assigned Branches
@@ -892,7 +893,7 @@ export default function EnhancedOperatorsPage() {
 							</>
 						)}
 					</CardContent>
-				</Card>
+				</Card> */}
 			</div>
 
 			{/* Search and Filter */}
@@ -1045,7 +1046,7 @@ export default function EnhancedOperatorsPage() {
 												</div>
 											</div>
 											<div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
-												<div className="text-right hidden sm:block">
+												{/* <div className="text-right hidden sm:block">
 													<p className="text-sm font-medium">
 														Assigned Branches
 													</p>
@@ -1054,9 +1055,9 @@ export default function EnhancedOperatorsPage() {
 														operator.assignedBranches.length > 0 ? (
 															operator.assignedBranches
 																.slice(0, 2)
-																.map((branchId) => (
+																.map((branchId, index) => (
 																	<Badge
-																		key={branchId}
+																		key={index}
 																		variant="outline"
 																		className="text-xs">
 																		{getBranchName(branchId)}
@@ -1074,7 +1075,7 @@ export default function EnhancedOperatorsPage() {
 																</Badge>
 															)}
 													</div>
-												</div>
+												</div> */}
 												<div className="flex space-x-1">
 													<Button
 														variant="outline"
@@ -1319,7 +1320,7 @@ export default function EnhancedOperatorsPage() {
 												</div>
 											</div>
 											<div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
-												{operator.status === "ACTIVE" && (
+												{/* {operator.status === "ACTIVE" && (
 													<div className="text-right hidden sm:block">
 														<p className="text-sm font-medium">
 															Assigned Branches
@@ -1350,7 +1351,7 @@ export default function EnhancedOperatorsPage() {
 																)}
 														</div>
 													</div>
-												)}
+												)} */}
 												<div className="flex space-x-1">
 													<Button
 														variant="outline"
@@ -1509,7 +1510,7 @@ export default function EnhancedOperatorsPage() {
 								</Badge>
 							</div>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div className="grid grid-cols-1 md:grid-cols-1 gap-6">
 								<Card>
 									<CardHeader>
 										<CardTitle className="text-lg flex items-center gap-2">
@@ -1536,7 +1537,7 @@ export default function EnhancedOperatorsPage() {
 										<div className="grid grid-cols-2 gap-4">
 											<div>
 												<Label className="text-sm text-muted-foreground">
-													Type
+													Operator Type
 												</Label>
 												<p>
 													{selectedOperatorDetails.operatorType ||
@@ -1564,7 +1565,7 @@ export default function EnhancedOperatorsPage() {
 									</CardContent>
 								</Card>
 
-								<Card>
+								{/* <Card>
 									<CardHeader className="flex flex-row items-center justify-between">
 										<CardTitle className="text-lg flex items-center gap-2">
 											<Building className="h-4 w-4 text-primary" />
@@ -1606,7 +1607,7 @@ export default function EnhancedOperatorsPage() {
 											</div>
 										)}
 									</CardContent>
-								</Card>
+								</Card> */}
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -110,7 +110,7 @@ export function GlobalAlarmStatusBar() {
 	}
 
 	return (
-		<div className="fixed top-4 right-4 z-[9997]">
+		<div className="fixed bottom-4 right-4 z-[9997]">
 			<Card className="bg-slate-900 border-slate-700 shadow-2xl max-w-md">
 				<CardContent className="p-4">
 					<div className="space-y-3">
@@ -251,8 +251,8 @@ export function GlobalAlarmStatusBar() {
 						)}
 
 						{/* Test Controls */}
-						<div className="flex items-center justify-between pt-2 border-t border-slate-700">
-							{/* <Button
+						{/* <div className="flex items-center justify-between pt-2 border-t border-slate-700"> */}
+						{/* <Button
 								variant="outline"
 								size="sm"
 								onClick={() => audioService.testAllSounds()}
@@ -262,7 +262,7 @@ export function GlobalAlarmStatusBar() {
 								Test
 							</Button> */}
 
-							<Button
+						{/* <Button
 								variant="outline"
 								size="sm"
 								onClick={refreshAlarms}
@@ -270,8 +270,8 @@ export function GlobalAlarmStatusBar() {
 								title="Refresh alarms">
 								<RefreshCw className="h-3 w-3 mr-1" />
 								Refresh
-							</Button>
-						</div>
+							</Button> */}
+						{/* </div> */}
 					</div>
 				</CardContent>
 			</Card>

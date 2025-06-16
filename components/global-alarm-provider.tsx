@@ -137,13 +137,22 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 			async (newAlarm: any) => {
 				console.log("🚨 [GLOBAL] New real-time alarm received:", newAlarm);
 
-				// Fetch complete branch data including company information
 				let branchData = {
 					id: newAlarm.branchId,
 					name: newAlarm.branchName || "Unknown Branch",
+					locationType: newAlarm.branchlocationType || "N/A",
+					gpsAddress: newAlarm.branchgpsAddress || "N/A",
+					city: newAlarm.branchcity || "N/A",
+					subCity: newAlarm.branchsubCity || "N/A",
+					woreda: newAlarm.branchworeda || "N/A",
+					country: newAlarm.branchcountry || "N/A",
+					managerName: newAlarm.branchmanagerName || "N/A",
+					phoneNumber: newAlarm.branchphoneNumber || "N/A",
+					contactNumber1: newAlarm.branchcontactNumber1 || "N/A",
+
 					company: {
-						name: newAlarm.companyName,
-						logo: newAlarm.companyLogo,
+						name: newAlarm.companyName || "Unknown Company",
+						logo: newAlarm.companyLogo || null,
 					},
 				};
 
@@ -407,6 +416,10 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 		try {
 			console.log("🔄 [GLOBAL] Refreshing alarms...");
 			const response = await apiClient.getAlarms();
+
+			console.log({
+				response,
+			});
 
 			const alarmsWithCoords =
 				(response as any).alarms?.map((alarm: any) => ({

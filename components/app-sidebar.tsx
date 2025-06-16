@@ -96,8 +96,8 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						icon: AlertTriangle,
 					},
 					{
-						title: "Branches",
-						url: "/dashboard/branches",
+						title: "Locations",
+						url: "/dashboard/locations",
 						icon: Building,
 					},
 					{

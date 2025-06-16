@@ -56,7 +56,10 @@ import {
 	Building,
 	User,
 	Clock,
+	Map,
 } from "lucide-react";
+
+import { Phone, Info, BarChart3, X, Copy, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGlobalAlarms } from "@/components/global-alarm-provider";
 
@@ -726,6 +729,20 @@ export default function EnhancedAlarmReportsPage() {
 	// 		</div>
 	// 	);
 	// }
+
+	const copyToClipboard = (text: any) => {
+		navigator.clipboard.writeText(text);
+	};
+
+	const openInMaps = () => {
+		const coords = selectedAlarm.coordinates || selectedAlarm;
+		if (coords?.latitude && coords?.longitude) {
+			window.open(
+				`https://www.google.com/maps?q=${coords.latitude},${coords.longitude}`,
+				"_blank"
+			);
+		}
+	};
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -1573,338 +1590,417 @@ export default function EnhancedAlarmReportsPage() {
 								)}
 							</DialogTitle>
 							<DialogDescription className="text-slate-400">
-								Complete information about this alarm incident
+								Complete incident and location information
 							</DialogDescription>
 						</DialogHeader>
 
 						{selectedAlarm && (
-							<div className="space-y-6">
-								{/* Company and Branch Header */}
-								<div className="bg-slate-800 rounded-lg p-4">
-									<div className="flex items-center space-x-4">
-										{selectedAlarm.branch.company?.logo && (
-											<div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center">
-												<img
-													src={
-														selectedAlarm.branch.company.logo.startsWith("http")
-															? selectedAlarm.branch.company.logo
-															: `http://8436insight.et:3003${(
-																	selectedAlarm as any
-															  )?.branch?.company?.logo.replace(
-																	"/var/www/html/koppa-security-api",
-																	""
-															  )}`
-													}
-													alt={`${selectedAlarm.branch.company.name} logo`}
-													className="h-14 w-14 object-cover rounded-xl shadow-lg border border-slate-600"
-													// onError={(e) => {
-													// 	console.error(
-													// 		"Failed to load company logo:",
-													// 		currentAlarm.branch.company.logo
-													// 	);
-													// 	e.currentTarget.style.display = "none";
-													// }}
-												/>
+							<div className="space-y-4">
+								{/* Enhanced Compact Header with Branch Summary */}
+								<div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-4 border border-slate-600">
+									<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+										{/* Company & Branch */}
+										<div className="lg:col-span-2 flex items-center space-x-3">
+											{selectedAlarm.branch?.company?.logo && (
+												<div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center border border-slate-600">
+													<img
+														src={
+															selectedAlarm.branch.company.logo.startsWith(
+																"http"
+															)
+																? selectedAlarm.branch.company.logo
+																: `http://8436insight.et:3003${selectedAlarm.branch.company.logo.replace(
+																		"/var/www/html/koppa-security-api",
+																		""
+																  )}`
+														}
+														alt={`${selectedAlarm.branch.company.name} logo`}
+														className="h-10 w-10 object-cover rounded-lg"
+														onError={(e) => {
+															e.currentTarget.style.display = "none";
+														}}
+													/>
+												</div>
+											)}
+											<div className="flex-1 min-w-0">
+												<h3 className="text-lg font-bold text-white truncate">
+													{selectedAlarm.branch?.company?.name ||
+														"Unknown Company"}
+												</h3>
+												<div className="flex items-center space-x-2">
+													<Building className="h-3 w-3 text-blue-400" />
+													<span className="text-sm text-slate-300 truncate">
+														{selectedAlarm.branch?.name}
+													</span>
+													<Badge
+														variant="outline"
+														className="text-xs bg-blue-900/30 border-blue-500 text-blue-300">
+														{selectedAlarm.branch?.locationType}
+													</Badge>
+												</div>
 											</div>
-										)}
-										<div className="flex-1">
-											<h3 className="text-xl font-bold text-white">
-												{selectedAlarm.branch.company?.name ||
-													"Unknown Company"}
-											</h3>
-											<div className="flex items-center space-x-2 mt-1">
-												<Building className="h-4 w-4 text-blue-400" />
-												<span className="text-slate-300">
-													{selectedAlarm.branch.name}
+										</div>
+
+										{/* Location & Contact */}
+										<div className="space-y-1">
+											<div className="flex items-center space-x-2">
+												<MapPin className="h-3 w-3 text-green-400" />
+												<span className="text-sm text-slate-300">
+													{selectedAlarm.branch?.city}
+													{selectedAlarm.branch?.subCity &&
+														`, ${selectedAlarm.branch.subCity}`}
+												</span>
+											</div>
+											<div className="flex items-center space-x-2">
+												<User className="h-3 w-3 text-yellow-400" />
+												<span className="text-sm text-slate-300">
+													{selectedAlarm.branch?.managerName}
+												</span>
+											</div>
+											<div className="flex items-center space-x-2">
+												<Phone className="h-3 w-3 text-green-400" />
+												<span className="text-sm text-slate-300 font-mono">
+													{selectedAlarm.branch?.phoneNumber}
 												</span>
 											</div>
 										</div>
-										<div className="text-right">
-											{/* <Badge
-												className={getSeverityColor(selectedAlarm.severity)}>
-												{selectedAlarm.severity}
-											</Badge> */}
-											<Badge
-												variant="outline"
-												className={getStatusColor(selectedAlarm.status)}
-												style={{ marginLeft: "8px" }}>
-												{selectedAlarm.status}
-											</Badge>
+
+										{/* Status & Actions */}
+										<div className="flex flex-col items-end space-y-2">
+											<div className="flex items-center space-x-2">
+												<Badge
+													className={getSeverityColor(selectedAlarm.severity)}>
+													{selectedAlarm.severity}
+												</Badge>
+												<Badge className={getStatusColor(selectedAlarm.status)}>
+													{selectedAlarm.status}
+												</Badge>
+											</div>
+											<span className="text-xs text-slate-400">
+												ID: {selectedAlarm.id}
+											</span>
 										</div>
 									</div>
 								</div>
 
 								{/* Full Width Google Map */}
-								{selectedAlarm.coordinates && (
-									<div>
-										<Label className="text-slate-300 text-lg font-medium">
-											Location Map
-										</Label>
-										<div className="bg-slate-800 rounded-lg p-4 mt-2">
-											<div className="w-full h-80 rounded-lg overflow-hidden">
-												<iframe
-													src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&q=${selectedAlarm.coordinates.latitude},${selectedAlarm.coordinates.longitude}&zoom=16&maptype=roadmap`}
-													width="100%"
-													height="100%"
-													style={{ border: 0 }}
-													allowFullScreen
-													loading="lazy"
-													referrerPolicy="no-referrer-when-downgrade"
-												/>
+								{(selectedAlarm.coordinates || selectedAlarm.latitude) && (
+									<div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+										<div className="flex items-center justify-between mb-3">
+											<h4 className="text-lg font-semibold text-white flex items-center">
+												<Map className="h-5 w-5 text-red-400 mr-2" />
+												Incident Location
+											</h4>
+											<div className="flex space-x-2">
+												<Button
+													variant="outline"
+													size="sm"
+													className="border-blue-600 text-blue-300 hover:bg-blue-900/30"
+													onClick={() =>
+														copyToClipboard(
+															`${
+																selectedAlarm.coordinates?.latitude ||
+																selectedAlarm.latitude
+															}, ${
+																selectedAlarm.coordinates?.longitude ||
+																selectedAlarm.longitude
+															}`
+														)
+													}>
+													<Copy className="h-3 w-3 mr-1" />
+													Copy
+												</Button>
+												<Button
+													variant="outline"
+													size="sm"
+													className="border-purple-600 text-purple-300 hover:bg-purple-900/30"
+													onClick={openInMaps}>
+													<ExternalLink className="h-3 w-3 mr-1" />
+													Maps
+												</Button>
 											</div>
+										</div>
+										<div className="w-full h-64 rounded-lg overflow-hidden border border-slate-600">
+											<iframe
+												src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&q=${
+													selectedAlarm.coordinates?.latitude ||
+													selectedAlarm.latitude
+												},${
+													selectedAlarm.coordinates?.longitude ||
+													selectedAlarm.longitude
+												}&zoom=16&maptype=roadmap`}
+												width="100%"
+												height="100%"
+												style={{ border: 0 }}
+												allowFullScreen
+												loading="lazy"
+												referrerPolicy="no-referrer-when-downgrade"
+											/>
 										</div>
 									</div>
 								)}
 
-								{/* Main Content Grid */}
-								<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-									{/* Left Column - Details */}
-									<div className="space-y-4">
-										<div>
-											<Label className="text-slate-300 text-lg font-medium">
-												Incident Description
-											</Label>
-											<div className="bg-slate-800 rounded-lg p-4 mt-2">
-												<p className="text-white">
+								{/* Combined Incident Details Card */}
+								<div className="bg-slate-800 rounded-xl p-5 border border-slate-700">
+									<h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+										<Info className="h-5 w-5 text-blue-400 mr-2" />
+										Incident Details
+									</h4>
+
+									<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+										{/* Left: Incident Information */}
+										<div className="lg:col-span-2 space-y-4">
+											<div>
+												<Label className="text-slate-400 text-sm font-medium">
+													Description
+												</Label>
+												<p className="text-white mt-1 bg-slate-900/50 p-3 rounded-lg border border-slate-600 text-sm">
 													{selectedAlarm.description}
 												</p>
 											</div>
-										</div>
 
-										{selectedAlarm.additionalNotes && (
-											<div>
-												<Label className="text-slate-300 text-lg font-medium">
-													Additional Notes
-												</Label>
-												<div className="bg-slate-800 rounded-lg p-4 mt-2">
-													<p className="text-white">
+											{selectedAlarm.additionalNotes && (
+												<div>
+													<Label className="text-slate-400 text-sm font-medium">
+														Additional Notes
+													</Label>
+													<p className="text-white mt-1 bg-slate-900/50 p-3 rounded-lg border border-slate-600 text-sm">
 														{selectedAlarm.additionalNotes}
 													</p>
 												</div>
-											</div>
-										)}
+											)}
 
-										<div className="grid grid-cols-2 gap-4">
-											<div>
-												<Label className="text-slate-300">Created By</Label>
-												<div className="bg-slate-800 rounded-lg p-3 mt-2">
-													<div className="flex items-center space-x-2">
-														<User className="h-4 w-4 text-slate-400" />
-														<span className="text-white">
-															{selectedAlarm.createdBy.name}
-														</span>
-													</div>
+											{selectedAlarm.resolutionDescription && (
+												<div>
+													<Label className="text-slate-400 text-sm font-medium">
+														Resolution
+													</Label>
+													<p className="text-white mt-1 bg-green-900/20 p-3 rounded-lg border border-green-700 text-sm">
+														{selectedAlarm.resolutionDescription}
+													</p>
 												</div>
-											</div>
+											)}
+
+											{/* Timeline */}
 											<div>
-												<Label className="text-slate-300">Created At</Label>
-												<div className="bg-slate-800 rounded-lg p-3 mt-2">
-													<div className="flex items-center space-x-2">
-														<Clock className="h-4 w-4 text-slate-400" />
-														{/* <span className="text-white">
-															{new Date(
-																selectedAlarm.createdAt
-															).toLocaleString()}
-														</span> */}
-														<span className="text-white">
-															{new Date(
-																selectedAlarm.createdAt
-															).toLocaleDateString("en-GB")}
-														</span>
+												<Label className="text-slate-400 text-sm font-medium mb-2 block">
+													Timeline
+												</Label>
+												<div className="space-y-2">
+													<div className="flex items-center space-x-3 p-2 bg-slate-900/50 rounded-lg">
+														<div className="w-2 h-2 bg-red-400 rounded-full"></div>
+														<div className="flex-1 flex items-center justify-between">
+															<span className="text-white text-sm font-medium">
+																Created
+															</span>
+															<span className="text-slate-400 text-xs">
+																{new Date(
+																	selectedAlarm.createdAt
+																).toLocaleString()}
+															</span>
+														</div>
 													</div>
+
+													{selectedAlarm.acknowledgedAt && (
+														<div className="flex items-center space-x-3 p-2 bg-slate-900/50 rounded-lg">
+															<div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+															<div className="flex-1 flex items-center justify-between">
+																<span className="text-white text-sm font-medium">
+																	Acknowledged
+																</span>
+																<span className="text-slate-400 text-xs">
+																	{new Date(
+																		selectedAlarm.acknowledgedAt
+																	).toLocaleString()}
+																</span>
+															</div>
+														</div>
+													)}
+
+													{selectedAlarm.status === "RESOLVED" && (
+														<div className="flex items-center space-x-3 p-2 bg-slate-900/50 rounded-lg">
+															<div className="w-2 h-2 bg-green-400 rounded-full"></div>
+															<div className="flex-1 flex items-center justify-between">
+																<span className="text-white text-sm font-medium">
+																	Resolved
+																</span>
+																<span className="text-slate-400 text-xs">
+																	{new Date(
+																		selectedAlarm.updatedAt ||
+																			selectedAlarm.createdAt
+																	).toLocaleString()}
+																</span>
+															</div>
+														</div>
+													)}
 												</div>
 											</div>
 										</div>
 
-										{selectedAlarm.acknowledgedAt && (
+										{/* Right: GPS & Quick Stats */}
+										<div className="space-y-4">
+											{/* GPS Coordinates */}
 											<div>
-												<Label className="text-slate-300">
-													Acknowledged At
+												<Label className="text-slate-400 text-sm font-medium mb-2 block flex items-center">
+													<MapPin className="h-4 w-4 text-green-400 mr-1" />
+													GPS Coordinates
 												</Label>
-												<div className="bg-slate-800 rounded-lg p-3 mt-2">
-													<span className="text-white">
-														{new Date(
-															selectedAlarm.acknowledgedAt
-														).toLocaleDateString("en-GB")}
-														{/* {new Date(
-															selectedAlarm.acknowledgedAt
-														).toLocaleString()} */}
-													</span>
+												<div className="bg-slate-900/50 p-3 rounded-lg border border-slate-600">
+													<div className="space-y-1 text-sm">
+														<div className="flex justify-between">
+															<span className="text-slate-400">Lat:</span>
+															<span className="text-white font-mono">
+																{selectedAlarm.coordinates?.latitude?.toFixed(
+																	6
+																) ||
+																	selectedAlarm.latitude ||
+																	"N/A"}
+															</span>
+														</div>
+														<div className="flex justify-between">
+															<span className="text-slate-400">Lng:</span>
+															<span className="text-white font-mono">
+																{selectedAlarm.coordinates?.longitude?.toFixed(
+																	6
+																) ||
+																	selectedAlarm.longitude ||
+																	"N/A"}
+															</span>
+														</div>
+													</div>
+													{selectedAlarm.location && (
+														<p className="text-slate-400 text-xs mt-2 pt-2 border-t border-slate-600">
+															{selectedAlarm.location}
+														</p>
+													)}
 												</div>
 											</div>
-										)}
 
-										{selectedAlarm.resolutionDescription && (
+											{/* Quick Stats */}
 											<div>
-												<Label className="text-slate-300">Resolution</Label>
-												<div className="bg-slate-800 rounded-lg p-4 mt-2">
-													<p className="text-white">
-														{selectedAlarm.resolutionDescription}
-													</p>
-												</div>
-											</div>
-										)}
-									</div>
-
-									{/* Right Column - Map and Location */}
-									<div className="space-y-4">
-										{/* Large Google Map */}
-										{/* {selectedAlarm.coordinates && (
-											<div>
-												<Label className="text-slate-300 text-lg font-medium">
-													Location Map
+												<Label className="text-slate-400 text-sm font-medium mb-2 block flex items-center">
+													<Clock className="h-4 w-4 text-purple-400 mr-1" />
+													Quick Stats
 												</Label>
-												<div className="bg-slate-800 rounded-lg p-4 mt-2">
-													<div className="w-full h-80 rounded-lg overflow-hidden">
-														<iframe
-															src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&q=${selectedAlarm.coordinates.latitude},${selectedAlarm.coordinates.longitude}&zoom=16&maptype=roadmap`}
-															width="100%"
-															height="100%"
-															style={{ border: 0 }}
-															allowFullScreen
-															loading="lazy"
-															referrerPolicy="no-referrer-when-downgrade"
-														/>
+												<div className="grid grid-cols-2 gap-2">
+													<div className="bg-slate-900/50 p-3 rounded-lg text-center">
+														<div className="text-lg font-bold text-blue-400">
+															{Math.floor(
+																(Date.now() -
+																	new Date(selectedAlarm.createdAt).getTime()) /
+																	(1000 * 60)
+															)}
+														</div>
+														<div className="text-xs text-slate-400">
+															Min Ago
+														</div>
+													</div>
+													<div className="bg-slate-900/50 p-3 rounded-lg text-center">
+														<div className="text-lg font-bold text-purple-400">
+															{selectedAlarm.severity === "CRITICAL"
+																? "🔴"
+																: selectedAlarm.severity === "HIGH"
+																? "🟠"
+																: selectedAlarm.severity === "MEDIUM"
+																? "🟡"
+																: "🟢"}
+														</div>
+														<div className="text-xs text-slate-400">
+															Priority
+														</div>
 													</div>
 												</div>
 											</div>
-										)} */}
-										{/* {selectedAlarm.coordinates && (
+
+											{/* Created By */}
 											<div>
-												<Label className="text-slate-300 text-lg font-medium">
-													Location Map
+												<Label className="text-slate-400 text-sm font-medium mb-2 block">
+													Created By
 												</Label>
-												<div className="bg-slate-800 rounded-lg p-4 mt-2">
-													<div className="w-full h-80 rounded-lg overflow-hidden">
-														<iframe
-															src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAKwdu6D9M3XuS_LKY25uI2R0FrZZgsX5c&q=${selectedAlarm.coordinates.latitude},${selectedAlarm.coordinates.longitude}&zoom=16&maptype=roadmap`}
-															width="100%"
-															height="100%"
-															style={{ border: 0 }}
-															allowFullScreen
-															loading="lazy"
-															referrerPolicy="no-referrer-when-downgrade"
-														/>
+												<div className="bg-slate-900/50 p-3 rounded-lg border border-slate-600">
+													<div className="flex items-center space-x-2">
+														<User className="h-4 w-4 text-slate-400" />
+														<span className="text-white text-sm">
+															{selectedAlarm.createdBy?.name || "Unknown"}
+														</span>
 													</div>
 												</div>
-											</div>
-										)} */}
-
-										{/* GPS Coordinates */}
-										<div>
-											<Label className="text-slate-300">GPS Coordinates</Label>
-											<div className="bg-slate-800 rounded-lg p-4 mt-2">
-												<div className="flex items-center space-x-2 mb-2">
-													<MapPin className="h-4 w-4 text-purple-400" />
-													<span className="text-white font-medium">
-														Precise Location
-													</span>
-												</div>
-												<p className="text-slate-300 font-mono">
-													Lat:{" "}
-													{selectedAlarm.coordinates?.latitude.toFixed(6) ||
-														selectedAlarm.latitude ||
-														"N/A"}
-												</p>
-												<p className="text-slate-300 font-mono">
-													Lng:{" "}
-													{selectedAlarm.coordinates?.longitude.toFixed(6) ||
-														selectedAlarm.longitude ||
-														"N/A"}
-												</p>
-												{selectedAlarm.location && (
-													<p className="text-slate-400 text-sm mt-2">
-														{selectedAlarm.location}
-													</p>
-												)}
 											</div>
 										</div>
 									</div>
 								</div>
 
 								{/* Action Buttons */}
-								<div className="flex flex-wrap gap-3 pt-4 border-t border-slate-700">
-									{selectedAlarm.status === "ACTIVE" && (
-										<>
-											<Button
-												onClick={() =>
-													changeAlarmStatus(selectedAlarm.id, "ACKNOWLEDGED")
-												}
-												disabled={updating}
-												className="bg-yellow-600 hover:bg-yellow-700 text-white">
-												{updating ? (
-													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-												) : (
-													<Eye className="h-4 w-4 mr-2" />
-												)}
-												Acknowledge
-											</Button>
-											<Button
-												onClick={() =>
-													changeAlarmStatus(selectedAlarm.id, "RESOLVED")
-												}
-												disabled={updating}
-												className="bg-green-600 hover:bg-green-700 text-white">
-												{updating ? (
-													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-												) : (
-													<CheckCircle className="h-4 w-4 mr-2" />
-												)}
-												Mark Resolved
-											</Button>
-										</>
-									)}
+								<div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+									<div className="flex flex-wrap gap-3">
+										{selectedAlarm.status === "ACTIVE" && (
+											<>
+												<Button
+													onClick={() =>
+														changeAlarmStatus(selectedAlarm.id, "ACKNOWLEDGED")
+													}
+													disabled={updating}
+													className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white">
+													{updating ? (
+														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+													) : (
+														<Eye className="h-4 w-4 mr-2" />
+													)}
+													Acknowledge
+												</Button>
+												<Button
+													onClick={() =>
+														changeAlarmStatus(selectedAlarm.id, "RESOLVED")
+													}
+													disabled={updating}
+													className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
+													{updating ? (
+														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+													) : (
+														<CheckCircle className="h-4 w-4 mr-2" />
+													)}
+													Resolve
+												</Button>
+											</>
+										)}
 
-									{selectedAlarm.status === "ACKNOWLEDGED" && (
-										<>
-											{/* <Button
-												onClick={() =>
-													changeAlarmStatus(selectedAlarm.id, "ACTIVE")
-												}
-												disabled={updating}
-												className="bg-red-600 hover:bg-red-700 text-white">
-												{updating ? (
-													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-												) : (
-													<AlertTriangle className="h-4 w-4 mr-2" />
-												)}
-												Reactivate
-											</Button> */}
+										{selectedAlarm.status === "ACKNOWLEDGED" && (
 											<Button
 												onClick={() => {
 													setSelectedAlarm(selectedAlarm);
 													setIsResolutionDialogOpen(true);
 													setIsDetailsDialogOpen(false);
 												}}
-												className="bg-green-600 hover:bg-green-700 text-white">
+												className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
 												<Target className="h-4 w-4 mr-2" />
-												Resolve with Notes
+												Resolve with Details
 											</Button>
-										</>
-									)}
+										)}
 
-									{selectedAlarm.status === "RESOLVED" && (
+										{selectedAlarm.status === "RESOLVED" && (
+											<Button
+												onClick={() =>
+													changeAlarmStatus(selectedAlarm.id, "ACTIVE")
+												}
+												disabled={updating}
+												className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white">
+												{updating ? (
+													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+												) : (
+													<AlertTriangle className="h-4 w-4 mr-2" />
+												)}
+												Reopen
+											</Button>
+										)}
+
 										<Button
-											onClick={() =>
-												changeAlarmStatus(selectedAlarm.id, "ACTIVE")
-											}
-											disabled={updating}
-											className="bg-red-600 hover:bg-red-700 text-white">
-											{updating ? (
-												<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-											) : (
-												<AlertTriangle className="h-4 w-4 mr-2" />
-											)}
-											Reopen Alarm
+											variant="outline"
+											onClick={() => setIsDetailsDialogOpen(false)}
+											className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white">
+											<X className="h-4 w-4 mr-2" />
+											Close
 										</Button>
-									)}
-
-									<Button
-										variant="outline"
-										onClick={() => setIsDetailsDialogOpen(false)}
-										className="border-slate-600 text-slate-300 hover:bg-slate-800">
-										Close
-									</Button>
+									</div>
 								</div>
 							</div>
 						)}
