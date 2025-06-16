@@ -19,8 +19,10 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	Home,
 	AlertTriangle,
@@ -35,27 +37,38 @@ import {
 	ChevronDown,
 	LogOut,
 	UserIcon,
-	User,
+	Bell,
+	HelpCircle,
+	Moon,
+	Sun,
+	Zap,
+	Activity,
+	MapPin,
+	Calendar,
+	Search,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-interface User {
-	role: string;
-	name: string;
-	id: string;
-	managedBy?: any;
-	operatorType?: string;
-}
+import { useState } from "react";
 
 interface AppSidebarProps {
-	user: User;
+	user: {
+		role: string;
+		name: string;
+		id: string;
+		managedBy?: any;
+		operatorType?: string;
+		avatar?: string;
+		email?: string;
+		lastActive?: string;
+	};
 	onLogout: () => void;
 }
 
 export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 	const pathname = usePathname();
+	const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode as per CSS
 
 	const getMenuItems = () => {
 		const baseItems = [
@@ -63,6 +76,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 				title: "Dashboard",
 				url: "/dashboard",
 				icon: Home,
+				description: "Overview & Analytics",
 			},
 		];
 
@@ -74,87 +88,126 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						title: "User Management",
 						url: "/dashboard/users",
 						icon: Users,
+						description: "Manage system users",
+						badge: "Admin",
 					},
 					{
 						title: "Company Management",
 						url: "/dashboard/companies",
 						icon: Building,
+						description: "Manage organizations",
 					},
 					{
 						title: "System Analytics",
 						url: "/dashboard/analytics",
 						icon: BarChart3,
+						description: "System insights",
+					},
+					{
+						title: "System Settings",
+						url: "/dashboard/settings",
+						icon: Settings,
+						description: "Global configuration",
 					},
 				];
 
 			case "OFFICE_MANAGER":
 				return [
-					// ...baseItems,
 					{
 						title: "Alarms",
 						url: "/dashboard/alarms",
 						icon: AlertTriangle,
+						description: "Security alerts",
+						badge: "Live",
 					},
 					{
 						title: "Locations",
 						url: "/dashboard/locations",
 						icon: Building,
+						description: "Manage locations",
 					},
 					{
 						title: "Operators",
 						url: "/dashboard/operators",
 						icon: Users,
+						description: "Team management",
 					},
 					{
 						title: "Reports",
 						url: "/dashboard/analytics",
 						icon: FileText,
+						description: "Analytics & reports",
+					},
+					{
+						title: "Schedule",
+						url: "/dashboard/schedule",
+						icon: Calendar,
+						description: "Shift planning",
 					},
 					{
 						title: "Profile",
 						url: "/dashboard/profile",
 						icon: UserIcon,
+						description: "Account settings",
 					},
 				];
 
 			case "POLICE_MANAGER":
 				return [
-					// ...baseItems,
 					{
 						title: "Alarm Reports",
 						url: "/dashboard/alarm-reports",
 						icon: AlertTriangle,
+						description: "Emergency responses",
+						badge: "Priority",
 					},
 					{
 						title: "Operators",
 						url: "/dashboard/police-operators",
 						icon: Shield,
+						description: "Police personnel",
+					},
+					{
+						title: "Activity Log",
+						url: "/dashboard/activity",
+						icon: Activity,
+						description: "System activity",
 					},
 					{
 						title: "Profile",
 						url: "/dashboard/account-profile",
 						icon: UserIcon,
+						description: "Account settings",
 					},
 				];
 
 			case "OPERATOR":
 				if (user.operatorType === "OFFICE") {
 					return [
-						// ...baseItems,
 						{
 							title: "Alarms",
 							url: "/dashboard/alarms",
 							icon: AlertTriangle,
+							description: "Active alerts",
+							badge: "Live",
 						},
 						{
 							title: "Tasks",
 							url: "/dashboard/tasks",
 							icon: FileText,
+							description: "Assigned tasks",
+						},
+						{
+							title: "Locations",
+							url: "/dashboard/locations",
+							icon: MapPin,
+							description: "Site locations",
 						},
 						{
 							title: "Profile",
 							url: "/dashboard/profile",
 							icon: UserIcon,
+							description: "Account settings",
 						},
 					];
 				} else if (user.operatorType === "POLICE") {
@@ -163,11 +216,14 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							title: "Alarms",
 							url: "/dashboard/alarm-reports",
 							icon: AlertTriangle,
+							description: "Emergency calls",
+							badge: "Priority",
 						},
 						{
 							title: "Profile",
 							url: "/dashboard/account-profile",
 							icon: UserIcon,
+							description: "Account settings",
 						},
 					];
 				} else {
@@ -177,21 +233,25 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							title: "Reports",
 							url: "/dashboard/reports",
 							icon: AlertTriangle,
+							description: "Incident reports",
 						},
 						{
 							title: "Cases",
 							url: "/dashboard/cases",
 							icon: FileText,
+							description: "Case management",
 						},
 						{
 							title: "Evidence",
 							url: "/dashboard/evidence",
 							icon: Shield,
+							description: "Evidence tracking",
 						},
 						{
 							title: "Profile",
 							url: "/dashboard/profile",
 							icon: UserIcon,
+							description: "Account settings",
 						},
 					];
 				}
@@ -211,6 +271,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						icon: AlertTriangle,
 						color:
 							"bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700",
+						description: "Create security alert",
 					},
 					{
 						title: "Add Location",
@@ -218,6 +279,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						icon: Plus,
 						color:
 							"bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
+						description: "Register new site",
 					},
 				];
 			case "SUPER_ADMIN":
@@ -228,18 +290,17 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						icon: UserPlus,
 						color:
 							"bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
+						description: "Create user account",
+					},
+					{
+						title: "System Health",
+						url: "/dashboard/system",
+						icon: Activity,
+						color:
+							"bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
+						description: "Monitor system",
 					},
 				];
-			// case "POLICE_MANAGER":
-			// 	return [
-			// 		{
-			// 			title: "New Case",
-			// 			url: "/dashboard/new-case",
-			// 			icon: Plus,
-			// 			color:
-			// 				"bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
-			// 		},
-			// 	];
 			default:
 				return [];
 		}
@@ -263,15 +324,30 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 	const getRoleBadgeColor = (role: string) => {
 		switch (role) {
 			case "SUPER_ADMIN":
-				return "bg-gradient-to-r from-red-500 to-pink-500 text-white border-0";
+				return "bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 shadow-lg";
 			case "OFFICE_MANAGER":
-				return "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0";
+				return "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-lg";
 			case "POLICE_MANAGER":
-				return "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0";
+				return "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg";
 			case "OPERATOR":
-				return "bg-gradient-to-r from-gray-500 to-slate-500 text-white border-0";
+				return "bg-gradient-to-r from-gray-500 to-slate-500 text-white border-0 shadow-lg";
 			default:
-				return "bg-gradient-to-r from-gray-500 to-slate-500 text-white border-0";
+				return "bg-gradient-to-r from-gray-500 to-slate-500 text-white border-0 shadow-lg";
+		}
+	};
+
+	const getRoleIcon = (role: string) => {
+		switch (role) {
+			case "SUPER_ADMIN":
+				return "";
+			case "OFFICE_MANAGER":
+				return "";
+			case "POLICE_MANAGER":
+				return "";
+			case "OPERATOR":
+				return "";
+			default:
+				return "";
 		}
 	};
 
@@ -280,15 +356,41 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 
 	return (
 		<Sidebar className="sidebar-enhanced">
-			<SidebarHeader className="border-b-[1px]">
-				<div className="flex items-center space-x-3 p-8 animate-fade-in">
-					<img src="/logo-shield.png" alt="" />
+			{/* Enhanced Header with Real Logo */}
+			<SidebarHeader className="header-enhanced border-b border-sidebar-border">
+				<div className="flex items-center justify-between py-5">
+					<div className="flex items-center flex-col justify-center space-y-2 space-x-3 animate-fade-in">
+						<div className="relative">
+							<img
+								src="/logo-shield.png"
+								alt="Real-Time Response Link Logo"
+								className="w-16 h-16 object-contain"
+							/>
+							<div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-sidebar-background animate-pulse" />
+						</div>
+						<div>
+							<h1 className="text-lg font-bold text-sidebar-foreground">
+								Real-Time Response Link
+							</h1>
+							{/* <p className="text-xs text-muted-foreground">
+								Security Management
+							</p> */}
+						</div>
+					</div>
+					{/* <Button
+						variant="ghost"
+						size="sm"
+						className="h-8 w-8 p-0 hover:bg-sidebar-accent text-sidebar-foreground">
+						<Search className="h-4 w-4" />
+					</Button> */}
 				</div>
 			</SidebarHeader>
 
-			<SidebarContent className="px-3">
+			<SidebarContent className="px-4 py-2">
+				{/* Navigation Menu */}
 				<SidebarGroup>
-					<SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+					<SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2 flex items-center">
+						<Home className="h-3 w-3 mr-2" />
 						Navigation
 					</SidebarGroupLabel>
 					<SidebarGroupContent>
@@ -297,17 +399,50 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 								<SidebarMenuItem
 									key={item.title}
 									className="animate-slide-up"
-									style={{ animationDelay: `${index * 0.1}s` }}>
+									style={{ animationDelay: `${index * 0.05}s` }}>
 									<SidebarMenuButton
 										asChild
 										isActive={pathname === item.url}
 										className={cn(
-											"sidebar-menu-item h-11 px-3 font-medium",
+											"sidebar-menu-item h-12 px-3 font-medium transition-all duration-300",
 											pathname === item.url && "active"
 										)}>
-										<Link href={item.url}>
-											<item.icon className="h-5 w-5" />
-											<span>{item.title}</span>
+										<Link href={item.url} className="flex items-center w-full">
+											<div
+												className={cn(
+													"w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-all duration-300",
+													pathname === item.url
+														? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground"
+														: "bg-sidebar-primary/10 text-sidebar-primary hover:bg-sidebar-primary/20"
+												)}>
+												<item.icon className="h-4 w-4" />
+											</div>
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center justify-between">
+													<span className="font-medium text-sidebar-foreground">
+														{item.title}
+													</span>
+													{/* {item.badge && (
+														<Badge
+															className={cn(
+																"text-xs px-2 py-0.5 ml-2",
+																item.badge === "Live" &&
+																	"bg-red-500/20 text-red-400 border-red-500/30 dark:text-red-300",
+																item.badge === "Admin" &&
+																	"bg-purple-500/20 text-purple-400 border-purple-500/30 dark:text-purple-300",
+																item.badge === "Priority" &&
+																	"bg-orange-500/20 text-orange-400 border-orange-500/30 dark:text-orange-300"
+															)}>
+															{item.badge}
+														</Badge>
+													)} */}
+												</div>
+												{/* {item.description && (
+													<p className="text-xs text-muted-foreground truncate mt-0.5">
+														{item.description}
+													</p>
+												)} */}
+											</div>
 										</Link>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
@@ -316,9 +451,11 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 					</SidebarGroupContent>
 				</SidebarGroup>
 
+				{/* Quick Actions */}
 				{quickActions.length > 0 && (
 					<SidebarGroup className="mt-6">
-						<SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+						<SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2 flex items-center">
+							<Zap className="h-3 w-3 mr-2" />
 							Quick Actions
 						</SidebarGroupLabel>
 						<SidebarGroupContent>
@@ -328,14 +465,23 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 										<Button
 											size="sm"
 											className={cn(
-												"w-full justify-start h-10 font-medium shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105",
+												"w-full justify-start h-11 font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] rounded-xl",
 												action.color
 											)}
 											style={{
-												animationDelay: `${(index + menuItems.length) * 0.1}s`,
+												animationDelay: `${(index + menuItems.length) * 0.05}s`,
 											}}>
-											<action.icon className="h-4 w-4 mr-2" />
-											{action.title}
+											<div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center mr-3">
+												<action.icon className="h-4 w-4" />
+											</div>
+											<div className="flex-1 text-left">
+												<div className="font-medium">{action.title}</div>
+												{/* {action.description && (
+													<div className="text-xs opacity-90">
+														{action.description}
+													</div>
+												)} */}
+											</div>
 										</Button>
 									</Link>
 								))}
@@ -343,46 +489,170 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						</SidebarGroupContent>
 					</SidebarGroup>
 				)}
+
+				{/* Status Section */}
+				{/* <SidebarGroup className="mt-6">
+					<SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2 flex items-center">
+						<Activity className="h-3 w-3 mr-2" />
+						System Status
+					</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<div className="glass rounded-xl p-3 border border-green-500/20">
+							<div className="flex items-center space-x-2">
+								<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+								<span className="text-sm font-medium text-green-600 dark:text-green-400">
+									All Systems Operational
+								</span>
+							</div>
+							<p className="text-xs text-muted-foreground mt-1">
+								Last updated: 2 minutes ago
+							</p>
+						</div>
+					</SidebarGroupContent>
+				</SidebarGroup> */}
 			</SidebarContent>
 
-			<SidebarFooter className="p-4 border-t border-sidebar-border">
+			{/* Enhanced Footer */}
+			<SidebarFooter className="p-4 border-t border-sidebar-border glass">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<SidebarMenuButton className="h-12 px-3 hover:bg-sidebar-accent/50 transition-colors">
-									<div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold text-sm">
-										{user.name.charAt(0).toUpperCase()}
+								<SidebarMenuButton className="h-14 px-3 hover:bg-sidebar-accent/50 transition-all duration-300 rounded-xl group">
+									<div className="flex items-center space-x-3 w-full">
+										<div className="relative">
+											<Avatar className="h-10 w-10 ring-2 ring-sidebar-primary/20 transition-all duration-300 group-hover:ring-sidebar-primary/40">
+												<AvatarImage
+													src={user.avatar || "/placeholder.svg"}
+													alt={user.name}
+												/>
+												<AvatarFallback className="bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 text-sidebar-primary-foreground font-semibold">
+													{user.name.charAt(0).toUpperCase()}
+												</AvatarFallback>
+											</Avatar>
+											<div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-sidebar-background flex items-center justify-center">
+												<div className="w-2 h-2 bg-white rounded-full" />
+											</div>
+										</div>
+										<div className="flex-1 text-left min-w-0">
+											<div className="flex items-center space-x-2">
+												<p className="text-sm font-medium truncate text-sidebar-foreground">
+													{user.name}
+												</p>
+												<span className="text-lg">
+													{getRoleIcon(user.role)}
+												</span>
+											</div>
+											<Badge
+												className={cn(
+													"text-xs font-medium mt-1",
+													getRoleBadgeColor(user.role)
+												)}>
+												{getRoleDisplay(user.role)}
+											</Badge>
+											{user.email && (
+												<p className="text-xs text-muted-foreground truncate mt-1">
+													{user.email}
+												</p>
+											)}
+										</div>
+										<ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-hover:rotate-180" />
 									</div>
-									<div className="flex-1 text-left">
-										<p className="text-sm font-medium truncate">{user.name}</p>
-										<Badge
-											className={cn(
-												"text-xs font-medium",
-												getRoleBadgeColor(user.role)
-											)}>
-											{getRoleDisplay(user.role)}
-										</Badge>
-									</div>
-									<ChevronDown className="h-4 w-4 text-muted-foreground" />
 								</SidebarMenuButton>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
 								side="top"
-								className="w-[--radix-popper-anchor-width] glass">
-								<DropdownMenuItem className="cursor-pointer">
-									<UserIcon className="h-4 w-4 mr-2" />
-									Profile Settings
+								className="w-64 glass border border-sidebar-border/50 shadow-2xl">
+								<div className="p-3 border-b border-sidebar-border/50">
+									<div className="flex items-center space-x-3">
+										<Avatar className="h-8 w-8">
+											<AvatarImage
+												src={user.avatar || "/placeholder.svg"}
+												alt={user.name}
+											/>
+											<AvatarFallback className="bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 text-sidebar-primary-foreground text-sm">
+												{user.name.charAt(0).toUpperCase()}
+											</AvatarFallback>
+										</Avatar>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium truncate text-sidebar-foreground">
+												{user.name}
+											</p>
+											<p className="text-xs text-muted-foreground truncate">
+												{user.email || "No email"}
+											</p>
+										</div>
+									</div>
+								</div>
+
+								<DropdownMenuItem className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground">
+									<UserIcon className="h-4 w-4 mr-3 text-blue-500" />
+									<div>
+										<p className="font-medium">Profile Settings</p>
+										<p className="text-xs text-muted-foreground">
+											Manage your account
+										</p>
+									</div>
 								</DropdownMenuItem>
-								<DropdownMenuItem className="cursor-pointer">
-									<Settings className="h-4 w-4 mr-2" />
-									Preferences
+
+								<DropdownMenuItem className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground">
+									<Bell className="h-4 w-4 mr-3 text-orange-500" />
+									<div>
+										<p className="font-medium">Notifications</p>
+										<p className="text-xs text-muted-foreground">
+											Alert preferences
+										</p>
+									</div>
 								</DropdownMenuItem>
+
+								<DropdownMenuItem className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground">
+									<Settings className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />
+									<div>
+										<p className="font-medium">Preferences</p>
+										<p className="text-xs text-muted-foreground">
+											App settings
+										</p>
+									</div>
+								</DropdownMenuItem>
+
+								<DropdownMenuItem
+									className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground"
+									onClick={() => setIsDarkMode(!isDarkMode)}>
+									{isDarkMode ? (
+										<Sun className="h-4 w-4 mr-3 text-yellow-500" />
+									) : (
+										<Moon className="h-4 w-4 mr-3 text-purple-500" />
+									)}
+									<div>
+										<p className="font-medium">
+											{isDarkMode ? "Light Mode" : "Dark Mode"}
+										</p>
+										<p className="text-xs text-muted-foreground">
+											Toggle theme
+										</p>
+									</div>
+								</DropdownMenuItem>
+
+								<DropdownMenuItem className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground">
+									<HelpCircle className="h-4 w-4 mr-3 text-green-500" />
+									<div>
+										<p className="font-medium">Help & Support</p>
+										<p className="text-xs text-muted-foreground">
+											Get assistance
+										</p>
+									</div>
+								</DropdownMenuItem>
+
+								<DropdownMenuSeparator className="bg-sidebar-border/50" />
+
 								<DropdownMenuItem
 									onClick={onLogout}
-									className="cursor-pointer text-destructive focus:text-destructive">
-									<LogOut className="h-4 w-4 mr-2" />
-									Sign Out
+									className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors">
+									<LogOut className="h-4 w-4 mr-3" />
+									<div>
+										<p className="font-medium">Sign Out</p>
+										<p className="text-xs opacity-70">End your session</p>
+									</div>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
