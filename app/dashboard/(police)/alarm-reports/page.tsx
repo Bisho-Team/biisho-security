@@ -1182,20 +1182,6 @@ export default function EnhancedAlarmReportsPage() {
 														<h2 className="text-xl font-bold text-white truncate">
 															{alarm.branch.company?.name || "Unknown Company"}
 														</h2>
-														<div className="flex items-center space-x-2">
-															{alarm.isRealTime && (
-																<Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 animate-pulse">
-																	<Radio className="h-3 w-3 mr-1" />
-																	LIVE
-																</Badge>
-															)}
-															{alarm.status === "ACTIVE" && audioEnabled && (
-																<Badge className="bg-red-500/20 text-red-300 border-red-500/30 animate-pulse">
-																	<Volume2 className="h-3 w-3 mr-1" />
-																	AUDIO
-																</Badge>
-															)}
-														</div>
 													</div>
 
 													<div className="flex items-center space-x-3">
@@ -1243,9 +1229,9 @@ export default function EnhancedAlarmReportsPage() {
 														{alarm.type}
 													</h3>
 												</div>
-												<p className="text-slate-300 leading-relaxed">
+												{/* <p className="text-slate-300 leading-relaxed">
 													{alarm.description}
-												</p>
+												</p> */}
 											</div>
 
 											{/* Details Grid */}
@@ -1530,7 +1516,7 @@ export default function EnhancedAlarmReportsPage() {
 						<DialogHeader>
 							<DialogTitle className="text-2xl font-bold flex items-center space-x-3">
 								<AlertTriangle className="h-6 w-6 text-red-400" />
-								<span>Alarm Details - {selectedAlarm?.type}</span>
+								<span>{selectedAlarm?.type}</span>
 								{selectedAlarm?.isRealTime && (
 									<Badge className="bg-cyan-600 text-white animate-pulse">
 										{selectedAlarm?.status}
@@ -1616,10 +1602,10 @@ export default function EnhancedAlarmReportsPage() {
 										{/* Status & Actions */}
 										<div className="flex flex-col items-end space-y-2">
 											<div className="flex items-center space-x-2">
-												<Badge
+												{/* <Badge
 													className={getSeverityColor(selectedAlarm.severity)}>
 													{selectedAlarm.severity}
-												</Badge>
+												</Badge> */}
 												<Badge className={getStatusColor(selectedAlarm.status)}>
 													{selectedAlarm.status}
 												</Badge>

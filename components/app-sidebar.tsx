@@ -62,6 +62,10 @@ interface AppSidebarProps {
 		avatar?: string;
 		email?: string;
 		lastActive?: string;
+		company?: {
+			logo: string;
+			name: string;
+		};
 	};
 	onLogout: () => void;
 }
@@ -328,7 +332,40 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 	return (
 		<Sidebar className="sidebar-enhanced">
 			{/* Enhanced Header with Real Logo */}
+
 			<SidebarHeader className="header-enhanced border-b border-sidebar-border">
+				<div className="flex items-center justify-center py-5 mx-auto">
+					<div className="flex items-center flex-col justify-center space-y-2 animate-fade-in">
+						<div className="relative">
+							<img
+								src={
+									user?.company?.logo
+										? `http://8436insight.et:3003${user.company.logo.replace(
+												"/var/www/html/koppa-security-api",
+												""
+										  )}`
+										: "/logo-shield.png"
+								}
+								// 	`http://8436insight.et:3003${selectedAlarm.branch.company.logo.replace(
+								// 		"/var/www/html/koppa-security-api",
+								// 		""
+								//   )}`
+
+								alt={user?.company?.name || "Real-Time Response Link Logo"}
+								className="w-20 h-20 object-contain"
+							/>
+							<div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-sidebar-background animate-pulse" />
+						</div>
+						<div>
+							<h1 className="text-lg font-bold text-sidebar-foreground text-center">
+								{user?.company?.name || "Real-Time Response Link"}
+							</h1>
+						</div>
+					</div>
+				</div>
+			</SidebarHeader>
+
+			{/* <SidebarHeader className="header-enhanced border-b border-sidebar-border">
 				<div className="flex items-center justify-between py-5">
 					<div className="flex items-center flex-col justify-center space-y-2 space-x-3 animate-fade-in">
 						<div className="relative">
@@ -343,19 +380,10 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							<h1 className="text-lg font-bold text-sidebar-foreground">
 								Real-Time Response Link
 							</h1>
-							{/* <p className="text-xs text-muted-foreground">
-								Security Management
-							</p> */}
 						</div>
 					</div>
-					{/* <Button
-						variant="ghost"
-						size="sm"
-						className="h-8 w-8 p-0 hover:bg-sidebar-accent text-sidebar-foreground">
-						<Search className="h-4 w-4" />
-					</Button> */}
 				</div>
-			</SidebarHeader>
+			</SidebarHeader> */}
 
 			<SidebarContent className="px-4 py-2">
 				{/* Navigation Menu */}

@@ -7,8 +7,6 @@ import { Bell, Search, Wifi, WifiOff } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-// import { AlarmIndicator } from "./alarm-indicator";
-// import { ConnectionStatus } from "./connection-status";
 
 interface User {
 	role: string;
@@ -77,26 +75,8 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 			<div className="flex-1" />
 
 			<div className="flex items-center gap-3">
-				{/* Connection Status */}
-				{/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50">
-					{isOnline ? (
-						<Wifi className="h-4 w-4 text-green-500" />
-					) : (
-						<WifiOff className="h-4 w-4 text-red-500" />
-					)}
-					<span className="text-xs font-medium">
-						{isOnline ? "Online" : "Offline"}
-					</span>
-				</div> */}
-
 				{/* Action Buttons */}
 				<div className="flex items-center gap-1">
-					{/* <Button variant="ghost" size="icon" className="h-9 w-9 relative">
-						<Search className="h-4 w-4" />
-					</Button> */}
-					{/* <ConnectionStatus />
-					<AlarmIndicator /> */}
-
 					{/* <Button variant="ghost" size="icon" className="h-9 w-9 relative"> */}
 					{/* <Bell className="h-4 w-4" /> */}
 					{/* {notifications > 0 && (

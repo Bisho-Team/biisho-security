@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const { user } = await apiClient.login(email, password);
 			console.log({ user });
 			setUser(user);
-			// ✅ Redirect based on role
+
 			if (user.role === "OFFICE_MANAGER") {
 				router.push("/dashboard/alarms");
 			} else if (user.role === "POLICE_MANAGER") {

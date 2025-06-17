@@ -1,5 +1,4 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-import { persistentNotificationService } from "./persistent-notification-service";
 
 interface ApiResponse<T = any> {
 	data: T;
@@ -134,19 +133,13 @@ class ApiService {
 			localStorage.setItem("currentUser", JSON.stringify(response.data.user));
 		}
 
-		// Reinitialize notification service after login
-		await persistentNotificationService.reinitializeAfterLogin();
-
 		return response;
 	}
 
 	async logout() {
 		try {
 			await this.post("/auth/logout");
-			// Stop all sirens before logout
-			persistentNotificationService.stopAllSirens();
 		} catch (error) {
-			// Continue with logout even if API call fails
 			console.warn("Logout API call failed:", error);
 		} finally {
 			localStorage.removeItem("authToken");

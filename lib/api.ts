@@ -1,13 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-interface ApiResponse<T> {
-	data?: T;
-	message?: string;
-	error?: string;
-	details?: any;
-}
-import { persistentNotificationService } from "./persistent-notification-service";
-
 class ApiClient {
 	private getAuthHeaders() {
 		const token = localStorage.getItem("authToken");
@@ -62,15 +54,11 @@ class ApiClient {
 			localStorage.setItem("currentUser", JSON.stringify(response.user));
 		}
 
-		// Reinitialize notification service after login
-		await persistentNotificationService.reinitializeAfterLogin();
-
 		return response;
 	}
 
 	async logout() {
 		// Stop all sirens before logout
-		persistentNotificationService.stopAllSirens();
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("currentUser");
 	}
