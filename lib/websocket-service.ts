@@ -44,9 +44,7 @@ export class WebSocketClient {
 		}
 
 		this.isConnecting = true;
-		const wsUrl = `${
-			process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3004"
-		}?token=${this.token}`;
+		const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}?token=${this.token}`;
 
 		console.log("🔌 Connecting to WebSocket server...");
 		this.ws = new WebSocket(wsUrl);

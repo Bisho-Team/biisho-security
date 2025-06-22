@@ -47,11 +47,15 @@ import {
 	FileText,
 	Navigation,
 	Radio,
+	Building,
 } from "lucide-react";
 import Link from "next/link";
 import { apiService } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useAuth } from "@/contexts/auth-context";
+const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
 
 interface Alarm {
 	id: string;
@@ -62,7 +66,7 @@ interface Alarm {
 	severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 	description: string;
 	additionalNotes?: string;
-	status: "ACTIVE" | "DISPATCHED" | "RESOLVED" | "ACKNOWLEDGED";
+	status: "ACTIVE" | "RESOLVED" | "ACKNOWLEDGED";
 	createdAt: string;
 	updatedAt: string;
 	companyId: string;
@@ -217,6 +221,7 @@ export default function EnhancedAlarmsPage() {
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [updating, setUpdating] = useState(false);
 	const { toast } = useToast();
+	const { user } = useAuth();
 
 	useEffect(() => {
 		fetchAlarms();
@@ -334,8 +339,6 @@ export default function EnhancedAlarmsPage() {
 		switch (status) {
 			case "ACTIVE":
 				return <AlertTriangle className="h-4 w-4 text-red-500" />;
-			case "DISPATCHED":
-				return <Send className="h-4 w-4 text-blue-500" />;
 			case "ACKNOWLEDGED":
 				return <Clock className="h-4 w-4 text-yellow-500" />;
 			case "RESOLVED":
@@ -349,8 +352,6 @@ export default function EnhancedAlarmsPage() {
 		switch (status) {
 			case "ACTIVE":
 				return "bg-gradient-to-r from-red-500 to-red-600 text-white border-0 shadow-md";
-			case "DISPATCHED":
-				return "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-md";
 			case "ACKNOWLEDGED":
 				return "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0 shadow-md";
 			case "RESOLVED":
@@ -443,16 +444,18 @@ export default function EnhancedAlarmsPage() {
 						Monitor and manage security alarms across all locations
 					</p>
 				</div>
-				<Link href="/dashboard/configure-alarm">
-					<Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transition-all duration-200">
-						<Plus className="h-4 w-4 mr-2" />
-						Configure New Alarm
-					</Button>
-				</Link>
+				{user?.role !== "SUPER_ADMIN" && (
+					<Link href="/dashboard/configure-alarm">
+						<Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transition-all duration-200">
+							<Plus className="h-4 w-4 mr-2" />
+							Configure New Alarm
+						</Button>
+					</Link>
+				)}
 			</div>
 
-			{/* Enhanced Overview Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+			{/* Overview Cards */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<Card
 					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
 					style={{ animationDelay: "0.1s" }}>
@@ -476,7 +479,7 @@ export default function EnhancedAlarmsPage() {
 						</div>
 					</CardContent>
 				</Card>
-				<Card
+				{/* <Card
 					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
 					style={{ animationDelay: "0.2s" }}>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -497,7 +500,7 @@ export default function EnhancedAlarmsPage() {
 								0 && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
 						</div>
 					</CardContent>
-				</Card>
+				</Card> */}
 				<Card
 					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
 					style={{ animationDelay: "0.3s" }}>
@@ -547,7 +550,7 @@ export default function EnhancedAlarmsPage() {
 				</Card>
 			</div>
 
-			{/* Enhanced Alarm Management Tabs */}
+			{/* Alarm Management Tabs */}
 			<Tabs
 				defaultValue="active"
 				className="space-y-4 animate-slide-up"
@@ -588,7 +591,7 @@ export default function EnhancedAlarmsPage() {
 							<SelectContent>
 								<SelectItem value="all">All Status</SelectItem>
 								<SelectItem value="ACTIVE">Active</SelectItem>
-								<SelectItem value="DISPATCHED">Dispatched</SelectItem>
+								<SelectItem value="RESOLVED">Resolved</SelectItem>
 								<SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
 							</SelectContent>
 						</Select>
@@ -621,26 +624,42 @@ export default function EnhancedAlarmsPage() {
 									<CardContent className="p-6">
 										<div className="flex items-center justify-between">
 											<div className="flex items-center space-x-4">
-												<div
-													className={cn(
-														"p-3 rounded-lg",
-														alarm.status === "ACTIVE"
-															? "bg-red-100 dark:bg-red-900/20"
-															: alarm.status === "DISPATCHED"
-															? "bg-blue-100 dark:bg-blue-900/20"
-															: "bg-yellow-100 dark:bg-yellow-900/20"
-													)}>
-													{getStatusIcon(alarm.status)}
-												</div>
+												{alarm.branch?.company?.logo ? (
+													<Image
+														src={`${NEXT_PUBLIC_API_URL}${alarm.branch?.company?.logo.replace(
+															"/var/www/html/koppa-security-api",
+															""
+														)}`}
+														width={20}
+														height={20}
+														alt={`${alarm.branch?.company?.name} logo`}
+														className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
+													/>
+												) : (
+													<div
+														className={cn(
+															"p-3 rounded-lg",
+															alarm.status === "ACTIVE"
+																? "bg-red-100 dark:bg-red-900/20"
+																: alarm.status === "ACKNOWLEDGED"
+																? "bg-blue-100 dark:bg-blue-900/20"
+																: "bg-yellow-100 dark:bg-yellow-900/20"
+														)}>
+														{getStatusIcon(alarm.status)}
+													</div>
+												)}
+
 												<div className="space-y-1">
 													<h4 className="font-semibold text-lg">
 														{alarm.type}
 													</h4>
 													<div className="flex items-center gap-2 text-sm text-muted-foreground">
+														<Building className="h-3 w-3" />
+														<span>{alarm.branch?.company?.name}</span>
+													</div>
+													<div className="flex items-center gap-2 text-sm text-muted-foreground">
 														<MapPin className="h-3 w-3" />
-														<span>
-															{alarm.location} • {alarm.branch.name}
-														</span>
+														<span>{alarm.branch.name}</span>
 													</div>
 													<div className="flex items-center gap-2 text-xs text-muted-foreground">
 														<Clock className="h-3 w-3" />
@@ -667,12 +686,7 @@ export default function EnhancedAlarmsPage() {
 															{alarm.status}
 														</Badge>
 													</div>
-													<span className="text-xs text-muted-foreground mt-1">
-														{alarm.status === "ACKNOWLEDGED" &&
-															`By ${alarm.reports[0].acknowledgedBy?.name}`}
-														{alarm.status === "RESOLVED" &&
-															`By ${alarm.reports[0].resolvedBy?.name}`}
-													</span>
+
 													{alarm?.updatedAt && (
 														<p className="text-xs text-muted-foreground">
 															{formatDateTime(alarm.updatedAt)}
@@ -751,15 +765,27 @@ export default function EnhancedAlarmsPage() {
 														{alarm.type}
 													</h4>
 													<div className="flex items-center gap-2 text-sm text-muted-foreground">
+														<Building className="h-3 w-3" />
+														<span>{alarm.branch?.company?.name}</span>
+													</div>
+													<div className="flex items-center gap-2 text-sm text-muted-foreground">
 														<MapPin className="h-3 w-3" />
 														<span>
 															{alarm.location} • {alarm.branch.name}
 														</span>
 													</div>
 													<div className="flex items-center gap-2 text-xs text-muted-foreground">
-														<Calendar className="h-3 w-3" />
-														<span>{formatDateTime(alarm.createdAt)}</span>
+														<Clock className="h-3 w-3" />
+														<span>{formatTimeAgo(alarm.createdAt)}</span>
 													</div>
+													{alarm.reports?.[0]?.assignedTo && (
+														<div className="flex items-center gap-2 text-sm">
+															<Shield className="h-3 w-3 text-blue-500" />
+															<span className="text-blue-600 dark:text-blue-400">
+																{alarm.reports[0].assignedTo.name}
+															</span>
+														</div>
+													)}
 												</div>
 											</div>
 											<div className="flex items-center space-x-3">
@@ -852,7 +878,7 @@ export default function EnhancedAlarmsPage() {
 															? "bg-red-600/30 text-red-200 border border-red-500/50"
 															: selectedAlarm.status === "ACKNOWLEDGED"
 															? "bg-yellow-600/30 text-yellow-200 border border-yellow-500/50"
-															: selectedAlarm.status === "DISPATCHED"
+															: selectedAlarm.status === "RESOLVED"
 															? "bg-blue-600/30 text-blue-200 border border-blue-500/50"
 															: "bg-green-600/30 text-green-200 border border-green-500/50"
 													}>
@@ -1116,18 +1142,6 @@ export default function EnhancedAlarmsPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="space-y-4">
-										{/* <div>
-											<Label className="text-sm font-medium text-slate-400 font-mono">
-												PRIMARY DESCRIPTION
-											</Label>
-											<div className="mt-2 p-4 bg-slate-900/50 rounded-lg border border-slate-600">
-												<p className="text-slate-200 font-mono leading-relaxed">
-													{selectedAlarm.description ||
-														"No description provided for this alarm."}
-												</p>
-											</div>
-										</div> */}
-
 										{selectedAlarm.status === "RESOLVED" && (
 											<div>
 												<Label className="text-sm font-medium text-green-400 font-mono">
@@ -1136,7 +1150,7 @@ export default function EnhancedAlarmsPage() {
 												<div className="mt-2 p-4 bg-green-900/20 rounded-lg border border-green-500/30">
 													<p className="text-green-200 font-mono leading-relaxed">
 														{selectedAlarm.updatedAt
-															? `Alarm successfully resolved in ${selectedAlarm.updatedAt}. Security team confirmed false alarm.`
+															? `Alarm successfully resolved in ${selectedAlarm.updatedAt}.`
 															: "Alarm successfully resolved. No further action required."}
 													</p>
 												</div>
@@ -1178,18 +1192,14 @@ export default function EnhancedAlarmsPage() {
 									<Select
 										value={selectedAlarm.status}
 										onValueChange={(
-											value:
-												| "ACTIVE"
-												| "DISPATCHED"
-												| "RESOLVED"
-												| "ACKNOWLEDGED"
+											value: "ACTIVE" | "RESOLVED" | "ACKNOWLEDGED"
 										) => setSelectedAlarm({ ...selectedAlarm, status: value })}>
 										<SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="ACTIVE">Active</SelectItem>
-											<SelectItem value="DISPATCHED">Dispatched</SelectItem>
+
 											<SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
 											<SelectItem value="RESOLVED">Resolved</SelectItem>
 										</SelectContent>

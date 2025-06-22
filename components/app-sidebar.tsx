@@ -89,29 +89,31 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 				return [
 					...baseItems,
 					{
-						title: "User Management",
-						url: "/dashboard/users",
-						icon: Users,
-						description: "Manage system users",
-						badge: "Admin",
-					},
-					{
-						title: "Company Management",
+						title: "Companies",
 						url: "/dashboard/companies",
 						icon: Building,
 						description: "Manage organizations",
 					},
 					{
-						title: "System Analytics",
+						title: "Uses",
+						url: "/dashboard/users",
+						icon: Users,
+						description: "Manage system users",
+						badge: "Admin",
+					},
+
+					{
+						title: "Alarms",
+						url: "/dashboard/alarms",
+						icon: AlertTriangle,
+						description: "Security alerts",
+						badge: "Live",
+					},
+					{
+						title: "Analytics",
 						url: "/dashboard/analytics",
 						icon: BarChart3,
 						description: "System insights",
-					},
-					{
-						title: "System Settings",
-						url: "/dashboard/settings",
-						icon: Settings,
-						description: "Global configuration",
 					},
 				];
 
@@ -136,12 +138,12 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						icon: Users,
 						description: "Team management",
 					},
-					{
-						title: "Reports",
-						url: "/dashboard/analytics",
-						icon: FileText,
-						description: "Analytics & reports",
-					},
+					// {
+					// 	title: "Reports",
+					// 	url: "/dashboard/analytics",
+					// 	icon: FileText,
+					// 	description: "Analytics & reports",
+					// },
 					{
 						title: "Profile",
 						url: "/dashboard/profile",
@@ -267,14 +269,14 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							"bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
 						description: "Create user account",
 					},
-					{
-						title: "System Health",
-						url: "/dashboard/system",
-						icon: Activity,
-						color:
-							"bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
-						description: "Monitor system",
-					},
+					// {
+					// 	title: "System Health",
+					// 	url: "/dashboard/system",
+					// 	icon: Activity,
+					// 	color:
+					// 		"bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
+					// 	description: "Monitor system",
+					// },
 				];
 			default:
 				return [];
