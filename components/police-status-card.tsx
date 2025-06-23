@@ -212,7 +212,7 @@ export function PoliceStatusCard({
 				<div className="flex items-center justify-between">
 					<CardTitle className="flex items-center space-x-2">
 						<Users className="h-5 w-5 text-blue-400" />
-						<span>Police Personnel Status</span>
+						<span>Police Status</span>
 						<Badge
 							variant="outline"
 							className="border-slate-600 text-slate-300">

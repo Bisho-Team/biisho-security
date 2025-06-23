@@ -128,21 +128,42 @@ export default function EnhancedDashboardOverview() {
 	const [alarmsLoading, setAlarmsLoading] = useState(true);
 	const [connectionStatusData, setConnectionStatusData] = useState<any>(null);
 
-	// WebSocket connection for real-time updates
+	// WebSocket connection with reconnection capability
 	const { isConnected, connect, disconnect } = useWebSocket(token, {
 		autoConnect: true,
 		onConnectionStatusUpdate: (data) => {
-			console.log("📊 Dashboard received connection status update:", data);
+			console.log("📊 Received connection status update:", data);
 			setConnectionStatusData(data);
+
+			// Update the police status card
+			if ((window as any).updatePoliceStatus) {
+				(window as any).updatePoliceStatus(data);
+			}
 		},
 		onConnectionEstablished: (userInfo) => {
-			console.log("🎉 Dashboard connection established:", userInfo);
+			console.log("🎉 Connection established:", userInfo);
+			toast({
+				title: "Connected",
+				description: "Real-time connection established",
+			});
 		},
 		onError: (error) => {
-			console.error("❌ Dashboard WebSocket error:", error);
+			console.error("❌ WebSocket error:", error);
+			toast({
+				title: "Connection Error",
+				description: "WebSocket connection failed",
+				variant: "destructive",
+			});
 		},
 		onClose: (event) => {
-			console.log("🔌 Dashboard WebSocket closed:", event);
+			console.log("🔌 WebSocket closed:", event);
+			if (event.code !== 1000) {
+				toast({
+					title: "Connection Lost",
+					description: "Attempting to reconnect...",
+					variant: "destructive",
+				});
+			}
 		},
 	});
 
