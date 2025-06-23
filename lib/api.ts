@@ -96,11 +96,11 @@ class ApiClient {
 		);
 	}
 
-	// async getPoliceManagerandOperator() {
-	// 	return this.request<any>(
-	// 		"/users/filtered?role=POLICE_MANAGER,OPERATOR&operatorType=POLICE&page=1&limit=20"
-	// 	);
-	// }
+	async getPoliceManagerandOperatorStatus() {
+		return this.request<any>(
+			"/users/filtered?role=POLICE_MANAGER,OPERATOR&operatorType=POLICE&page=1&limit=20"
+		);
+	}
 
 	async createUser(userData: any) {
 		return this.request<{ user: any }>("/users", {
