@@ -219,7 +219,7 @@ export function PoliceStatusCard({
 							{stats.online}/{stats.total}
 						</Badge>
 					</CardTitle>
-					<Button
+					{/* <Button
 						variant="outline"
 						size="sm"
 						onClick={handleRefresh}
@@ -228,7 +228,7 @@ export function PoliceStatusCard({
 						<RefreshCw
 							className={cn("h-4 w-4", refreshing && "animate-spin")}
 						/>
-					</Button>
+					</Button> */}
 				</div>
 			</CardHeader>
 

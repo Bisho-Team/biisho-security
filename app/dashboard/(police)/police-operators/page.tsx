@@ -842,24 +842,7 @@ export default function OperatorsManagementPage() {
 
 											<div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
 												<div className="text-right hidden sm:block">
-													<div className="flex space-x-4 text-sm">
-														{/* <div className="text-center">
-															<p className="font-semibold text-blue-600 dark:text-blue-400">
-																{operator._count?.createdAlarms || 0}
-															</p>
-															<p className="text-xs text-muted-foreground">
-																Alarms
-															</p>
-														</div>
-														<div className="text-center">
-															<p className="font-semibold text-purple-600 dark:text-purple-400">
-																{operator._count?.createdReports || 0}
-															</p>
-															<p className="text-xs text-muted-foreground">
-																Reports
-															</p>
-														</div> */}
-													</div>
+													<div className="flex space-x-4 text-sm"></div>
 												</div>
 
 												<div className="flex space-x-1">
@@ -877,60 +860,6 @@ export default function OperatorsManagementPage() {
 														className="hover:bg-blue-50 dark:hover:bg-blue-950/20">
 														<Edit className="h-4 w-4" />
 													</Button>
-													<Button
-														variant="outline"
-														size="sm"
-														onClick={() =>
-															handleStatusToggle(
-																operator.id,
-																operator.status === "ACTIVE"
-																	? "INACTIVE"
-																	: "ACTIVE"
-															)
-														}
-														className={
-															operator.status === "ACTIVE"
-																? "hover:bg-red-50 dark:hover:bg-red-950/20"
-																: "hover:bg-green-50 dark:hover:bg-green-950/20"
-														}>
-														{operator.status === "ACTIVE" ? (
-															<UserX className="h-4 w-4" />
-														) : (
-															<UserCheck className="h-4 w-4" />
-														)}
-													</Button>
-													{/* <AlertDialog>
-														<AlertDialogTrigger asChild>
-															<Button
-																variant="outline"
-																size="sm"
-																className="hover:bg-red-50 dark:hover:bg-red-950/20">
-																<Trash2 className="h-4 w-4" />
-															</Button>
-														</AlertDialogTrigger>
-														<AlertDialogContent>
-															<AlertDialogHeader>
-																<AlertDialogTitle>
-																	Delete Operator
-																</AlertDialogTitle>
-																<AlertDialogDescription>
-																	Are you sure you want to delete "
-																	{operator.name}"? This action cannot be
-																	undone.
-																</AlertDialogDescription>
-															</AlertDialogHeader>
-															<AlertDialogFooter>
-																<AlertDialogCancel>Cancel</AlertDialogCancel>
-																<AlertDialogAction
-																	onClick={() =>
-																		handleDeleteOperator(operator.id)
-																	}
-																	className="bg-red-600 hover:bg-red-700">
-																	Delete
-																</AlertDialogAction>
-															</AlertDialogFooter>
-														</AlertDialogContent>
-													</AlertDialog> */}
 												</div>
 											</div>
 										</div>
@@ -1249,24 +1178,6 @@ export default function OperatorsManagementPage() {
 										</CardTitle>
 									</CardHeader>
 									<CardContent className="space-y-4">
-										{/* <div className="grid grid-cols-2 gap-4">
-											<div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-												<p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-													{selectedOperator._count?.createdAlarms || 0}
-												</p>
-												<p className="text-sm text-blue-500 dark:text-blue-400">
-													Alarms Created
-												</p>
-											</div>
-											<div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-												<p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-													{selectedOperator._count?.createdReports || 0}
-												</p>
-												<p className="text-sm text-purple-500 dark:text-purple-400">
-													Reports Filed
-												</p>
-											</div>
-										</div> */}
 										<div>
 											<Label className="text-sm text-muted-foreground">
 												Member Since

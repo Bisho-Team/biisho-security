@@ -729,7 +729,7 @@ export function PersistentAlarmModal({
 									)}
 								</Button>
 
-								{onStatusChange && (
+								{/* {onStatusChange && (
 									<Button
 										onClick={() => onStatusChange(currentAlarm.id, "RESOLVED")}
 										disabled={isAcknowledging}
@@ -737,7 +737,7 @@ export function PersistentAlarmModal({
 										<Target className="h-4 w-4 mr-2" />
 										RESOLVE
 									</Button>
-								)}
+								)} */}
 
 								{/* <Button
 									variant="outline"

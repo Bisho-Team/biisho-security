@@ -162,7 +162,7 @@ export default function CreateAlarmPage() {
 
 	// Simplified form data - removed unnecessary fields
 	const [formData, setFormData] = useState<AlarmFormData>({
-		type: "BURGLARY", // Fixed value
+		type: "ACTIVE BURGLARY ALERT", // Fixed value
 		branchId: "",
 		companyId: "",
 		location: "",
@@ -288,51 +288,6 @@ export default function CreateAlarmPage() {
 		return () => clearInterval(healthCheckInterval);
 	}, [isConnected, reconnecting]);
 
-	// Get current location
-	const getCurrentLocation = useCallback(() => {
-		if (!navigator.geolocation) {
-			toast({
-				title: "Error",
-				description: "Geolocation is not supported by this browser",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		setLocationLoading(true);
-		navigator.geolocation.getCurrentPosition(
-			(position) => {
-				const { latitude, longitude } = position.coords;
-				setFormData((prev) => ({
-					...prev,
-					latitude: latitude.toString(),
-					longitude: longitude.toString(),
-					location:
-						prev.location || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-				}));
-				setLocationLoading(false);
-				toast({
-					title: "Location Updated",
-					description: "GPS coordinates have been captured",
-				});
-			},
-			(error) => {
-				console.error("Geolocation error:", error);
-				setLocationLoading(false);
-				toast({
-					title: "Location Error",
-					description: "Unable to get current location",
-					variant: "destructive",
-				});
-			},
-			{
-				enableHighAccuracy: true,
-				timeout: 10000,
-				maximumAge: 60000,
-			}
-		);
-	}, [toast]);
-
 	// Handle form field changes
 	const handleInputChange = (field: keyof AlarmFormData, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -362,8 +317,7 @@ export default function CreateAlarmPage() {
 		const newErrors: Partial<AlarmFormData> = {};
 
 		if (!formData.branchId) newErrors.branchId = "Branch selection is required";
-		if (!formData.description.trim())
-			newErrors.description = "Description is required";
+
 		if (!formData.assignedToId)
 			newErrors.assignedToId = "Police assignment is required";
 
@@ -406,7 +360,7 @@ export default function CreateAlarmPage() {
 
 			// Reset form
 			setFormData({
-				type: "BURGLARY",
+				type: "ACTIVE BURGLARY ALERT",
 				branchId: "",
 				companyId: currentUser?.companyId || "",
 				location: "",
@@ -420,7 +374,7 @@ export default function CreateAlarmPage() {
 			// Redirect after success
 			setTimeout(() => {
 				router.push("/dashboard/alarms");
-			}, 2000);
+			}, 1000);
 		} catch (error: any) {
 			console.error("Failed to create alarm:", error);
 			toast({
@@ -475,7 +429,7 @@ export default function CreateAlarmPage() {
 						) : isConnected ? (
 							<>
 								<Wifi className="h-4 w-4 mr-2" />
-								🟢 REAL-TIME DISPATCH READY
+								🟢 ONLINE
 							</>
 						) : (
 							<>
@@ -488,18 +442,7 @@ export default function CreateAlarmPage() {
 
 				{/* Simplified Header */}
 				<div className="text-center space-y-4">
-					<div className="flex justify-center">
-						{/* <div className="p-6 bg-red-600/20 rounded-2xl border border-red-500/30">
-							<AlertTriangle className="h-12 w-12 text-red-400 mx-auto" />
-						</div> */}
-					</div>
 					<div>
-						{/* <h1 className="text-5xl font-bold bg-gradient-to-r from-red-400 via-red-300 to-red-400 bg-clip-text text-transparent">
-							BURGLARY ALARM
-						</h1>
-						<p className="text-slate-400 text-xl mt-2">
-							Critical Emergency Dispatch System
-						</p> */}
 						{currentUser && (
 							<p className="text-slate-500 text-sm">
 								Operator: {currentUser.name} ({currentUser.role}
@@ -520,7 +463,7 @@ export default function CreateAlarmPage() {
 								<div className="flex items-center justify-center space-x-4">
 									<div className="text-center">
 										<h3 className="text-2xl font-bold text-white">
-											BURGLARY ALARM
+											ACTIVE BURGLARY ALARM
 										</h3>
 									</div>
 								</div>

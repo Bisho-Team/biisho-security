@@ -101,16 +101,12 @@ interface Alarm {
 }
 
 export default function EnhancedAlarmReportsPage() {
-	// State management
-	// const [alarms, setAlarms] = useState<any[]>([]);
-	// const [loading, setLoading] = useState(true);
 	const [updating, setUpdating] = useState(false);
 	const [selectedAlarm, setSelectedAlarm] = useState<any | null>(null);
 	const [resolutionDescription, setResolutionDescription] = useState("");
 	const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
 	const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-	// const [audioEnabled, setAudioEnabled] = useState(true);
-	// const [modalEnabled, setModalEnabled] = useState(true);
+
 	const [currentUser, setCurrentUser] = useState<any | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -144,224 +140,6 @@ export default function EnhancedAlarmReportsPage() {
 			audioService.updateActiveAlarms(alarms);
 		}
 	}, [alarms, audioEnabled]);
-
-	// WebSocket connection with real-time alarm handling
-	// const { isConnected, userInfo } = useWebSocket(token, {
-	// 	autoConnect: true,
-	// 	onAlarmCreated: useCallback(
-	// 		async (newAlarm: any) => {
-	// 			console.log("🚨 New real-time alarm received:", newAlarm);
-
-	// 			// Fetch complete branch data including company information
-	// 			let branchData = {
-	// 				id: newAlarm.branchId,
-	// 				name: newAlarm.branchName || "Unknown Branch",
-	// 				company: undefined,
-	// 			};
-
-	// 			try {
-	// 				// Try to get complete branch data with company info
-	// 				const branchResponse = await apiClient.getBranches();
-	// 				const fullBranch = branchResponse?.find(
-	// 					(b: any) => b.id === newAlarm.branchId
-	// 				);
-	// 				if (fullBranch && fullBranch.company) {
-	// 					branchData = {
-	// 						id: fullBranch.id,
-	// 						name: fullBranch.name,
-	// 						company: {
-	// 							id: fullBranch.company.id,
-	// 							name: fullBranch.company.name,
-	// 							logo: fullBranch.company.logo,
-	// 						},
-	// 					} as any;
-	// 					console.log(
-	// 						"✅ Company data loaded for alarm:",
-	// 						branchData.company
-	// 					);
-	// 				} else {
-	// 					console.warn(
-	// 						"⚠️ No company data found for branch:",
-	// 						newAlarm.branchId
-	// 					);
-	// 				}
-	// 			} catch (error) {
-	// 				console.error("❌ Could not fetch complete branch data:", error);
-	// 			}
-
-	// 			// Transform the alarm data to match our interface
-	// 			const transformedAlarm: any = {
-	// 				id: newAlarm.id,
-	// 				type: newAlarm.type,
-	// 				branchId: newAlarm.branchId,
-	// 				branch: branchData,
-	// 				location: newAlarm.location || "",
-	// 				latitude: newAlarm.latitude || "",
-	// 				longitude: newAlarm.longitude || "",
-	// 				coordinates: {
-	// 					latitude: newAlarm.latitude
-	// 						? Number(newAlarm.latitude)
-	// 						: 9.0192 + (Math.random() - 0.5) * 0.1,
-	// 					longitude: newAlarm.longitude
-	// 						? Number(newAlarm.longitude)
-	// 						: 38.7525 + (Math.random() - 0.5) * 0.1,
-	// 				},
-	// 				status: newAlarm.status || "ACTIVE",
-	// 				severity: newAlarm.severity,
-	// 				description: newAlarm.description,
-	// 				additionalNotes: newAlarm.additionalNotes,
-	// 				createdBy: {
-	// 					id: newAlarm.createdBy?.id || "",
-	// 					name: newAlarm.createdBy || "Unknown User",
-	// 				},
-	// 				createdAt: newAlarm.createdAt,
-	// 				priority: newAlarm.priority || getSeverityPriority(newAlarm.severity),
-	// 				isRealTime: true,
-	// 			};
-
-	// 			// Add to the beginning of alarms list and force re-render
-	// 			setAlarms((prev) => {
-	// 				const exists = prev.some((alarm) => alarm.id === transformedAlarm.id);
-	// 				if (exists) {
-	// 					// Update existing alarm with complete data
-	// 					const updated = prev.map((alarm) =>
-	// 						alarm.id === transformedAlarm.id ? transformedAlarm : alarm
-	// 					);
-	// 					console.log("🔄 Updated existing alarm with company data");
-	// 					return updated;
-	// 				}
-	// 				console.log("➕ Added new alarm with company data");
-	// 				return [transformedAlarm, ...prev];
-	// 			});
-
-	// 			// Small delay to ensure state is updated, then try to fetch company data again if missing
-	// 			if (!branchData.company) {
-	// 				setTimeout(async () => {
-	// 					try {
-	// 						console.log("🔄 Retrying company data fetch...");
-	// 						const retryBranchResponse = await apiClient.getBranches();
-	// 						const retryFullBranch = retryBranchResponse?.find(
-	// 							(b: any) => b.id === newAlarm.branchId
-	// 						);
-
-	// 						if (retryFullBranch && retryFullBranch.company) {
-	// 							setAlarms((prev) =>
-	// 								prev.map((alarm) =>
-	// 									alarm.id === transformedAlarm.id
-	// 										? {
-	// 												...alarm,
-	// 												branch: {
-	// 													...alarm.branch,
-	// 													company: {
-	// 														id: retryFullBranch.company.id,
-	// 														name: retryFullBranch.company.name,
-	// 														logo: retryFullBranch.company.logo,
-	// 													},
-	// 												},
-	// 										  }
-	// 										: alarm
-	// 								)
-	// 							);
-	// 							console.log("✅ Company data loaded on retry");
-	// 						}
-	// 					} catch (retryError) {
-	// 						console.error("❌ Retry failed:", retryError);
-	// 					}
-	// 				}, 1000);
-	// 			}
-
-	// 			// Rest of the existing code for audio alerts, notifications, etc.
-	// 			if (audioEnabled && transformedAlarm.status === "ACTIVE") {
-	// 				audioService.addActiveAlarm(
-	// 					transformedAlarm.id,
-	// 					transformedAlarm.severity
-	// 				);
-	// 			}
-
-	// 			toast({
-	// 				title: `🚨 ${newAlarm.severity} ALARM RECEIVED`,
-	// 				description: `${newAlarm.type} at ${
-	// 					newAlarm.branchName || newAlarm.location
-	// 				}`,
-	// 				variant: newAlarm.severity === "CRITICAL" ? "destructive" : "default",
-	// 				duration: newAlarm.severity === "CRITICAL" ? 15000 : 10000,
-	// 			});
-
-	// 			if ("Notification" in window && Notification.permission === "granted") {
-	// 				new Notification(`🚨 ${newAlarm.severity} EMERGENCY ALARM`, {
-	// 					body: `${newAlarm.type} at ${
-	// 						newAlarm.branchName || newAlarm.location
-	// 					}`,
-	// 					icon: "/favicon.ico",
-	// 					tag: `alarm-${newAlarm.id}`,
-	// 					requireInteraction: newAlarm.severity === "CRITICAL",
-	// 				});
-	// 			}
-	// 		},
-	// 		[audioEnabled, toast]
-	// 	),
-
-	// 	onAlarmUpdated: useCallback(
-	// 		(updatedAlarm: any) => {
-	// 			console.log("🔄 Alarm update received:", updatedAlarm);
-
-	// 			setAlarms((prev) =>
-	// 				prev.map((alarm) => {
-	// 					if (alarm.id === updatedAlarm.id) {
-	// 						const updated = {
-	// 							...alarm,
-	// 							status: updatedAlarm.status,
-	// 							acknowledgedAt: updatedAlarm.acknowledgedAt,
-	// 							completedAt: updatedAlarm.completedAt,
-	// 							resolutionDescription: updatedAlarm.resolutionDescription,
-	// 							isRealTime: true,
-	// 						};
-
-	// 						// Remove from audio alerts if acknowledged or resolved
-	// 						if (updated.status !== "ACTIVE") {
-	// 							audioService.removeActiveAlarm(updated.id);
-	// 						}
-
-	// 						return updated;
-	// 					}
-	// 					return alarm;
-	// 				})
-	// 			);
-
-	// 			// Show update notification
-	// 			if (updatedAlarm.status === "RESOLVED") {
-	// 				toast({
-	// 					title: "✅ Alarm Resolved",
-	// 					description: `Alarm at ${
-	// 						updatedAlarm.branchName || updatedAlarm.location
-	// 					} has been resolved`,
-	// 				});
-	// 			} else if (updatedAlarm.status === "ACKNOWLEDGED") {
-	// 				toast({
-	// 					title: "👁️ Alarm Acknowledged",
-	// 					description: `Alarm at ${
-	// 						updatedAlarm.branchName || updatedAlarm.location
-	// 					} has been acknowledged`,
-	// 				});
-	// 			}
-	// 		},
-	// 		[toast]
-	// 	),
-
-	// 	onSystemNotification: useCallback(
-	// 		(notification: any) => {
-	// 			toast({
-	// 				title: "📢 System Notification",
-	// 				description: notification.message,
-	// 				variant:
-	// 					notification.severity === "error" ? "destructive" : "default",
-	// 			});
-	// 		},
-	// 		[toast]
-	// 	),
-	// });
-
-	// Load current user info
 
 	useEffect(() => {
 		const loadCurrentUser = async () => {
@@ -443,174 +221,6 @@ export default function EnhancedAlarmReportsPage() {
 			setUpdating(false);
 		}
 	};
-
-	// const fetchAlarms = async () => {
-	// 	try {
-	// 		setLoading(true);
-	// 		const response = await apiClient.getAlarms();
-	// 		console.log("Fetched alarms from API:", response);
-
-	// 		const alarmsWithCoords =
-	// 			(response as any).alarms?.map((alarm: any) => ({
-	// 				...alarm,
-	// 				coordinates: {
-	// 					latitude: alarm?.latitude
-	// 						? Number(alarm?.latitude)
-	// 						: 9.0192 + (Math.random() - 0.5) * 0.1,
-	// 					longitude: alarm?.longitude
-	// 						? Number(alarm?.longitude)
-	// 						: 38.7525 + (Math.random() - 0.5) * 0.1,
-	// 				},
-	// 				isRealTime: false,
-	// 			})) || [];
-
-	// 		setAlarms(alarmsWithCoords);
-	// 	} catch (error) {
-	// 		console.error("Failed to fetch alarms:", error);
-	// 		toast({
-	// 			title: "Error",
-	// 			description: "Failed to fetch alarms",
-	// 			variant: "destructive",
-	// 		});
-	// 	} finally {
-	// 		setLoading(false);
-	// 	}
-	// };
-
-	// const acknowledgeAlarm = async (alarmId: string) => {
-	// 	try {
-	// 		setUpdating(true);
-	// 		await apiClient.updateAlarm(alarmId, {
-	// 			status: "ACKNOWLEDGED",
-	// 			acknowledgedAt: new Date().toISOString(),
-	// 		});
-
-	// 		toast({
-	// 			title: "Success",
-	// 			description: "Alarm acknowledged successfully",
-	// 		});
-
-	// 		// Update local state immediately
-	// 		setAlarms((prev) =>
-	// 			prev.map((alarm) =>
-	// 				alarm.id === alarmId
-	// 					? {
-	// 							...alarm,
-	// 							status: "ACKNOWLEDGED" as const,
-	// 							acknowledgedAt: new Date().toISOString(),
-	// 					  }
-	// 					: alarm
-	// 			)
-	// 		);
-
-	// 		// Remove from audio alerts
-	// 		audioService.removeActiveAlarm(alarmId);
-	// 	} catch (error: any) {
-	// 		toast({
-	// 			title: "Error",
-	// 			description: error.message || "Failed to acknowledge alarm",
-	// 			variant: "destructive",
-	// 		});
-	// 	} finally {
-	// 		setUpdating(false);
-	// 	}
-	// };
-
-	// const resolveAlarm = async () => {
-	// 	if (!selectedAlarm) return;
-
-	// 	try {
-	// 		setUpdating(true);
-	// 		await apiClient.updateAlarm(selectedAlarm.id, {
-	// 			status: "RESOLVED",
-	// 			completedAt: new Date().toISOString(),
-	// 			resolutionDescription,
-	// 		});
-
-	// 		toast({
-	// 			title: "Success",
-	// 			description: "Alarm resolved successfully",
-	// 		});
-
-	// 		// Update local state
-	// 		setAlarms((prev) =>
-	// 			prev.map((alarm) =>
-	// 				alarm.id === selectedAlarm.id
-	// 					? {
-	// 							...alarm,
-	// 							status: "RESOLVED" as const,
-	// 							completedAt: new Date().toISOString(),
-	// 							resolutionDescription,
-	// 					  }
-	// 					: alarm
-	// 			)
-	// 		);
-
-	// 		// Remove from audio alerts
-	// 		audioService.removeActiveAlarm(selectedAlarm.id);
-
-	// 		setIsResolutionDialogOpen(false);
-	// 		setResolutionDescription("");
-	// 		setSelectedAlarm(null);
-	// 	} catch (error: any) {
-	// 		toast({
-	// 			title: "Error",
-	// 			description: error.message || "Failed to resolve alarm",
-	// 			variant: "destructive",
-	// 		});
-	// 	} finally {
-	// 		setUpdating(false);
-	// 	}
-	// };
-
-	// const changeAlarmStatus = async (
-	// 	alarmId: string,
-	// 	newStatus: "ACTIVE" | "ACKNOWLEDGED" | "RESOLVED"
-	// ) => {
-	// 	try {
-	// 		setUpdating(true);
-	// 		const updateData: any = {
-	// 			status: newStatus,
-	// 		};
-
-	// 		if (newStatus === "ACKNOWLEDGED") {
-	// 			updateData.acknowledgedAt = new Date().toISOString();
-	// 		} else if (newStatus === "RESOLVED") {
-	// 			updateData.completedAt = new Date().toISOString();
-	// 			updateData.resolutionDescription =
-	// 				resolutionDescription || "Status changed from modal";
-	// 		}
-
-	// 		await apiClient.updateAlarm(alarmId, updateData);
-
-	// 		toast({
-	// 			title: "Status Updated",
-	// 			description: `Alarm status changed to ${newStatus}`,
-	// 		});
-
-	// 		// Update local state
-	// 		setAlarms((prev) =>
-	// 			prev.map((alarm) =>
-	// 				alarm.id === alarmId ? { ...alarm, ...updateData } : alarm
-	// 			)
-	// 		);
-
-	// 		// Remove from audio alerts if not active
-	// 		if (newStatus !== "ACTIVE") {
-	// 			audioService.removeActiveAlarm(alarmId);
-	// 		}
-
-	// 		setIsDetailsDialogOpen(false);
-	// 	} catch (error: any) {
-	// 		toast({
-	// 			title: "Error",
-	// 			description: error.message || "Failed to update alarm status",
-	// 			variant: "destructive",
-	// 		});
-	// 	} finally {
-	// 		setUpdating(false);
-	// 	}
-	// };
 
 	const viewAlarmDetails = (alarmId: string) => {
 		const alarm = alarms.find((a) => a.id === alarmId);
@@ -699,36 +309,6 @@ export default function EnhancedAlarmReportsPage() {
 	}, [alarms, searchTerm, statusFilter, severityFilter, activeTab]);
 	// Statistics
 	const alarmStats = getAlarmStats();
-
-	// Statistics
-	// const alarmStats = useMemo(() => {
-	// 	const total = alarms.length;
-	// 	const active = alarms.filter((a) => a.status === "ACTIVE").length;
-	// 	const acknowledged = alarms.filter(
-	// 		(a) => a.status === "ACKNOWLEDGED"
-	// 	).length;
-	// 	const resolved = alarms.filter((a) => a.status === "RESOLVED").length;
-	// 	const critical = alarms.filter((a) => a.severity === "CRITICAL").length;
-	// 	const realTime = alarms.filter((a) => a.isRealTime).length;
-
-	// 	return { total, active, acknowledged, resolved, critical, realTime };
-	// }, [alarms]);
-
-	// if (loading) {
-	// 	return (
-	// 		<div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-6">
-	// 			<div className="space-y-6">
-	// 				<Skeleton className="h-32 w-full bg-slate-800" />
-	// 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-	// 					{[...Array(4)].map((_, i) => (
-	// 						<Skeleton key={i} className="h-24 bg-slate-800" />
-	// 					))}
-	// 				</div>
-	// 				<Skeleton className="h-96 w-full bg-slate-800" />
-	// 			</div>
-	// 		</div>
-	// 	);
-	// }
 
 	const copyToClipboard = (text: any) => {
 		navigator.clipboard.writeText(text);
@@ -864,26 +444,6 @@ export default function EnhancedAlarmReportsPage() {
 							{/* Alert Controls */}
 							<div className="flex items-center space-x-2">
 								{/* Audio Toggle */}
-								{/* <Button
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										setAudioEnabled(!audioEnabled);
-										audioService.setEnabled(!audioEnabled);
-									}}
-									className={cn(
-										"border-slate-600",
-										audioEnabled
-											? "bg-blue-600/20 text-blue-400"
-											: "bg-slate-600/20 text-slate-400"
-									)}
-									title="Toggle audio alerts">
-									{audioEnabled ? (
-										<Volume2 className="h-4 w-4" />
-									) : (
-										<VolumeX className="h-4 w-4" />
-									)}
-								</Button> */}
 
 								{/* Modal Toggle */}
 								<Button
@@ -899,26 +459,6 @@ export default function EnhancedAlarmReportsPage() {
 									title="Toggle persistent modal alerts">
 									<Monitor className="h-4 w-4" />
 								</Button>
-
-								{/* Emergency Stop Button */}
-								{/* <Button
-									variant="outline"
-									size="sm"
-									onClick={() => audioService.forceStopAllAlerts()}
-									className="border-red-600 bg-red-600/20 text-red-400 hover:bg-red-600/40"
-									title="Emergency stop all audio alerts">
-									<StopCircle className="h-4 w-4" />
-								</Button> */}
-
-								{/* Test Audio Button */}
-								{/* <Button
-									variant="outline"
-									size="sm"
-									onClick={() => audioService.testAllSounds()}
-									className="border-slate-600 bg-purple-600/20 text-purple-400 hover:bg-purple-600/40"
-									title="Test all alarm sounds">
-									<TestTube className="h-4 w-4" />
-								</Button> */}
 							</div>
 
 							{/* Refresh Button */}
@@ -941,17 +481,9 @@ export default function EnhancedAlarmReportsPage() {
 						<div className="bg-red-900/30 border-2 border-red-500/50 rounded-lg p-4 animate-pulse">
 							<div className="flex items-center justify-between">
 								<div className="flex items-center space-x-3">
-									{/* <div className="flex items-center space-x-2">
-										{audioService.isCurrentlyPlaying() ? (
-											<Play className="h-5 w-5 text-red-400 animate-pulse" />
-										) : (
-											<Pause className="h-5 w-5 text-red-400" />
-										)}
-										<Volume2 className="h-5 w-5 text-red-400" />
-									</div> */}
 									<div>
 										<span className="text-red-400 font-bold">
-											🚨 ALERTS ACTIVE
+											ALERTS ACTIVE
 										</span>
 										<p className="text-red-300 text-sm">
 											{audioService.getActiveAlarmCount()} active alarm
@@ -962,25 +494,6 @@ export default function EnhancedAlarmReportsPage() {
 							</div>
 						</div>
 					)}
-
-					{/* Persistent Modal Status */}
-					{/* {modalEnabled && alarmStats.active > 0 && (
-						<div className="bg-purple-900/30 border-2 border-purple-500/50 rounded-lg p-4">
-							<div className="flex items-center space-x-3">
-								<Monitor className="h-5 w-5 text-purple-400" />
-								<div>
-									<span className="text-purple-400 font-bold">
-										📱 MODAL ALERTS ACTIVE
-									</span>
-									<p className="text-purple-300 text-sm">
-										{alarmStats.active} alarm
-										{alarmStats.active !== 1 ? "s" : ""} showing persistent
-										modal
-									</p>
-								</div>
-							</div>
-						</div>
-					)} */}
 				</div>
 
 				{/* Ready Status */}
@@ -1359,156 +872,10 @@ export default function EnhancedAlarmReportsPage() {
 								{/* Hover Effect Overlay */}
 								<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 							</Card>
-							// <Card
-							// 	key={alarm.id}
-							// 	className={cn(
-							// 		"bg-slate-900/50 border-slate-700 transition-all duration-300",
-							// 		alarm.isRealTime &&
-							// 			"ring-2 ring-cyan-500/50 shadow-lg shadow-cyan-500/20",
-							// 		alarm.severity === "CRITICAL" &&
-							// 			"border-red-500/50 bg-red-900/10",
-							// 		alarm.status === "ACTIVE" &&
-							// 			(audioEnabled || modalEnabled) &&
-							// 			"ring-1 ring-red-400/30"
-							// 	)}>
-							// 	<CardContent className="p-6">
-							// 		<div className="flex items-start justify-between">
-							// 			<div className="flex-1 space-y-3">
-							// 				<div className="flex items-center space-x-3">
-							// 					{/* <Badge className={getSeverityColor(alarm.severity)}>
-							// 						{alarm.severity}
-							// 					</Badge> */}
-							// 					<img
-							// 						src={`http://8436insight.et:3003${(
-							// 							alarm as any
-							// 						)?.branch?.company?.logo.replace(
-							// 							"/var/www/html/koppa-security-api",
-							// 							""
-							// 						)}`}
-							// 						alt={`${alarm.branch.company?.name} logo`}
-							// 						className="h-14 w-14 object-cover rounded-xl shadow-lg border border-slate-600"
-							// 					/>
-
-							// 					<h2>{alarm.branch.company?.name}</h2>
-							// 					<h2>{alarm.branch?.name}</h2>
-
-							// 					<Badge
-							// 						variant="outline"
-							// 						className={getStatusColor(alarm.status)}>
-							// 						{alarm.status}
-							// 					</Badge>
-							// 					{/* {alarm.isRealTime && (
-							// 						<Badge className="bg-cyan-600 text-white animate-pulse">
-							// 							<Radio className="h-3 w-3 mr-1" />
-							// 							LIVE
-							// 						</Badge>
-							// 					)}
-							// 					{alarm.status === "ACTIVE" && audioEnabled && (
-							// 						<Badge className="bg-red-600 text-white animate-pulse">
-							// 							<Volume2 className="h-3 w-3 mr-1" />
-							// 							AUDIO
-							// 						</Badge>
-							// 					)} */}
-							// 					{/* {alarm.status === "ACTIVE" && modalEnabled && (
-							// 						<Badge className="bg-purple-600 text-white animate-pulse">
-							// 							<Monitor className="h-3 w-3 mr-1" />
-							// 							MODAL
-							// 						</Badge>
-							// 					)} */}
-							// 					<Badge className="bg-gray-800 text-white">
-							// 						<span className="text-sm text-slate-400 font-mono">
-							// 							#{alarm.id.slice(-8)}
-							// 						</span>
-							// 					</Badge>
-							// 				</div>
-
-							// 				<div>
-							// 					<h3 className="text-lg font-semibold text-white mb-1">
-							// 						{alarm.type}
-							// 					</h3>
-							// 					<p className="text-slate-300">{alarm.description}</p>
-							// 				</div>
-
-							// 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-							// 					<div className="flex items-center space-x-2">
-							// 						<MapPin className="h-4 w-4 text-slate-400" />
-							// 						<span className="text-slate-300">
-							// 							{alarm.branch.name}
-							// 						</span>
-							// 					</div>
-							// 					<div className="flex items-center space-x-2">
-							// 						<Users className="h-4 w-4 text-slate-400" />
-							// 						<span className="text-slate-300">
-							// 							{alarm.createdBy.name}
-							// 						</span>
-							// 					</div>
-							// 					<div className="flex items-center space-x-2">
-							// 						<Calendar className="h-4 w-4 text-slate-400" />
-							// 						<span className="text-slate-300">
-							// 							{new Date(alarm.createdAt).toLocaleString()}
-							// 						</span>
-							// 					</div>
-							// 				</div>
-
-							// 				{alarm.location && (
-							// 					<div className="flex items-center space-x-2 text-sm">
-							// 						<Navigation className="h-4 w-4 text-slate-400" />
-							// 						<span className="text-slate-300">
-							// 							{alarm.location}
-							// 						</span>
-							// 					</div>
-							// 				)}
-							// 			</div>
-
-							// 			<div className="flex flex-col space-y-2 ml-4">
-							// 				<Button
-							// 					variant="outline"
-							// 					size="sm"
-							// 					onClick={() => viewAlarmDetails(alarm.id)}
-							// 					className="border-slate-600 bg-slate-600/20 text-slate-300 hover:bg-slate-600/40">
-							// 					<Eye className="h-4 w-4 mr-2" />
-							// 					Details
-							// 				</Button>
-
-							// 				{alarm.status === "ACTIVE" && (
-							// 					<Button
-							// 						variant="outline"
-							// 						size="sm"
-							// 						onClick={() => acknowledgeAlarm(alarm.id)}
-							// 						disabled={updating}
-							// 						className="border-yellow-600 bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/40">
-							// 						{updating ? (
-							// 							<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-							// 						) : (
-							// 							<CheckCircle className="h-4 w-4 mr-2" />
-							// 						)}
-							// 						Acknowledge
-							// 					</Button>
-							// 				)}
-
-							// 				{alarm.status === "ACKNOWLEDGED" && (
-							// 					<Button
-							// 						variant="outline"
-							// 						size="sm"
-							// 						onClick={() => {
-							// 							setSelectedAlarm(alarm);
-							// 							setIsResolutionDialogOpen(true);
-							// 						}}
-							// 						className="border-green-600 bg-green-600/20 text-green-300 hover:bg-green-600/40">
-							// 						<Target className="h-4 w-4 mr-2" />
-							// 						Resolve
-							// 					</Button>
-							// 				)}
-							// 			</div>
-							// 		</div>
-							// 	</CardContent>
-							// </Card>
 						))
 					)}
 				</div>
 
-				{/* Alarm Details Dialog */}
-				{/* Enhanced Alarm Details Dialog */}
 				<Dialog
 					open={isDetailsDialogOpen}
 					onOpenChange={setIsDetailsDialogOpen}>
@@ -1911,7 +1278,7 @@ export default function EnhancedAlarmReportsPage() {
 											</Button>
 										)}
 
-										{selectedAlarm.status === "RESOLVED" && (
+										{/* {selectedAlarm.status === "RESOLVED" && (
 											<Button
 												onClick={() =>
 													changeAlarmStatus(selectedAlarm.id, "ACTIVE")
@@ -1925,7 +1292,7 @@ export default function EnhancedAlarmReportsPage() {
 												)}
 												Reopen
 											</Button>
-										)}
+										)} */}
 
 										<Button
 											variant="outline"
