@@ -11,6 +11,9 @@ import branchRoutes from "./routes/branches";
 import alarmRoutes from "./routes/alarms";
 import reportRoutes from "./routes/reports";
 import analyticsRoutes from "./routes/analytics";
+import profileRoutes from "./routes/profile"
+import path from "path";
+
 
 dotenv.config();
 
@@ -19,14 +22,31 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT;
 
 // Middleware
-app.use(helmet());
+// app.use(helmet());
+app.use(helmet({
+	crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
+  
 app.use(
 	cors({
-		origin: process.env.FRONTEND_URL,
-		credentials: true,
+		// origin: process.env.FRONTEND_URL,
+		// credentials: true,
+		// allowedHeaders: ["Content-Type", "Authorization"]
+		origin: "*", // or specify exact frontend URL
+		methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+		allowedHeaders: ["Content-Type", "Authorization"]
 	})
 );
 
+// app.use("/uploads", cors({ origin: "*" }));
+// Serve static files from /uploads
+// This one is correct (with headers)
+app.use("/uploads", express.static(path.join(__dirname, 'uploads'), {
+	setHeaders: (res, path) => {
+	  res.set('Access-Control-Allow-Origin', '*');
+	  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+	}
+  }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,6 +55,7 @@ app.get("/health", (req, res) => {
 	res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
@@ -42,7 +63,10 @@ app.use("/api/branches", branchRoutes);
 app.use("/api/alarms", alarmRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/profile", profileRoutes);
 
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Error handling
 app.use(
 	(

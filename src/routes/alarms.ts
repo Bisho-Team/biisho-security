@@ -16,11 +16,11 @@ const createAlarmSchema = z.object({
 	type: z.string().min(1),
 	branchId: z.string().min(1),
 	companyId: z.string().optional(), 
-	location: z.string().optional(),
-	longitude: z.string().optional(),
-	latitude: z.string().optional(),
+	// location: z.string().optional(),
+	// longitude: z.string().optional(),
+	// latitude: z.string().optional(),
 	severity: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
-	description: z.string().min(1),
+	description: z.string().optional(),
 	additionalNotes: z.string().optional(),
 	assignedToId: z.string().min(1), // Police Manager ID
 });
@@ -30,7 +30,10 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 	try {
 		const user = req?.user!;
 		const where: any = {};
-		if (user.role === "OFFICE_MANAGER" || user.role === "OPERATOR") {
+		console.log({
+			user: req?.user
+		})
+		if ((user.role === "OFFICE_MANAGER") || (user?.role === "OPERATOR" && user?.operatorType === "OFFICE")) {
 			if (!user.companyId) {
 				return res.status(400).json({ error: "User is not assigned to a company" });
 			}
@@ -40,22 +43,83 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 		}
 		const alarms = await prisma.alarm.findMany({
 			where,
+			orderBy: {
+				createdAt: 'desc',
+			},
 			include: {
-				branch: {
+			  branch: {
+				select: {
+				  name: true,
+				  locationType: true,
+				  gpsAddress: true,
+				  city: true,
+				  subCity: true,
+				  woreda: true,
+				  country: true,
+				  managerName: true,
+				  phoneNumber: true,
+				  contactNumber1: true,
+				  company: {
 					select: {
-						name: true,
-						company: {
-							select: {
-								name: true,
-							},
-						},
+					  name: true,
+					  logo: true,
 					},
+				  },
 				},
-				createdBy: {
-					select: { id: true, name: true, email: true },
+			  },
+			  createdBy: {
+				select: { id: true, name: true, email: true },
+			  },
+			  reports: {
+				select: {
+				  id: true,
+				  status: true,
+				  acknowledgedAt: true,
+				  completedAt: true,
+				  resolutionDescription: true,
+				  notes: true,
+				  assignedTo: {
+					select: { id: true, name: true },
+				  },
+				  acknowledgedBy: {
+					select: { id: true, name: true },
+				  },
+				  resolvedBy: {
+					select: { id: true, name: true },
+				  },
 				},
+			  },
 			},
 		});
+		  
+		// const alarms = await prisma.alarm.findMany({
+		// 	where,
+		// 	include: {
+		// 		branch: {
+		// 			select: {
+		// 				name: true,
+		// 				locationType: true,
+		// 				gpsAddress: true,
+		// 				city: true,
+		// 				subCity: true,
+		// 				woreda: true,
+		// 				country: true,
+		// 				managerName: true,
+		// 				phoneNumber: true,
+		// 				contactNumber1: true,
+		// 				company: {
+		// 					select: {
+		// 						name: true,
+		// 						logo:true
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 		createdBy: {
+		// 			select: { id: true, name: true, email: true },
+		// 		},
+		// 	},
+		// });
 		res.json({ alarms });
 	} catch (error) {
 		console.error(error);
@@ -67,24 +131,82 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 router.get("/:id", authenticate, async (req, res) => {
 	const { id } = req.params;
 	try {
+		// const alarm = await prisma.alarm.findUnique({
+		// 	where: { id },
+		// 	include: {
+		// 		branch: {
+		// 			select: {
+		// 				name: true,
+		// 				locationType: true,
+		// 				gpsAddress: true,
+		// 				city: true,
+		// 				subCity: true,
+		// 				woreda: true,
+		// 				country: true,
+		// 				managerName: true,
+		// 				phoneNumber: true,
+		// 				contactNumber1: true,
+		// 				company: {
+		// 					select: {
+		// 						name: true,
+		// 						logo:true
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 		createdBy: {
+		// 			select: { id: true, name: true, email: true },
+		// 		},
+		// 	},
+		// });
 		const alarm = await prisma.alarm.findUnique({
 			where: { id },
 			include: {
-				branch: {
+			  branch: {
+				select: {
+				  name: true,
+				  locationType: true,
+				  gpsAddress: true,
+				  city: true,
+				  subCity: true,
+				  woreda: true,
+				  country: true,
+				  managerName: true,
+				  phoneNumber: true,
+				  contactNumber1: true,
+				  company: {
 					select: {
-						name: true,
-						company: {
-							select: {
-								name: true,
-							},
-						},
+					  name: true,
+					  logo: true,
 					},
+				  },
 				},
-				createdBy: {
-					select: { id: true, name: true, email: true },
+			  },
+			  createdBy: {
+				select: { id: true, name: true, email: true },
+			  },
+			  reports: {
+				select: {
+				  id: true,
+				  status: true,
+				  acknowledgedAt: true,
+				  completedAt: true,
+				  resolutionDescription: true,
+				  notes: true,
+				  assignedTo: {
+					select: { id: true, name: true },
+				  },
+				  acknowledgedBy: {
+					select: { id: true, name: true },
+				  },
+				  resolvedBy: {
+					select: { id: true, name: true },
+				  },
 				},
+			  },
 			},
 		});
+
 		if (!alarm) {
 			return res.status(404).json({ error: "Alarm not found" });
 		}
@@ -110,6 +232,7 @@ router.post(
 			// Verify branch access
 			const branch = await prisma.branch.findUnique({
 				where: { id: data.branchId },
+			
 			});
 
 			if (!branch) {
@@ -145,11 +268,12 @@ router.post(
 					type: data.type,
 					branchId: data.branchId,
 					companyId: req.user!.companyId!,
-					location: data.location,
-					longitude: data.longitude,
-					latitude: data.latitude,
+					location: branch.gpsAddress || "",
+					latitude:branch.latitude || "",
+					longitude:branch.longitude || "",
+                    status:"ACTIVE",
 					severity: data.severity,
-					description: data.description,
+					description: data?.description || "No Description",
 					additionalNotes: data.additionalNotes,
 					createdById: req.user!.id,
 				},
@@ -168,6 +292,18 @@ router.post(
 				data: {
 					alarmId: alarm.id,
 					assignedToId: data.assignedToId,
+					companyName: branch.companyName,
+					companyLogo: branch.logo || null,
+					branchName: branch.name || null,
+					branchlocationType: branch.locationType || null,
+					branchgpsAddress: branch.gpsAddress || null,
+					branchcity: branch.city || null,
+					branchsubCity: branch.subCity || null,
+					branchworeda: branch.woreda || null,
+					branchcountry: branch.country || null,
+					branchmanagerName: branch.managerName || null,
+					branchphoneNumber: branch.phoneNumber || null,
+					branchcontactNumber1: branch.contactNumber1 || null,
 				},
 			});
 
@@ -177,6 +313,20 @@ router.post(
 				type: alarm.type,
 				branchId: alarm.branchId,
 				branchName: alarm.branch.name,
+
+				companyLogo: branch.logo,
+				companyName: branch.companyName,
+
+				branchlocationType: branch.locationType || null,
+				branchgpsAddress: branch.gpsAddress || null,
+				branchcity: branch.city || null,
+				branchsubCity: branch.subCity || null,
+				branchworeda: branch.woreda || null,
+				branchcountry: branch.country || null,
+				branchmanagerName: branch.managerName || null,
+				branchphoneNumber: branch.phoneNumber || null,
+				branchcontactNumber1: branch.contactNumber1 || null,
+				
 				location: alarm.location,
 				longitude: alarm.longitude,
 				latitude: alarm.latitude,
@@ -203,13 +353,16 @@ router.post(
 	}
 );
 
-// Update an alarm
-router.put("/:id", authenticate, async (req, res) => {
+
+router.put("/:id", authenticate, async (req: AuthRequest, res) => {
 	const { id } = req.params;
 	try {
-		const { type, branchId, location, severity, description, status } =
-			req.body;
+		const { type, branchId, location, severity, description, status } = req.body;
+		const user = req.user!;
 
+		console.log({ type, branchId, location, severity, description, status })
+
+		// Find alarm
 		const alarm = await prisma.alarm.findUnique({
 			where: { id },
 			include: {
@@ -233,11 +386,12 @@ router.put("/:id", authenticate, async (req, res) => {
 			return res.status(404).json({ error: "Alarm not found" });
 		}
 
+		// Update Alarm base info
 		const updatedAlarm = await prisma.alarm.update({
-			where: { id: id },
+			where: { id },
 			data: {
 				type,
-				branchId: branchId ? branchId : alarm.branchId,
+				branchId: branchId ?? alarm.branchId,
 				location,
 				severity,
 				description,
@@ -248,9 +402,7 @@ router.put("/:id", authenticate, async (req, res) => {
 					select: {
 						name: true,
 						company: {
-							select: {
-								name: true,
-							},
+							select: { name: true },
 						},
 					},
 				},
@@ -260,7 +412,39 @@ router.put("/:id", authenticate, async (req, res) => {
 			},
 		});
 
-		// Broadcast update to police managers
+		// Find latest AlarmReport
+		const latestReport = await prisma.alarmReport.findFirst({
+			where: { alarmId: id },
+			orderBy: { createdAt: "desc" },
+		});
+
+		console.log({
+			latestReport
+		})
+
+		// Update AlarmReport status info if available
+		if (latestReport) {
+			const reportUpdateData: any = {};
+
+			if (status === "ACKNOWLEDGED" && !latestReport.acknowledgedById) {
+				reportUpdateData.acknowledgedById = user.id;
+				reportUpdateData.acknowledgedAt = new Date();
+			}
+
+			if (status === "RESOLVED" && !latestReport.resolvedById) {
+				reportUpdateData.resolvedById = user.id;
+				reportUpdateData.completedAt = new Date();
+			}
+
+			if (Object.keys(reportUpdateData).length > 0) {
+				await prisma.alarmReport.update({
+					where: { id: latestReport.id },
+					data: reportUpdateData,
+				});
+			}
+		}
+
+		// Broadcast update
 		broadcastAlarmUpdate({
 			id: updatedAlarm.id,
 			type: updatedAlarm.type,
@@ -269,7 +453,7 @@ router.put("/:id", authenticate, async (req, res) => {
 			location: updatedAlarm.location,
 			severity: updatedAlarm.severity,
 			description: updatedAlarm.description,
-			createdBy: `${updatedAlarm.createdBy.name} `,
+			createdBy: updatedAlarm.createdBy.name,
 			createdAt: updatedAlarm.createdAt,
 			status: updatedAlarm.status,
 		});
@@ -280,6 +464,94 @@ router.put("/:id", authenticate, async (req, res) => {
 		res.status(500).json({ error: "Failed to update alarm" });
 	}
 });
+
+// // Update an alarm
+// router.put("/:id", authenticate, async (req, res) => {
+// 	const { id } = req.params;
+// 	try {
+// 		const { type, branchId, location, severity, description, status } =
+// 			req.body;
+
+// 		const alarm = await prisma.alarm.findUnique({
+// 			where: { id },
+// 			include: {
+// 				branch: {
+// 					select: {
+// 						name: true,
+// 						company: {
+// 							select: {
+// 								name: true,
+// 							},
+// 						},
+// 					},
+// 				},
+// 				createdBy: {
+// 					select: { id: true, name: true, email: true },
+// 				},
+// 			},
+// 		});
+
+// 		if (!alarm) {
+// 			return res.status(404).json({ error: "Alarm not found" });
+// 		}
+
+// 		const updatedAlarm = await prisma.alarm.update({
+// 			where: { id: id },
+// 			data: {
+// 				type,
+// 				branchId: branchId ? branchId : alarm.branchId,
+// 				location,
+// 				severity,
+// 				description,
+// 				status,
+// 			},
+// 			include: {
+// 				branch: {
+// 					select: {
+// 						name: true,
+// 						company: {
+// 							select: {
+// 								name: true,
+// 							},
+// 						},
+// 					},
+// 				},
+// 				createdBy: {
+// 					select: { id: true, name: true, email: true },
+// 				},
+// 			},
+// 		});
+
+// 		if (status === "ACKNOWLEDGED" && !alarm.acknowledgedById) {
+// 			data.acknowledgedById = req.user.id; // Authenticated user
+// 			data.acknowledgedAt = new Date();
+// 		  }
+		  
+// 		  if (status === "COMPLETED" && !report.resolvedById) {
+// 			data.resolvedById = req.user.id; // Authenticated user
+// 			data.completedAt = new Date();
+// 		  }
+
+// 		// Broadcast update to police managers
+// 		broadcastAlarmUpdate({
+// 			id: updatedAlarm.id,
+// 			type: updatedAlarm.type,
+// 			branchId: updatedAlarm.branchId,
+// 			branchName: updatedAlarm.branch.name,
+// 			location: updatedAlarm.location,
+// 			severity: updatedAlarm.severity,
+// 			description: updatedAlarm.description,
+// 			createdBy: `${updatedAlarm.createdBy.name} `,
+// 			createdAt: updatedAlarm.createdAt,
+// 			status: updatedAlarm.status,
+// 		});
+
+// 		res.json({ alarm: updatedAlarm });
+// 	} catch (error) {
+// 		console.error(error);
+// 		res.status(500).json({ error: "Failed to update alarm" });
+// 	}
+// });
 
 // Delete an alarm
 router.delete("/:id", authenticate, async (req, res) => {

@@ -11,6 +11,9 @@ export interface AuthRequest extends Request {
     email: string
     role: Role
     companyId?: string
+    operatorType?:string
+    companyName?:string
+    comapnyLogo?:string
   }
 }
 
@@ -49,8 +52,46 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         role: true,
         companyId: true,
         status: true,
-      },
-    })
+        operatorType: true,
+        company: {
+          select:{
+            name:true,
+            logo:true
+          }
+        }, // selects all fields of the related company
+        managedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+          //  id: 'cmbc08fbl0000eyprqm39rfsl',
+      //  name: 'Koppa Security Solutions',
+      //  description: 'Leading security company in Ethiopia',
+      //  logo: '/var/www/html/koppa-security-api/uploads/koppa.png',
+      //  type: 'Security',
+      //  industry: 'Security',
+      //  address: 'Legehar',
+      //  city: 'Addis Ababa',
+      //  country: 'Ethiopia',
+      //  phone: '0913224492',
+      //  email: 'legehar@gmail.com',
+      //  status: 'ACTIVE',
+      //  createdAt: 2025-05-31T09:03:23.025Z,
+      //  updatedAt: 2025-05-31T09:03:23.025Z
+    // const user = await prisma.user.findUnique({
+    //   where: { id: decoded.id },
+    //   include: {
+		// 		company: true,
+		// 		managedBy: {
+		// 			select: { id: true, name: true, email: true },
+		// 		},
+		// 	},
+    // })
 
     if (!user || user.status !== "ACTIVE") {
       return res.status(401).json({ error: "Invalid token or user inactive." })

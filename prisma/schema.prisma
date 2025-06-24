@@ -19,6 +19,11 @@ model User {
   status    UserStatus @default(ACTIVE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  dateOfBirth DateTime?
+  address   String?
+  phone     String?
+  emergencyContact String?
+  emergencyPhone String?
 
   // Relations
   companyId String?
@@ -42,6 +47,8 @@ model User {
 
   @@map("users")
   CompanyOperator CompanyOperator[]
+  acknowledgedAlarmReports AlarmReport[] @relation("AcknowledgedBy")
+  resolvedAlarmReports AlarmReport[] @relation("ResolvedBy")
 }
 
 model Company {
@@ -74,6 +81,8 @@ model Branch {
   name        String
   locationType String
   gpsAddress  String?
+  latitude   String?
+  longitude String?
   city        String
   subCity     String?
   woreda      String?
@@ -86,6 +95,10 @@ model Branch {
   status      BranchStatus @default(ACTIVE)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  companyName    String?   // <- required
+  logo           String?  // <- optional
+
 
   // Relations
   companyId String
@@ -168,12 +181,32 @@ model AlarmReport {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  companyName   String?
+  companyLogo   String?
+
+  branchName  String?
+  branchlocationType  String?
+  branchgpsAddress  String?
+  branchcity String?
+  branchsubCity String?
+  branchworeda String?
+  branchcountry String?
+  branchmanagerName String?
+  branchphoneNumber String?
+  branchcontactNumber1 String?
+
   // Relations
   alarmId String
   alarm   Alarm  @relation(fields: [alarmId], references: [id])
   
   assignedToId String
   assignedTo   User   @relation(fields: [assignedToId], references: [id])
+
+  acknowledgedById String?      
+  acknowledgedBy   User?        @relation("AcknowledgedBy", fields: [acknowledgedById], references: [id])
+
+  resolvedById     String?      
+  resolvedBy       User?        @relation("ResolvedBy", fields: [resolvedById], references: [id])
 
   @@map("alarm_reports")
 }
@@ -219,13 +252,11 @@ enum AlarmSeverity {
 enum AlarmStatus {
   ACTIVE
   ACKNOWLEDGED
-  DISPATCHED
   RESOLVED
 }
 
 enum ReportStatus {
   PENDING
   ACKNOWLEDGED
-  INVESTIGATING
   COMPLETED
 }

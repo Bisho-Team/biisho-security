@@ -23,11 +23,11 @@ const createAlarmSchema = zod_1.z.object({
     type: zod_1.z.string().min(1),
     branchId: zod_1.z.string().min(1),
     companyId: zod_1.z.string().optional(),
-    location: zod_1.z.string().optional(),
-    longitude: zod_1.z.string().optional(),
-    latitude: zod_1.z.string().optional(),
+    // location: z.string().optional(),
+    // longitude: z.string().optional(),
+    // latitude: z.string().optional(),
     severity: zod_1.z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
-    description: zod_1.z.string().min(1),
+    description: zod_1.z.string().optional(),
     additionalNotes: zod_1.z.string().optional(),
     assignedToId: zod_1.z.string().min(1), // Police Manager ID
 });
@@ -36,7 +36,10 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
     try {
         const user = req === null || req === void 0 ? void 0 : req.user;
         const where = {};
-        if (user.role === "OFFICE_MANAGER" || user.role === "OPERATOR") {
+        console.log({
+            user: req === null || req === void 0 ? void 0 : req.user
+        });
+        if ((user.role === "OFFICE_MANAGER") || ((user === null || user === void 0 ? void 0 : user.role) === "OPERATOR" && (user === null || user === void 0 ? void 0 : user.operatorType) === "OFFICE")) {
             if (!user.companyId) {
                 return res.status(400).json({ error: "User is not assigned to a company" });
             }
@@ -46,13 +49,26 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
         }
         const alarms = yield prisma.alarm.findMany({
             where,
+            orderBy: {
+                createdAt: 'desc',
+            },
             include: {
                 branch: {
                     select: {
                         name: true,
+                        locationType: true,
+                        gpsAddress: true,
+                        city: true,
+                        subCity: true,
+                        woreda: true,
+                        country: true,
+                        managerName: true,
+                        phoneNumber: true,
+                        contactNumber1: true,
                         company: {
                             select: {
                                 name: true,
+                                logo: true,
                             },
                         },
                     },
@@ -60,8 +76,55 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
                 createdBy: {
                     select: { id: true, name: true, email: true },
                 },
+                reports: {
+                    select: {
+                        id: true,
+                        status: true,
+                        acknowledgedAt: true,
+                        completedAt: true,
+                        resolutionDescription: true,
+                        notes: true,
+                        assignedTo: {
+                            select: { id: true, name: true },
+                        },
+                        acknowledgedBy: {
+                            select: { id: true, name: true },
+                        },
+                        resolvedBy: {
+                            select: { id: true, name: true },
+                        },
+                    },
+                },
             },
         });
+        // const alarms = await prisma.alarm.findMany({
+        // 	where,
+        // 	include: {
+        // 		branch: {
+        // 			select: {
+        // 				name: true,
+        // 				locationType: true,
+        // 				gpsAddress: true,
+        // 				city: true,
+        // 				subCity: true,
+        // 				woreda: true,
+        // 				country: true,
+        // 				managerName: true,
+        // 				phoneNumber: true,
+        // 				contactNumber1: true,
+        // 				company: {
+        // 					select: {
+        // 						name: true,
+        // 						logo:true
+        // 					},
+        // 				},
+        // 			},
+        // 		},
+        // 		createdBy: {
+        // 			select: { id: true, name: true, email: true },
+        // 		},
+        // 	},
+        // });
         res.json({ alarms });
     }
     catch (error) {
@@ -73,21 +136,78 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
 router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
+        // const alarm = await prisma.alarm.findUnique({
+        // 	where: { id },
+        // 	include: {
+        // 		branch: {
+        // 			select: {
+        // 				name: true,
+        // 				locationType: true,
+        // 				gpsAddress: true,
+        // 				city: true,
+        // 				subCity: true,
+        // 				woreda: true,
+        // 				country: true,
+        // 				managerName: true,
+        // 				phoneNumber: true,
+        // 				contactNumber1: true,
+        // 				company: {
+        // 					select: {
+        // 						name: true,
+        // 						logo:true
+        // 					},
+        // 				},
+        // 			},
+        // 		},
+        // 		createdBy: {
+        // 			select: { id: true, name: true, email: true },
+        // 		},
+        // 	},
+        // });
         const alarm = yield prisma.alarm.findUnique({
             where: { id },
             include: {
                 branch: {
                     select: {
                         name: true,
+                        locationType: true,
+                        gpsAddress: true,
+                        city: true,
+                        subCity: true,
+                        woreda: true,
+                        country: true,
+                        managerName: true,
+                        phoneNumber: true,
+                        contactNumber1: true,
                         company: {
                             select: {
                                 name: true,
+                                logo: true,
                             },
                         },
                     },
                 },
                 createdBy: {
                     select: { id: true, name: true, email: true },
+                },
+                reports: {
+                    select: {
+                        id: true,
+                        status: true,
+                        acknowledgedAt: true,
+                        completedAt: true,
+                        resolutionDescription: true,
+                        notes: true,
+                        assignedTo: {
+                            select: { id: true, name: true },
+                        },
+                        acknowledgedBy: {
+                            select: { id: true, name: true },
+                        },
+                        resolvedBy: {
+                            select: { id: true, name: true },
+                        },
+                    },
                 },
             },
         });
@@ -142,11 +262,12 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "O
                 type: data.type,
                 branchId: data.branchId,
                 companyId: req.user.companyId,
-                location: data.location,
-                longitude: data.longitude,
-                latitude: data.latitude,
+                location: branch.gpsAddress || "",
+                latitude: branch.latitude || "",
+                longitude: branch.longitude || "",
+                status: "ACTIVE",
                 severity: data.severity,
-                description: data.description,
+                description: (data === null || data === void 0 ? void 0 : data.description) || "No Description",
                 additionalNotes: data.additionalNotes,
                 createdById: req.user.id,
             },
@@ -163,6 +284,18 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "O
             data: {
                 alarmId: alarm.id,
                 assignedToId: data.assignedToId,
+                companyName: branch.companyName,
+                companyLogo: branch.logo || null,
+                branchName: branch.name || null,
+                branchlocationType: branch.locationType || null,
+                branchgpsAddress: branch.gpsAddress || null,
+                branchcity: branch.city || null,
+                branchsubCity: branch.subCity || null,
+                branchworeda: branch.woreda || null,
+                branchcountry: branch.country || null,
+                branchmanagerName: branch.managerName || null,
+                branchphoneNumber: branch.phoneNumber || null,
+                branchcontactNumber1: branch.contactNumber1 || null,
             },
         });
         // Broadcast to police managers via WebSocket
@@ -171,6 +304,17 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "O
             type: alarm.type,
             branchId: alarm.branchId,
             branchName: alarm.branch.name,
+            companyLogo: branch.logo,
+            companyName: branch.companyName,
+            branchlocationType: branch.locationType || null,
+            branchgpsAddress: branch.gpsAddress || null,
+            branchcity: branch.city || null,
+            branchsubCity: branch.subCity || null,
+            branchworeda: branch.woreda || null,
+            branchcountry: branch.country || null,
+            branchmanagerName: branch.managerName || null,
+            branchphoneNumber: branch.phoneNumber || null,
+            branchcontactNumber1: branch.contactNumber1 || null,
             location: alarm.location,
             longitude: alarm.longitude,
             latitude: alarm.latitude,
@@ -195,11 +339,13 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "O
         res.status(500).json({ error: "Failed to create alarm" });
     }
 }));
-// Update an alarm
 router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
         const { type, branchId, location, severity, description, status } = req.body;
+        const user = req.user;
+        console.log({ type, branchId, location, severity, description, status });
+        // Find alarm
         const alarm = yield prisma.alarm.findUnique({
             where: { id },
             include: {
@@ -221,11 +367,12 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
         if (!alarm) {
             return res.status(404).json({ error: "Alarm not found" });
         }
+        // Update Alarm base info
         const updatedAlarm = yield prisma.alarm.update({
-            where: { id: id },
+            where: { id },
             data: {
                 type,
-                branchId: branchId ? branchId : alarm.branchId,
+                branchId: branchId !== null && branchId !== void 0 ? branchId : alarm.branchId,
                 location,
                 severity,
                 description,
@@ -236,9 +383,7 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                     select: {
                         name: true,
                         company: {
-                            select: {
-                                name: true,
-                            },
+                            select: { name: true },
                         },
                     },
                 },
@@ -247,7 +392,33 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                 },
             },
         });
-        // Broadcast update to police managers
+        // Find latest AlarmReport
+        const latestReport = yield prisma.alarmReport.findFirst({
+            where: { alarmId: id },
+            orderBy: { createdAt: "desc" },
+        });
+        console.log({
+            latestReport
+        });
+        // Update AlarmReport status info if available
+        if (latestReport) {
+            const reportUpdateData = {};
+            if (status === "ACKNOWLEDGED" && !latestReport.acknowledgedById) {
+                reportUpdateData.acknowledgedById = user.id;
+                reportUpdateData.acknowledgedAt = new Date();
+            }
+            if (status === "RESOLVED" && !latestReport.resolvedById) {
+                reportUpdateData.resolvedById = user.id;
+                reportUpdateData.completedAt = new Date();
+            }
+            if (Object.keys(reportUpdateData).length > 0) {
+                yield prisma.alarmReport.update({
+                    where: { id: latestReport.id },
+                    data: reportUpdateData,
+                });
+            }
+        }
+        // Broadcast update
         broadcastAlarmUpdate({
             id: updatedAlarm.id,
             type: updatedAlarm.type,
@@ -256,7 +427,7 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
             location: updatedAlarm.location,
             severity: updatedAlarm.severity,
             description: updatedAlarm.description,
-            createdBy: `${updatedAlarm.createdBy.name} `,
+            createdBy: updatedAlarm.createdBy.name,
             createdAt: updatedAlarm.createdAt,
             status: updatedAlarm.status,
         });
@@ -267,6 +438,86 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
         res.status(500).json({ error: "Failed to update alarm" });
     }
 }));
+// // Update an alarm
+// router.put("/:id", authenticate, async (req, res) => {
+// 	const { id } = req.params;
+// 	try {
+// 		const { type, branchId, location, severity, description, status } =
+// 			req.body;
+// 		const alarm = await prisma.alarm.findUnique({
+// 			where: { id },
+// 			include: {
+// 				branch: {
+// 					select: {
+// 						name: true,
+// 						company: {
+// 							select: {
+// 								name: true,
+// 							},
+// 						},
+// 					},
+// 				},
+// 				createdBy: {
+// 					select: { id: true, name: true, email: true },
+// 				},
+// 			},
+// 		});
+// 		if (!alarm) {
+// 			return res.status(404).json({ error: "Alarm not found" });
+// 		}
+// 		const updatedAlarm = await prisma.alarm.update({
+// 			where: { id: id },
+// 			data: {
+// 				type,
+// 				branchId: branchId ? branchId : alarm.branchId,
+// 				location,
+// 				severity,
+// 				description,
+// 				status,
+// 			},
+// 			include: {
+// 				branch: {
+// 					select: {
+// 						name: true,
+// 						company: {
+// 							select: {
+// 								name: true,
+// 							},
+// 						},
+// 					},
+// 				},
+// 				createdBy: {
+// 					select: { id: true, name: true, email: true },
+// 				},
+// 			},
+// 		});
+// 		if (status === "ACKNOWLEDGED" && !alarm.acknowledgedById) {
+// 			data.acknowledgedById = req.user.id; // Authenticated user
+// 			data.acknowledgedAt = new Date();
+// 		  }
+// 		  if (status === "COMPLETED" && !report.resolvedById) {
+// 			data.resolvedById = req.user.id; // Authenticated user
+// 			data.completedAt = new Date();
+// 		  }
+// 		// Broadcast update to police managers
+// 		broadcastAlarmUpdate({
+// 			id: updatedAlarm.id,
+// 			type: updatedAlarm.type,
+// 			branchId: updatedAlarm.branchId,
+// 			branchName: updatedAlarm.branch.name,
+// 			location: updatedAlarm.location,
+// 			severity: updatedAlarm.severity,
+// 			description: updatedAlarm.description,
+// 			createdBy: `${updatedAlarm.createdBy.name} `,
+// 			createdAt: updatedAlarm.createdAt,
+// 			status: updatedAlarm.status,
+// 		});
+// 		res.json({ alarm: updatedAlarm });
+// 	} catch (error) {
+// 		console.error(error);
+// 		res.status(500).json({ error: "Failed to update alarm" });
+// 	}
+// });
 // Delete an alarm
 router.delete("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;

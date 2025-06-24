@@ -39,9 +39,11 @@ const registerSchema = zod_1.z.object({
     password: zod_1.z.string().min(6),
     role: zod_1.z.enum(["OFFICE_MANAGER", "POLICE_MANAGER"]),
     companyId: zod_1.z.string().optional(),
+    comapany: zod_1.z.string().optional(),
 });
 // Login
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     try {
         const { email, password } = loginSchema.parse(req.body);
         const user = yield prisma.user.findUnique({
@@ -63,6 +65,9 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
             id: user.id,
             email: user.email,
             role: user.role,
+            roleType: user.operatorType ? user.operatorType : "",
+            companyName: (_b = (_a = (user)) === null || _a === void 0 ? void 0 : _a.company) === null || _b === void 0 ? void 0 : _b.name,
+            companyLogo: (_d = (_c = (user)) === null || _c === void 0 ? void 0 : _c.company) === null || _d === void 0 ? void 0 : _d.logo,
         });
         const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
         res.json({

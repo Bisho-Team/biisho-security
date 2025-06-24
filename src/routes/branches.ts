@@ -6,10 +6,13 @@ import { authenticate, authorize, type AuthRequest } from "../lib/auth";
 const router = express.Router();
 const prisma = new PrismaClient();
 
+
 const createBranchSchema = z.object({
 	name: z.string().min(1),
 	locationType: z.string().min(1),
 	gpsAddress: z.string().optional(),
+	longitude: z.string().optional(),
+	latitude: z.string().optional(),
 	city: z.string().min(1),
 	subCity: z.string().optional(),
 	woreda: z.string().optional(),
@@ -85,6 +88,7 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 				company: {
 					select: {
 						id: true,
+						logo:true,
 						name: true,
 						_count: {
 							select: {
@@ -137,6 +141,7 @@ router.get("/:id", authenticate, async (req: AuthRequest, res) => {
 						  CompanyOperator: true,
 						},
 					  },
+					  logo:true
 					},
 				  },
 				createdBy: {
@@ -184,43 +189,107 @@ router.get("/:id", authenticate, async (req: AuthRequest, res) => {
 	}
 });
 
+
 // Create branch
 router.post(
 	"/",
 	authenticate,
 	authorize("OFFICE_MANAGER", "SUPER_ADMIN"),
 	async (req: AuthRequest, res) => {
-		try {
-			const data = createBranchSchema.parse(req.body);
+	  try {
+		console.log({
+			body:req.body,
 
-			const branch = await prisma.branch.create({
-				data: {
-					...data,
-					companyId: req.user!.companyId!,
-					createdById: req.user!.id,
-				},
-				include: {
-					company: true,
-					createdBy: {
-						select: { id: true, name: true, email: true },
-					},
-				},
-			});
+		})
+		const data = createBranchSchema.parse(req.body);
 
-			res.status(201).json({
-				message: "Branch created successfully",
-				branch,
-			});
-		} catch (error) {
-			if (error instanceof z.ZodError) {
-				return res
-					.status(400)
-					.json({ error: "Validation failed", details: error.errors });
-			}
-			res.status(500).json({ error: "Failed to create branch" });
+		console.log({
+			data
+			
+		})
+  
+		const company = await prisma.company.findUnique({
+		  where: { id: req.user!.companyId! },
+		  select: {
+			name: true,
+			logo: true,
+		  },
+		});
+  
+		if (!company) {
+		  return res.status(400).json({ error: "Invalid company ID" });
 		}
+  
+		const branch = await prisma.branch.create({
+		  data: {
+			...data,
+			companyId: req.user!.companyId!,
+			createdById: req.user!.id,
+			companyName: company.name,
+			logo: company.logo || null,
+		  },
+		  include: {
+			company: true,
+			createdBy: {
+			  select: { id: true, name: true, email: true },
+			},
+		  },
+		});
+  
+		res.status(201).json({
+		  message: "Branch created successfully",
+		  branch,
+		});
+	  } catch (error) {
+		if (error instanceof z.ZodError) {
+		  return res
+			.status(400)
+			.json({ error: "Validation failed", details: error.errors });
+		}
+  
+		console.error("Branch creation error:", error);
+		res.status(500).json({ error: "Failed to create branch" });
+	  }
 	}
-);
+  );
+  
+// // Create branch
+// router.post(
+// 	"/",
+// 	authenticate,
+// 	authorize("OFFICE_MANAGER", "SUPER_ADMIN"),
+// 	async (req: AuthRequest, res) => {
+// 		try {
+// 			const data = createBranchSchema.parse(req.body);
+
+// 			const branch = await prisma.branch.create({
+// 				data: {
+// 					...data,
+// 					companyId: req.user!.companyId!,
+// 					createdById: req.user!.id,
+// 				},
+// 				include: {
+// 					company: true,
+// 					createdBy: {
+// 						select: { id: true, name: true, email: true },
+// 					},
+// 				},
+// 			});
+
+// 			res.status(201).json({
+// 				message: "Branch created successfully",
+// 				branch,
+// 			});
+// 		} catch (error) {
+// 			if (error instanceof z.ZodError) {
+// 				return res
+// 					.status(400)
+// 					.json({ error: "Validation failed", details: error.errors });
+// 			}
+// 			res.status(500).json({ error: "Failed to create branch" });
+// 		}
+// 	}
+// );
 
 // Update branch
 router.put("/:id", authenticate, async (req: AuthRequest, res) => {

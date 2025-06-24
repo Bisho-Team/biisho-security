@@ -23,6 +23,7 @@ const registerSchema = z.object({
 	password: z.string().min(6),
 	role: z.enum(["OFFICE_MANAGER", "POLICE_MANAGER"]),
 	companyId: z.string().optional(),
+	comapany:z.string().optional(),
 });
 
 // Login
@@ -52,8 +53,10 @@ router.post("/login", async (req, res) => {
 			id: user.id,
 			email: user.email,
 			role: user.role,
+			roleType: user.operatorType ? user.operatorType : "",
+			companyName:(user)?.company?.name,
+			companyLogo:(user)?.company?.logo,
 		});
-
 		const { password: _, ...userWithoutPassword } = user;
 
 		res.json({

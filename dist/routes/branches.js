@@ -22,6 +22,8 @@ const createBranchSchema = zod_1.z.object({
     name: zod_1.z.string().min(1),
     locationType: zod_1.z.string().min(1),
     gpsAddress: zod_1.z.string().optional(),
+    longitude: zod_1.z.string().optional(),
+    latitude: zod_1.z.string().optional(),
     city: zod_1.z.string().min(1),
     subCity: zod_1.z.string().optional(),
     woreda: zod_1.z.string().optional(),
@@ -90,6 +92,7 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
                 company: {
                     select: {
                         id: true,
+                        logo: true,
                         name: true,
                         _count: {
                             select: {
@@ -136,6 +139,7 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                                 CompanyOperator: true,
                             },
                         },
+                        logo: true
                     },
                 },
                 createdBy: {
@@ -179,9 +183,25 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
 // Create branch
 router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "SUPER_ADMIN"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log({
+            body: req.body,
+        });
         const data = createBranchSchema.parse(req.body);
+        console.log({
+            data
+        });
+        const company = yield prisma.company.findUnique({
+            where: { id: req.user.companyId },
+            select: {
+                name: true,
+                logo: true,
+            },
+        });
+        if (!company) {
+            return res.status(400).json({ error: "Invalid company ID" });
+        }
         const branch = yield prisma.branch.create({
-            data: Object.assign(Object.assign({}, data), { companyId: req.user.companyId, createdById: req.user.id }),
+            data: Object.assign(Object.assign({}, data), { companyId: req.user.companyId, createdById: req.user.id, companyName: company.name, logo: company.logo || null }),
             include: {
                 company: true,
                 createdBy: {
@@ -200,9 +220,45 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "S
                 .status(400)
                 .json({ error: "Validation failed", details: error.errors });
         }
+        console.error("Branch creation error:", error);
         res.status(500).json({ error: "Failed to create branch" });
     }
 }));
+// // Create branch
+// router.post(
+// 	"/",
+// 	authenticate,
+// 	authorize("OFFICE_MANAGER", "SUPER_ADMIN"),
+// 	async (req: AuthRequest, res) => {
+// 		try {
+// 			const data = createBranchSchema.parse(req.body);
+// 			const branch = await prisma.branch.create({
+// 				data: {
+// 					...data,
+// 					companyId: req.user!.companyId!,
+// 					createdById: req.user!.id,
+// 				},
+// 				include: {
+// 					company: true,
+// 					createdBy: {
+// 						select: { id: true, name: true, email: true },
+// 					},
+// 				},
+// 			});
+// 			res.status(201).json({
+// 				message: "Branch created successfully",
+// 				branch,
+// 			});
+// 		} catch (error) {
+// 			if (error instanceof z.ZodError) {
+// 				return res
+// 					.status(400)
+// 					.json({ error: "Validation failed", details: error.errors });
+// 			}
+// 			res.status(500).json({ error: "Failed to create branch" });
+// 		}
+// 	}
+// );
 // Update branch
 router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
