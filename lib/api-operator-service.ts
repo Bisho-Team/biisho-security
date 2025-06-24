@@ -170,7 +170,7 @@ export const apiService = {
 			id: string,
 			status: "ACTIVE" | "INACTIVE" | "SUSPENDED"
 		) => {
-			return apiService.patch(`/api/users/${id}/status`, { status });
+			return apiService.patch(`/users/${id}/status`, { status });
 		},
 
 		// Delete operator

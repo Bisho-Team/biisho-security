@@ -860,6 +860,60 @@ export default function OperatorsManagementPage() {
 														className="hover:bg-blue-50 dark:hover:bg-blue-950/20">
 														<Edit className="h-4 w-4" />
 													</Button>
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() =>
+															handleStatusToggle(
+																operator.id,
+																operator.status === "ACTIVE"
+																	? "INACTIVE"
+																	: "ACTIVE"
+															)
+														}
+														className={
+															operator.status === "ACTIVE"
+																? "hover:bg-red-50 dark:hover:bg-red-950/20"
+																: "hover:bg-green-50 dark:hover:bg-green-950/20"
+														}>
+														{operator.status === "ACTIVE" ? (
+															<UserX className="h-4 w-4" />
+														) : (
+															<UserCheck className="h-4 w-4" />
+														)}
+													</Button>
+													{/* <AlertDialog>
+														<AlertDialogTrigger asChild>
+															<Button
+																variant="outline"
+																size="sm"
+																className="hover:bg-red-50 dark:hover:bg-red-950/20">
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</AlertDialogTrigger>
+														<AlertDialogContent>
+															<AlertDialogHeader>
+																<AlertDialogTitle>
+																	Delete Operator
+																</AlertDialogTitle>
+																<AlertDialogDescription>
+																	Are you sure you want to delete "
+																	{operator.name}"? This action cannot be
+																	undone.
+																</AlertDialogDescription>
+															</AlertDialogHeader>
+															<AlertDialogFooter>
+																<AlertDialogCancel>Cancel</AlertDialogCancel>
+																<AlertDialogAction
+																	onClick={() =>
+																		handleDeleteOperator(operator.id)
+																	}
+																	className="bg-red-600 hover:bg-red-700">
+																	Delete
+																</AlertDialogAction>
+															</AlertDialogFooter>
+														</AlertDialogContent>
+													</AlertDialog> */}
 												</div>
 											</div>
 										</div>
