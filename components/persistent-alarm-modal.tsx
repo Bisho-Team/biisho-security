@@ -351,7 +351,7 @@ export function PersistentAlarmModal({
 								<div className="flex items-center space-x-3">
 									<AlertTriangle className="h-6 w-6 text-red-400 animate-pulse" />
 									<div className="flex-1 min-w-0">
-										{currentAlarm.branch?.company?.logo && (
+										{currentAlarm.branch?.company?.logo ? (
 											<div className="flex items-start flex-col space-x-2 mt-1">
 												<img
 													src={`http://8436insight.et:3003${currentAlarm.branch.company.logo.replace(
@@ -367,6 +367,14 @@ export function PersistentAlarmModal({
 												<div className="flex flex-col">
 													<span className="text font-bold">
 														{currentAlarm.branch.company.name}
+													</span>
+												</div>
+											</div>
+										) : (
+											<div className="flex items-start flex-col space-x-2 mt-1">
+												<div className="flex flex-col">
+													<span className="text font-bold">
+														{currentAlarm?.branch?.company?.name}
 													</span>
 												</div>
 											</div>

@@ -658,21 +658,24 @@ export default function EnhancedAlarmReportsPage() {
 											<div className="flex items-center space-x-4">
 												{/* Company Logo */}
 												<div className="relative">
-													<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-1 shadow-lg">
-														<img
-															src={`http://8436insight.et:3003${(
-																alarm as any
-															)?.branch?.company?.logo.replace(
-																"/var/www/html/koppa-security-api",
-																""
-															)}`}
-															alt={`${alarm.branch.company?.name} logo`}
-															className="w-full h-full object-cover rounded-xl"
-															onError={(e) => {
-																e.currentTarget.style.display = "none";
-															}}
-														/>
-													</div>
+													{(alarm as any)?.branch?.company?.logo && (
+														<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-1 shadow-lg">
+															<img
+																src={`http://8436insight.et:3003${(
+																	alarm as any
+																)?.branch?.company?.logo.replace(
+																	"/var/www/html/koppa-security-api",
+																	""
+																)}`}
+																alt={`${alarm.branch.company?.name} logo`}
+																className="w-full h-full object-cover rounded-xl"
+																onError={(e) => {
+																	e.currentTarget.style.display = "none";
+																}}
+															/>
+														</div>
+													)}
+
 													{/* Severity Badge on Logo */}
 													<div
 														className={cn(
