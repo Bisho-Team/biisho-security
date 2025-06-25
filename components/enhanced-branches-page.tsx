@@ -823,8 +823,9 @@ export default function EnhancedLocationsPage() {
 
 									<div className="grid grid-cols-2 gap-4">
 										<div className="space-y-2">
-											<Label htmlFor="subCity">Sub-City</Label>
+											<Label htmlFor="subCity">Sub-City *</Label>
 											<Select
+												required
 												value={formData.subCity}
 												onValueChange={(value) =>
 													handleInputChange("subCity", value)
@@ -847,8 +848,9 @@ export default function EnhancedLocationsPage() {
 										</div>
 
 										<div className="space-y-2">
-											<Label htmlFor="woreda">Woreda</Label>
+											<Label htmlFor="woreda">Woreda *</Label>
 											<Select
+												required
 												value={formData.woreda}
 												onValueChange={(value) =>
 													handleInputChange("woreda", value)

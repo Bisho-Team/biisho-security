@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	Dialog,
 	DialogContent,
@@ -16,17 +14,6 @@ import {
 	DialogTrigger,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
 	Select,
 	SelectContent,
@@ -39,23 +26,35 @@ import { useToast } from "@/hooks/use-toast";
 import {
 	Users,
 	Plus,
-	Edit,
-	Eye,
 	UserCheck,
-	Building,
+	Loader2,
+	Eye,
+	Edit,
+	UserX,
 	Mail,
 	Phone,
+	Trash2,
+	Trash2Icon,
+	User,
+	UserCog,
 	Search,
 	Filter,
-	UserX,
-	Loader2,
-	AlertTriangle,
-	Clock,
-	UserCog,
-	Trash2,
-	User,
 } from "lucide-react";
 import { apiService } from "@/lib/api-service";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Badge } from "./ui/badge";
+
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 interface UserType {
 	role: string;
@@ -326,17 +325,29 @@ export default function EnhancedOperatorsPage() {
 		phone: string;
 		password?: string;
 	}) => {
-		const requiredFields = ["name", "email", "phone"];
-		const missingFields = requiredFields.filter(
-			(field) => !data[field as keyof typeof data]
-		);
-
-		if (missingFields.length > 0) {
+		// Check for empty required fields
+		if (!data.name.trim()) {
 			toast({
-				title: "Missing required fields",
-				description: `Please fill in all required fields: ${missingFields.join(
-					", "
-				)}`,
+				title: "Name Required",
+				description: "Please enter the operator's full name.",
+				variant: "destructive",
+			});
+			return false;
+		}
+
+		if (!data.email.trim()) {
+			toast({
+				title: "Email Required",
+				description: "Please enter a valid email address.",
+				variant: "destructive",
+			});
+			return false;
+		}
+
+		if (!data.phone.trim()) {
+			toast({
+				title: "Phone Required",
+				description: "Please enter a phone number.",
 				variant: "destructive",
 			});
 			return false;
@@ -346,29 +357,54 @@ export default function EnhancedOperatorsPage() {
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(data.email)) {
 			toast({
-				title: "Invalid email",
-				description: "Please enter a valid email address",
+				title: "Invalid Email Format",
+				description:
+					"Please enter a valid email address (e.g., operator@company.com).",
 				variant: "destructive",
 			});
 			return false;
 		}
 
 		// Validate phone number format
-		const phoneRegex = /^\+?[0-9]{10,15}$/;
-		if (!phoneRegex.test(data.phone)) {
+		const phoneRegex = /^\+?[0-9\s\-$$$$]{10,15}$/;
+		if (!phoneRegex.test(data.phone.replace(/\s/g, ""))) {
 			toast({
-				title: "Invalid phone number",
-				description: "Please enter a valid phone number",
+				title: "Invalid Phone Number",
+				description:
+					"Please enter a valid phone number (10-15 digits, with optional country code).",
 				variant: "destructive",
 			});
 			return false;
 		}
 
 		// Validate password if it's a new operator
-		if (data.password !== undefined && data.password.length < 8) {
+		if (data.password !== undefined) {
+			if (!data.password.trim()) {
+				toast({
+					title: "Password Required",
+					description: "Please enter a password for the new operator.",
+					variant: "destructive",
+				});
+				return false;
+			}
+
+			if (data.password.length < 8) {
+				toast({
+					title: "Password Too Short",
+					description:
+						"Password must be at least 8 characters long for security.",
+					variant: "destructive",
+				});
+				return false;
+			}
+		}
+
+		// Validate operator type
+		if (!newOperator.operatorType) {
 			toast({
-				title: "Invalid password",
-				description: "Password must be at least 8 characters long",
+				title: "Operator Type Required",
+				description:
+					"Please select whether this is an Office or Police operator.",
 				variant: "destructive",
 			});
 			return false;
@@ -383,15 +419,27 @@ export default function EnhancedOperatorsPage() {
 		setIsSubmitting(true);
 
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
-			const operator: Operator = {
-				id: `op-${Date.now()}`,
+			const operatorData = {
 				name: newOperator.name,
 				email: newOperator.email,
 				phone: newOperator.phone,
 				password: newOperator.password,
+				role: "OPERATOR",
+				operatorType: newOperator.operatorType,
+				companyId: user.companyId,
+			};
+
+			console.log("Creating operator with data:", operatorData);
+
+			// Call the actual API
+			const response = await apiService.post("/users", operatorData);
+
+			// Success - add the new operator to the list
+			const newOperatorData: Operator = {
+				id: (response as any).user?.id || `op-${Date.now()}`,
+				name: newOperator.name,
+				email: newOperator.email,
+				phone: newOperator.phone,
 				status: "ACTIVE",
 				role: "OPERATOR",
 				managedById: user.id,
@@ -403,10 +451,7 @@ export default function EnhancedOperatorsPage() {
 				lastActive: new Date().toISOString(),
 			};
 
-			// In a real app, you would call the API here
-			await apiService.post("/users", operator);
-
-			setOperators([operator, ...operators]);
+			setOperators([newOperatorData, ...operators]);
 			setNewOperator({
 				name: "",
 				email: "",
@@ -421,13 +466,104 @@ export default function EnhancedOperatorsPage() {
 				title: "Success",
 				description: "Operator created successfully",
 			});
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to create operator:", error);
-			toast({
-				title: "Error",
-				description: "Failed to create operator",
-				variant: "destructive",
-			});
+
+			// Handle different types of API errors
+			if (error.response?.data) {
+				const errorData = error.response.data;
+				console.log({
+					errorData,
+				});
+
+				// Handle validation errors (400 status)
+				if (error.response.status === 400 && errorData.details) {
+					const validationErrors = errorData.details
+						.map((err: any) => {
+							const field = err.path?.join(".") || "field";
+							return `${field}: ${err.message}`;
+						})
+						.join(", ");
+
+					toast({
+						title: "Validation Error",
+						description: `Please check the following fields: ${validationErrors}`,
+						variant: "destructive",
+					});
+				}
+				// Handle authorization errors (403 status)
+				else if (error.response.status === 403) {
+					if (errorData.error === "You can only create operators") {
+						toast({
+							title: "Permission Denied",
+							description:
+								"As a manager, you can only create operator accounts, not other managers or admins.",
+							variant: "destructive",
+						});
+					} else if (errorData.error === "Insufficient permissions") {
+						toast({
+							title: "Access Denied",
+							description:
+								"You don't have permission to create new users. Please contact your administrator.",
+							variant: "destructive",
+						});
+					} else {
+						toast({
+							title: "Permission Error",
+							description:
+								errorData.error ||
+								"You don't have permission to perform this action.",
+							variant: "destructive",
+						});
+					}
+				}
+				// Handle duplicate email errors (409 status)
+				else if (error.response.status === 409) {
+					toast({
+						title: "Email Already Exists",
+						description:
+							"An operator with this email address already exists. Please use a different email.",
+						variant: "destructive",
+					});
+				}
+				// Handle server errors (500 status)
+				else if (error.response.status === 500) {
+					toast({
+						title: "Server Error",
+						description:
+							"Something went wrong on our end. Please try again in a few moments.",
+						variant: "destructive",
+					});
+				}
+				// Handle other API errors
+				else {
+					toast({
+						title: "Error",
+						description:
+							errorData.error ||
+							errorData.message ||
+							"Failed to create operator. Please try again.",
+						variant: "destructive",
+					});
+				}
+			}
+			// Handle network errors or other non-API errors
+			else if (error.code === "NETWORK_ERROR" || !error.response) {
+				toast({
+					title: "ERROR",
+					description: "Something went wrong",
+					variant: "destructive",
+				});
+			}
+			// Handle unknown errors
+			else {
+				toast({
+					title: "Unexpected Error",
+					description:
+						"An unexpected error occurred. Please try again or contact support if the problem persists.",
+					variant: "destructive",
+				});
+			}
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -680,8 +816,9 @@ export default function EnhancedOperatorsPage() {
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="operatorType">Operator Type</Label>
+									<Label htmlFor="operatorType">Operator Type *</Label>
 									<Select
+										required
 										value={newOperator.operatorType}
 										onValueChange={(value) =>
 											setNewOperator({ ...newOperator, operatorType: value })
@@ -691,7 +828,6 @@ export default function EnhancedOperatorsPage() {
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="OFFICE">Office Operator</SelectItem>
-
 											<SelectItem value="POLICE">Police Operator</SelectItem>
 										</SelectContent>
 									</Select>
@@ -709,6 +845,7 @@ export default function EnhancedOperatorsPage() {
 									}
 									placeholder="operator@company.com"
 									className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+									required
 								/>
 							</div>
 
@@ -723,6 +860,7 @@ export default function EnhancedOperatorsPage() {
 										}
 										placeholder="+251911123456"
 										className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+										required
 									/>
 								</div>
 								<div className="space-y-2">
@@ -742,56 +880,6 @@ export default function EnhancedOperatorsPage() {
 									/>
 								</div>
 							</div>
-
-							{/* <div className="space-y-2">
-								<Label>Assign Branches</Label>
-								<div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
-									{userBranches.length > 0 ? (
-										userBranches.map((branch) => (
-											<div
-												key={branch.id}
-												className="flex items-center space-x-2">
-												<input
-													type="checkbox"
-													id={`branch-${branch.id}`}
-													checked={newOperator.assignedBranches.includes(
-														branch.id
-													)}
-													onChange={(e) => {
-														if (e.target.checked) {
-															setNewOperator({
-																...newOperator,
-																assignedBranches: [
-																	...newOperator.assignedBranches,
-																	branch.id,
-																],
-															});
-														} else {
-															setNewOperator({
-																...newOperator,
-																assignedBranches:
-																	newOperator.assignedBranches.filter(
-																		(id) => id !== branch.id
-																	),
-															});
-														}
-													}}
-													className="rounded border-gray-300"
-												/>
-												<Label
-													htmlFor={`branch-${branch.id}`}
-													className="text-sm">
-													{branch.name} - {branch.location}
-												</Label>
-											</div>
-										))
-									) : (
-										<p className="text-sm text-muted-foreground">
-											No branches available for assignment
-										</p>
-									)}
-								</div>
-							</div> */}
 						</div>
 						<DialogFooter>
 							<Button
@@ -870,30 +958,6 @@ export default function EnhancedOperatorsPage() {
 						)}
 					</CardContent>
 				</Card>
-				{/* <Card className="hover:shadow-md transition-all duration-300">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
-							Assigned Branches
-						</CardTitle>
-						<div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/20">
-							<Building className="h-4 w-4 text-purple-500" />
-						</div>
-					</CardHeader>
-					<CardContent>
-						{loading ? (
-							<Skeleton className="h-8 w-16" />
-						) : (
-							<>
-								<div className="text-2xl font-bold text-purple-600">
-									{userBranches.length}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									Under your management
-								</p>
-							</>
-						)}
-					</CardContent>
-				</Card> */}
 			</div>
 
 			{/* Search and Filter */}
@@ -1046,36 +1110,6 @@ export default function EnhancedOperatorsPage() {
 												</div>
 											</div>
 											<div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
-												{/* <div className="text-right hidden sm:block">
-													<p className="text-sm font-medium">
-														Assigned Branches
-													</p>
-													<div className="flex flex-wrap gap-1 mt-1 justify-end">
-														{operator.assignedBranches &&
-														operator.assignedBranches.length > 0 ? (
-															operator.assignedBranches
-																.slice(0, 2)
-																.map((branchId, index) => (
-																	<Badge
-																		key={index}
-																		variant="outline"
-																		className="text-xs">
-																		{getBranchName(branchId)}
-																	</Badge>
-																))
-														) : (
-															<span className="text-xs text-muted-foreground">
-																No branches assigned
-															</span>
-														)}
-														{operator.assignedBranches &&
-															operator.assignedBranches.length > 2 && (
-																<Badge variant="outline" className="text-xs">
-																	+{operator.assignedBranches.length - 2} more
-																</Badge>
-															)}
-													</div>
-												</div> */}
 												<div className="flex space-x-1">
 													<Button
 														variant="outline"
@@ -1320,38 +1354,6 @@ export default function EnhancedOperatorsPage() {
 												</div>
 											</div>
 											<div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
-												{/* {operator.status === "ACTIVE" && (
-													<div className="text-right hidden sm:block">
-														<p className="text-sm font-medium">
-															Assigned Branches
-														</p>
-														<div className="flex flex-wrap gap-1 mt-1 justify-end">
-															{operator.assignedBranches &&
-															operator.assignedBranches.length > 0 ? (
-																operator.assignedBranches
-																	.slice(0, 2)
-																	.map((branchId) => (
-																		<Badge
-																			key={branchId}
-																			variant="outline"
-																			className="text-xs">
-																			{getBranchName(branchId)}
-																		</Badge>
-																	))
-															) : (
-																<span className="text-xs text-muted-foreground">
-																	No branches assigned
-																</span>
-															)}
-															{operator.assignedBranches &&
-																operator.assignedBranches.length > 2 && (
-																	<Badge variant="outline" className="text-xs">
-																		+{operator.assignedBranches.length - 2} more
-																	</Badge>
-																)}
-														</div>
-													</div>
-												)} */}
 												<div className="flex space-x-1">
 													<Button
 														variant="outline"
@@ -1375,7 +1377,7 @@ export default function EnhancedOperatorsPage() {
 																		variant="outline"
 																		size="sm"
 																		className="hover:bg-red-50 dark:hover:bg-red-950/20">
-																		<Trash2 className="h-4 w-4" />
+																		<Trash2Icon className="h-4 w-4" />
 																	</Button>
 																</AlertDialogTrigger>
 																<AlertDialogContent>
@@ -1564,142 +1566,7 @@ export default function EnhancedOperatorsPage() {
 										)}
 									</CardContent>
 								</Card>
-
-								{/* <Card>
-									<CardHeader className="flex flex-row items-center justify-between">
-										<CardTitle className="text-lg flex items-center gap-2">
-											<Building className="h-4 w-4 text-primary" />
-											Assigned Branches
-										</CardTitle>
-										<Button variant="outline" size="sm">
-											Manage
-										</Button>
-									</CardHeader>
-									<CardContent>
-										{selectedOperatorDetails.branches &&
-										selectedOperatorDetails.branches.length > 0 ? (
-											<div className="space-y-3">
-												{selectedOperatorDetails.branches.map(
-													(branch, index) => (
-														<div
-															key={index}
-															className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-															<div>
-																<p className="text-sm font-medium">
-																	{branch.name}
-																</p>
-																<p className="text-xs text-muted-foreground">
-																	{branch.location}
-																</p>
-															</div>
-															<Button variant="ghost" size="sm">
-																<Eye className="h-3.5 w-3.5 mr-1" />
-																View
-															</Button>
-														</div>
-													)
-												)}
-											</div>
-										) : (
-											<div className="text-center py-6 text-muted-foreground">
-												<Building className="h-10 w-10 mx-auto mb-2 opacity-20" />
-												<p>No branches assigned to this operator</p>
-											</div>
-										)}
-									</CardContent>
-								</Card> */}
 							</div>
-
-							{/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<Card>
-									<CardHeader className="flex flex-row items-center justify-between">
-										<CardTitle className="text-lg flex items-center gap-2">
-											<AlertTriangle className="h-4 w-4 text-primary" />
-											Recent Alarms
-										</CardTitle>
-										<Button variant="outline" size="sm">
-											View All
-										</Button>
-									</CardHeader>
-									<CardContent>
-										{selectedOperatorDetails.alarms &&
-										selectedOperatorDetails.alarms.length > 0 ? (
-											<div className="space-y-3">
-												{selectedOperatorDetails.alarms.map((alarm, index) => (
-													<div
-														key={index}
-														className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-														<div>
-															<p className="text-sm font-medium">
-																{alarm.type}
-															</p>
-															<p className="text-xs text-muted-foreground">
-																{formatDateTime(alarm.timestamp)}
-															</p>
-														</div>
-														<Badge
-															className={
-																alarm.status === "ACTIVE"
-																	? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-																	: alarm.status === "ACKNOWLEDGED"
-																	? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-																	: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-															}>
-															{alarm.status}
-														</Badge>
-													</div>
-												))}
-											</div>
-										) : (
-											<div className="text-center py-6 text-muted-foreground">
-												<AlertTriangle className="h-10 w-10 mx-auto mb-2 opacity-20" />
-												<p>No recent alarms for this operator</p>
-											</div>
-										)}
-									</CardContent>
-								</Card>
-
-								<Card>
-									<CardHeader className="flex flex-row items-center justify-between">
-										<CardTitle className="text-lg flex items-center gap-2">
-											<Clock className="h-4 w-4 text-primary" />
-											Activity Log
-										</CardTitle>
-										<Button variant="outline" size="sm">
-											View All
-										</Button>
-									</CardHeader>
-									<CardContent>
-										{selectedOperatorDetails.activityLog &&
-										selectedOperatorDetails.activityLog.length > 0 ? (
-											<div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
-												{selectedOperatorDetails.activityLog.map(
-													(log, index) => (
-														<div
-															key={index}
-															className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-															<div>
-																<p className="text-sm font-medium">
-																	{log.action}
-																</p>
-																<p className="text-xs text-muted-foreground">
-																	{formatDateTime(log.timestamp)}
-																</p>
-																<p className="text-xs">{log.details}</p>
-															</div>
-														</div>
-													)
-												)}
-											</div>
-										) : (
-											<div className="text-center py-6 text-muted-foreground">
-												<Clock className="h-10 w-10 mx-auto mb-2 opacity-20" />
-												<p>No activity logs available</p>
-											</div>
-										)}
-									</CardContent>
-								</Card>
-							</div> */}
 
 							<div className="flex justify-between border-t pt-4">
 								<div className="text-sm text-muted-foreground">
