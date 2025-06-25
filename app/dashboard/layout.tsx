@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
+import { Toaster } from "@/components/ui/toaster";
 
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -57,9 +58,11 @@ export default function DashboardLayout({
 			enableSystem
 			disableTransitionOnChange>
 			{/* <NotificationProvider> */}
+			<Toaster />
 			<SidebarProvider>
 				{/* <AppSidebar /> */}
 				<AppSidebar user={user as any} onLogout={handleLogout} />
+
 				<SidebarInset>
 					<DashboardHeader user={user} onLogout={handleLogout} />
 					<main className="flex-1 space-y-4 p-4 md:p-8 pt-6">{children}</main>
