@@ -134,15 +134,12 @@ export default function OperatorsManagementPage() {
 		email: "",
 		password: "",
 		operatorType: "POLICE",
-		// companyId: "",
-		// managedById: "",
 	});
 
 	const [editForm, setEditForm] = useState<UpdateOperatorData>({
 		name: "",
 		email: "",
 		operatorType: "POLICE",
-		// companyId: "",
 		status: "ACTIVE",
 	});
 
