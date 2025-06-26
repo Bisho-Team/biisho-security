@@ -95,7 +95,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						description: "Manage organizations",
 					},
 					{
-						title: "Uses",
+						title: "Users",
 						url: "/dashboard/users",
 						icon: Users,
 						description: "Manage system users",
@@ -138,12 +138,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						icon: Users,
 						description: "Team management",
 					},
-					// {
-					// 	title: "Reports",
-					// 	url: "/dashboard/analytics",
-					// 	icon: FileText,
-					// 	description: "Analytics & reports",
-					// },
+
 					{
 						title: "Profile",
 						url: "/dashboard/profile",
@@ -185,13 +180,6 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							description: "Active alerts",
 							badge: "Live",
 						},
-						// {
-						// 	title: "Tasks",
-						// 	url: "/dashboard/tasks",
-						// 	icon: FileText,
-						// 	description: "Assigned tasks",
-						// },
-
 						{
 							title: "Profile",
 							url: "/dashboard/profile",

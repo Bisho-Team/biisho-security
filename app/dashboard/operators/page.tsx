@@ -41,6 +41,7 @@ import {
 	Filter,
 } from "lucide-react";
 import { apiService } from "@/lib/api-service";
+import { apiService as apiOperatorService } from "@/lib/api-operator-service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -78,7 +79,6 @@ interface Operator {
 	companyId: string;
 	role: "OPERATOR";
 	createdAt: string;
-	assignedBranches?: string[];
 	lastActive?: string;
 }
 
@@ -137,7 +137,7 @@ export default function OperatorsPage() {
 		phone: "",
 		password: "",
 		operatorType: "OFFICE",
-		assignedBranches: [] as string[],
+		status: "ACTIVE",
 	});
 
 	const [editOperator, setEditOperator] = useState({
@@ -145,7 +145,7 @@ export default function OperatorsPage() {
 		email: "",
 		phone: "",
 		operatorType: "",
-		assignedBranches: [] as string[],
+		status: "ACTIVE",
 	});
 
 	useEffect(() => {
@@ -195,15 +195,7 @@ export default function OperatorsPage() {
 			// Add mock data for assigned branches if not present
 			const operatorsWithBranches = (response as any).map((operator: any) => ({
 				...operator,
-				assignedBranches:
-					operator.assignedBranches ||
-					Array(Math.floor(Math.random() * 3) + 1)
-						.fill(0)
-						.map(
-							() =>
-								branches[Math.floor(Math.random() * branches.length)]?.id ||
-								"branch-1"
-						),
+
 				lastActive:
 					operator.lastActive ||
 					new Date(Date.now() - Math.random() * 10000000000).toISOString(),
@@ -225,8 +217,6 @@ export default function OperatorsPage() {
 
 	const fetchOperatorDetails = async (operatorId: string) => {
 		try {
-			// In a real app, you would fetch detailed operator info from the API
-			// For now, we'll simulate this with the existing operator data
 			const operator = operators.find((op) => op.id === operatorId);
 
 			if (!operator) {
@@ -236,15 +226,6 @@ export default function OperatorsPage() {
 			// Create mock detailed data
 			const operatorDetails: OperatorDetails = {
 				...operator,
-				branches:
-					operator.assignedBranches?.map((branchId) => {
-						const branch = branches.find((b) => b.id === branchId);
-						return {
-							id: branchId,
-							name: branch?.name || `Branch ${branchId.slice(-2)}`,
-							location: branch?.location || "Unknown Location",
-						};
-					}) || [],
 				alarms: Array(Math.floor(Math.random() * 5))
 					.fill(0)
 					.map((_, i) => ({
@@ -447,7 +428,7 @@ export default function OperatorsPage() {
 				createdBy: user.id,
 				companyId: user.companyId as string,
 				createdAt: new Date().toISOString(),
-				assignedBranches: newOperator.assignedBranches,
+
 				lastActive: new Date().toISOString(),
 			};
 
@@ -458,7 +439,7 @@ export default function OperatorsPage() {
 				phone: "",
 				password: "",
 				operatorType: "OFFICE",
-				assignedBranches: [],
+				status: "ACTIVE",
 			});
 			setIsCreateDialogOpen(false);
 
@@ -567,6 +548,34 @@ export default function OperatorsPage() {
 		}
 	};
 
+	// const handleUpdateOperator = async () => {
+	// 	if (!selectedOperator || !validateForm(editForm, false)) return;
+
+	// 	setIsSubmitting(true);
+	// 	try {
+	// 		const response = await apiService.operators.update(
+	// 			selectedOperator.id,
+	// 			editForm as any
+	// 		);
+	// 		setOperators(
+	// 			operators.map((op) => (op.id === selectedOperator.id ? response : op))
+	// 		);
+	// 		setIsEditDialogOpen(false);
+	// 		toast({
+	// 			title: "Success",
+	// 			description: "Operator updated successfully",
+	// 		});
+	// 	} catch (error: unknown | any) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: error.message || "Failed to update operator",
+	// 			variant: "destructive",
+	// 		});
+	// 	} finally {
+	// 		setIsSubmitting(false);
+	// 	}
+	// };
+
 	const handleEditOperator = async () => {
 		if (
 			!selectedOperator ||
@@ -577,20 +586,19 @@ export default function OperatorsPage() {
 		setIsSubmitting(true);
 
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
 			const updatedOperator: Operator = {
 				...selectedOperator,
 				name: editOperator.name,
 				email: editOperator.email,
+				status: editOperator.status as any,
 				phone: editOperator.phone,
 				operatorType: editOperator.operatorType,
-				assignedBranches: editOperator.assignedBranches,
 			};
 
-			// In a real app, you would call the API here
-			// await apiService.put(`/users/${selectedOperator.id}`, updatedOperator)
+			const response = await apiOperatorService.operators.updateOffice(
+				selectedOperator.id,
+				updatedOperator as any
+			);
 
 			setOperators(
 				operators.map((op) =>
@@ -651,6 +659,40 @@ export default function OperatorsPage() {
 		}
 	};
 
+	const handleStatusToggle = async (operatorId: string, newStatus: string) => {
+		try {
+			const operator = operators.find((op) => op.id === operatorId);
+			if (!operator) return;
+
+			const updatedOperators = operators.map((op) =>
+				op.id === operatorId
+					? { ...op, status: op.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" }
+					: op
+			);
+
+			const response = await apiOperatorService.operators.updateStatus(
+				operatorId,
+				newStatus as any
+			);
+
+			setOperators(updatedOperators as any);
+
+			toast({
+				title: "Success",
+				description: `Operator ${
+					operator.status === "ACTIVE" ? "deactivated" : "activated"
+				} successfully`,
+			});
+		} catch (error) {
+			console.error("Failed to toggle operator status:", error);
+			toast({
+				title: "Error",
+				description: "Failed to update operator status",
+				variant: "destructive",
+			});
+		}
+	};
+
 	const handleDeleteOperator = async (operatorId: string) => {
 		setIsDeleting(true);
 
@@ -687,7 +729,7 @@ export default function OperatorsPage() {
 			email: operator.email,
 			phone: operator.phone,
 			operatorType: operator.operatorType || "OFFICE",
-			assignedBranches: operator.assignedBranches || [],
+			status: operator.status || "ACTIVE",
 		});
 		setIsEditDialogOpen(true);
 	};
@@ -1123,13 +1165,13 @@ export default function OperatorsPage() {
 														className="hover:bg-blue-50 dark:hover:bg-blue-950/20">
 														<Edit className="h-4 w-4" />
 													</Button>
-													<Button
+													{/* <Button
 														variant="outline"
 														size="sm"
 														onClick={() => toggleOperatorStatus(operator.id)}
 														className="hover:bg-red-50 dark:hover:bg-red-950/20">
 														<UserX className="h-4 w-4" />
-													</Button>
+													</Button> */}
 												</div>
 											</div>
 										</div>
@@ -1220,10 +1262,25 @@ export default function OperatorsPage() {
 												<Button
 													variant="outline"
 													size="sm"
+													onClick={() =>
+														handleStatusToggle(operator.id, "ACTIVE")
+													}
+													className={
+														operator.status === "ACTIVE"
+															? "hover:bg-red-50 dark:hover:bg-red-950/20"
+															: "hover:bg-green-50 dark:hover:bg-green-950/20"
+													}>
+													{operator.status === "ACTIVE"
+														? "Deactivate"
+														: "Activate"}
+												</Button>
+												{/* <Button
+													variant="outline"
+													size="sm"
 													onClick={() => toggleOperatorStatus(operator.id)}
 													className="hover:bg-green-50 dark:hover:bg-green-950/20">
 													Activate
-												</Button>
+												</Button> */}
 											</div>
 										</div>
 									</CardContent>
@@ -1438,10 +1495,21 @@ export default function OperatorsPage() {
 															</AlertDialog>
 														</>
 													)}
+													{/* <Button
+														variant="outline"
+														size="sm"
+														onClick={() =>
+															handleStatusToggle(operator.id, "ACTIVE")
+														}
+														className="hover:bg-green-50 dark:hover:bg-green-950/20">
+														Activate
+													</Button> */}
 													<Button
 														variant="outline"
 														size="sm"
-														onClick={() => toggleOperatorStatus(operator.id)}
+														onClick={() =>
+															handleStatusToggle(operator.id, "ACTIVE")
+														}
 														className={
 															operator.status === "ACTIVE"
 																? "hover:bg-red-50 dark:hover:bg-red-950/20"
@@ -1650,8 +1718,6 @@ export default function OperatorsPage() {
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="OFFICE">Office Operator</SelectItem>
-										<SelectItem value="FIELD">Field Operator</SelectItem>
-										<SelectItem value="POLICE">Police Operator</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
@@ -1671,6 +1737,24 @@ export default function OperatorsPage() {
 						</div>
 
 						<div className="space-y-2">
+							<Label htmlFor="edit-status">Status *</Label>
+							<Select
+								value={editOperator.status}
+								onValueChange={(value: "ACTIVE" | "INACTIVE" | "SUSPENDED") =>
+									setEditOperator({ ...editOperator, status: value })
+								}>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="ACTIVE">Active</SelectItem>
+									<SelectItem value="INACTIVE">Inactive</SelectItem>
+									<SelectItem value="SUSPENDED">Suspended</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="space-y-2">
 							<Label htmlFor="edit-phone">Phone Number *</Label>
 							<Input
 								id="edit-phone"
@@ -1680,67 +1764,6 @@ export default function OperatorsPage() {
 								}
 								className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
 							/>
-						</div>
-
-						<div className="space-y-2">
-							<div className="flex items-center justify-between">
-								<Label>Assigned Branches</Label>
-								<Button
-									variant="ghost"
-									size="sm"
-									className="h-7 text-xs"
-									onClick={() =>
-										setEditOperator({ ...editOperator, assignedBranches: [] })
-									}>
-									Clear All
-								</Button>
-							</div>
-							<div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
-								{userBranches.length > 0 ? (
-									userBranches.map((branch) => (
-										<div
-											key={branch.id}
-											className="flex items-center space-x-2">
-											<input
-												type="checkbox"
-												id={`edit-branch-${branch.id}`}
-												checked={editOperator.assignedBranches.includes(
-													branch.id
-												)}
-												onChange={(e) => {
-													if (e.target.checked) {
-														setEditOperator({
-															...editOperator,
-															assignedBranches: [
-																...editOperator.assignedBranches,
-																branch.id,
-															],
-														});
-													} else {
-														setEditOperator({
-															...editOperator,
-															assignedBranches:
-																editOperator.assignedBranches.filter(
-																	(id) => id !== branch.id
-																),
-														});
-													}
-												}}
-												className="rounded border-gray-300"
-											/>
-											<Label
-												htmlFor={`edit-branch-${branch.id}`}
-												className="text-sm">
-												{branch.name} - {branch.location}
-											</Label>
-										</div>
-									))
-								) : (
-									<p className="text-sm text-muted-foreground">
-										No branches available for assignment
-									</p>
-								)}
-							</div>
 						</div>
 					</div>
 					<DialogFooter>

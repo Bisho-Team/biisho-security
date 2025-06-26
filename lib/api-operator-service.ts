@@ -165,6 +165,20 @@ export const apiService = {
 			return apiService.put(`/users/${id}`, data);
 		},
 
+		// Update operator
+		updateOffice: async (
+			id: string,
+			data: {
+				name: string;
+				email: string;
+				operatorType: "OFFICE";
+				companyId: string;
+				status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+			}
+		) => {
+			return apiService.put(`/users/${id}`, data);
+		},
+
 		// Update operator status
 		updateStatus: async (
 			id: string,
