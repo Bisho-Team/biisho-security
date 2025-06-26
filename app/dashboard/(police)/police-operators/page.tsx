@@ -227,6 +227,7 @@ export default function OperatorsManagementPage() {
 
 		setIsSubmitting(true);
 		try {
+			console.log("Creating operator with data:", createForm);
 			const response = await apiService.operators.create(createForm as any);
 			console.log({ response });
 			setOperators([(response as any).user, ...operators]);
