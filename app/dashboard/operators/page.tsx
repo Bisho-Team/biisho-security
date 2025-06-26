@@ -300,7 +300,7 @@ export default function OperatorsPage() {
 		setFilteredOperators(filtered);
 	}, [operators, searchTerm, statusFilter]);
 
-	const validateOperatorForm = (data: {
+	const validateOperatorForm: any = (data: {
 		name: string;
 		email: string;
 		phone: string;
@@ -868,7 +868,7 @@ export default function OperatorsPage() {
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="OFFICE">Office Operator</SelectItem>
-											<SelectItem value="POLICE">Police Operator</SelectItem>
+											{/* <SelectItem value="POLICE">Police Operator</SelectItem> */}
 										</SelectContent>
 									</Select>
 								</div>
