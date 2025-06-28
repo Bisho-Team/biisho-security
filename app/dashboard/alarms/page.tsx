@@ -48,6 +48,8 @@ import {
 	Navigation,
 	Radio,
 	Building,
+	User,
+	Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { apiService } from "@/lib/api-service";
@@ -103,6 +105,11 @@ interface Alarm {
 		assignedTo?: {
 			id: string;
 			name: string;
+			email?: string;
+			phoneNumber?: string;
+			company?: {
+				name: string;
+			};
 		};
 		acknowledgedBy?: {
 			id: string;
@@ -432,6 +439,18 @@ export default function EnhancedAlarmsPage() {
 			</div>
 		);
 	}
+
+	// const formatDateTime = (dateString: string) => {
+	// 	const date = new Date(dateString);
+	// 	return date.toLocaleDateString("en-US", {
+	// 		year: "numeric",
+	// 		month: "short",
+	// 		day: "numeric",
+	// 		hour: "numeric",
+	// 		minute: "2-digit",
+	// 		hour12: true,
+	// 	});
+	// };
 
 	return (
 		<div className="space-y-6 animate-fade-in">
@@ -822,7 +841,8 @@ export default function EnhancedAlarmsPage() {
 				</TabsContent>
 			</Tabs>
 
-			{/* Enhanced Alarm Details Dialog */}
+			{/* Alarm Details Dialog */}
+
 			<Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
 				<DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700 text-white">
 					<DialogHeader>
@@ -836,6 +856,7 @@ export default function EnhancedAlarmsPage() {
 							Comprehensive security incident report
 						</DialogDescription>
 					</DialogHeader>
+
 					{selectedAlarm && (
 						<div className="space-y-6 py-4">
 							{/* ALARM Overview */}
@@ -853,10 +874,8 @@ export default function EnhancedAlarmsPage() {
 												<Label className="text-sm font-medium text-slate-400 font-mono">
 													INCIDENT ID
 												</Label>
-
-												{/* {JSON.stringify(selectedAlarm)} */}
 												<p className="text-sm text-white font-mono bg-slate-900/50 p-2 rounded border">
-													{selectedAlarm.id.slice(-7)}
+													{selectedAlarm.id}
 												</p>
 											</div>
 											<div>
@@ -867,7 +886,6 @@ export default function EnhancedAlarmsPage() {
 													{selectedAlarm.type}
 												</p>
 											</div>
-
 											<div>
 												<Label className="text-sm font-medium text-slate-400 font-mono">
 													STATUS
@@ -879,7 +897,7 @@ export default function EnhancedAlarmsPage() {
 															: selectedAlarm.status === "ACKNOWLEDGED"
 															? "bg-yellow-600/30 text-yellow-200 border border-yellow-500/50"
 															: selectedAlarm.status === "RESOLVED"
-															? "bg-blue-600/30 text-blue-200 border border-blue-500/50"
+															? "bg-green-600/30 text-green-200 border border-green-500/50"
 															: "bg-green-600/30 text-green-200 border border-green-500/50"
 													}>
 													{selectedAlarm.status === "ACTIVE"
@@ -896,13 +914,13 @@ export default function EnhancedAlarmsPage() {
 													TIMESTAMP
 												</Label>
 												<p className="text-sm text-white font-mono bg-slate-900/50 p-2 rounded border">
-													{formatDateTime((selectedAlarm as any)?.createdAt)}
+													{formatDateTime(selectedAlarm.createdAt)}
 												</p>
 											</div>
 										</div>
 
-										{/* Alarm Created */}
-										<div className="flex items-center space-x-4 p-3 bg-red-900/20 rounded-lg border border-red-500/30">
+										{/* Enhanced Alarm Created */}
+										<div className="flex items-start space-x-4 p-3 bg-red-900/20 rounded-lg border border-red-500/30">
 											<div className="p-2 bg-red-600/30 rounded-full">
 												<AlertTriangle className="h-4 w-4 text-red-400" />
 											</div>
@@ -911,45 +929,66 @@ export default function EnhancedAlarmsPage() {
 													ALARM CREATED
 												</p>
 												<p className="text-red-300 text-sm font-mono">
-													{formatDateTime((selectedAlarm as any)?.createdAt)}
+													{formatDateTime(selectedAlarm.createdAt)}
 												</p>
-												<div className="flex items-center mt-1">
-													<Shield className="h-3 w-3 text-blue-400 mr-1" />
-													<span className="text-blue-300 text-xs font-mono">
-														Operator:{" "}
-														{selectedAlarm.createdBy?.name || "Unknown"}
-													</span>
-												</div>
+												{selectedAlarm.createdBy && (
+													<div className="space-y-1 mt-2">
+														<div className="flex items-center">
+															<User className="h-3 w-3 text-blue-400 mr-1" />
+															<span className="text-blue-300 text-xs font-mono">
+																Operator: {selectedAlarm.createdBy.name}
+															</span>
+														</div>
+														<div className="flex items-center">
+															<Mail className="h-3 w-3 text-blue-400 mr-1" />
+															<span className="text-blue-300 text-xs font-mono">
+																Email: {selectedAlarm.createdBy.email}
+															</span>
+														</div>
+													</div>
+												)}
 											</div>
 										</div>
 
-										{/* Alarm Assigned */}
+										{/* Enhanced Alarm Assigned */}
 										{selectedAlarm.reports?.[0]?.assignedTo && (
-											<div className="flex items-center space-x-4 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
+											<div className="flex items-start space-x-4 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
 												<div className="p-2 bg-blue-600/30 rounded-full">
 													<Send className="h-4 w-4 text-blue-400" />
 												</div>
 												<div className="flex-1">
 													<p className="text-blue-200 font-mono font-medium">
-														ASSIGNED TO POLICE
+														ASSIGNED TO{" "}
+														{selectedAlarm.reports[0].assignedTo.company?.name?.toUpperCase() ||
+															"POLICE"}
 													</p>
 													<p className="text-blue-300 text-sm font-mono">
-														{formatDateTime((selectedAlarm as any)?.createdAt)}
+														{formatDateTime(selectedAlarm.createdAt)}
 													</p>
-													<div className="flex items-center mt-1">
-														<Shield className="h-3 w-3 text-yellow-400 mr-1" />
-														<span className="text-yellow-300 text-xs font-mono">
-															Police Officer:{" "}
-															{selectedAlarm.reports[0].assignedTo.name}
-														</span>
+													<div className="space-y-1 mt-2">
+														<div className="flex items-center">
+															<Building className="h-3 w-3 text-yellow-400 mr-1" />
+															<span className="text-yellow-300 text-xs font-mono">
+																Company:{" "}
+																{selectedAlarm.reports[0].assignedTo.company
+																	?.name || "N/A"}
+															</span>
+														</div>
+														<div className="flex items-center">
+															<User className="h-3 w-3 text-yellow-400 mr-1" />
+															<span className="text-yellow-300 text-xs font-mono">
+																Contact Person:{" "}
+																{selectedAlarm.reports[0].assignedTo.name}
+															</span>
+														</div>
 													</div>
 												</div>
 											</div>
 										)}
 
-										{/* Alarm Acknowledged */}
-										{selectedAlarm.reports?.[0]?.acknowledgedBy && (
-											<div className="flex items-center space-x-4 p-3 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
+										{/* Enhanced Alarm Acknowledged */}
+										{selectedAlarm.reports?.[0]?.acknowledgedAt && (
+											<div className="flex items-start space-x-4 p-3 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
 												<div className="p-2 bg-yellow-600/30 rounded-full">
 													<Clock className="h-4 w-4 text-yellow-400" />
 												</div>
@@ -959,24 +998,40 @@ export default function EnhancedAlarmsPage() {
 													</p>
 													<p className="text-yellow-300 text-sm font-mono">
 														{formatDateTime(
-															selectedAlarm.reports[0].acknowledgedAt ||
-																(selectedAlarm as any)?.updatedAt
+															selectedAlarm.reports[0].acknowledgedAt
 														)}
 													</p>
-													<div className="flex items-center mt-1">
-														<Shield className="h-3 w-3 text-green-400 mr-1" />
-														<span className="text-green-300 text-xs font-mono">
-															Acknowledged by:{" "}
-															{selectedAlarm.reports[0].acknowledgedBy.name}
-														</span>
-													</div>
+													{selectedAlarm.reports[0].acknowledgedBy && (
+														<div className="space-y-1 mt-2">
+															<div className="flex items-center">
+																<User className="h-3 w-3 text-green-400 mr-1" />
+																<span className="text-green-300 text-xs font-mono">
+																	Acknowledged by:{" "}
+																	{selectedAlarm.reports[0].acknowledgedBy.name}
+																</span>
+															</div>
+															{selectedAlarm.reports[0].assignedTo?.company
+																?.name && (
+																<div className="flex items-center">
+																	<Building className="h-3 w-3 text-green-400 mr-1" />
+																	<span className="text-green-300 text-xs font-mono">
+																		Company:{" "}
+																		{
+																			selectedAlarm.reports[0].assignedTo
+																				.company.name
+																		}
+																	</span>
+																</div>
+															)}
+														</div>
+													)}
 												</div>
 											</div>
 										)}
 
-										{/* Alarm Resolved */}
-										{selectedAlarm.reports?.[0]?.resolvedBy && (
-											<div className="flex items-center space-x-4 p-3 bg-green-900/20 rounded-lg border border-green-500/30">
+										{/* Enhanced Alarm Resolved */}
+										{selectedAlarm.reports?.[0]?.completedAt && (
+											<div className="flex items-start space-x-4 p-3 bg-green-900/20 rounded-lg border border-green-500/30">
 												<div className="p-2 bg-green-600/30 rounded-full">
 													<CheckCircle className="h-4 w-4 text-green-400" />
 												</div>
@@ -986,21 +1041,37 @@ export default function EnhancedAlarmsPage() {
 													</p>
 													<p className="text-green-300 text-sm font-mono">
 														{formatDateTime(
-															selectedAlarm.reports[0].completedAt ||
-																(selectedAlarm as any)?.updatedAt
+															selectedAlarm.reports[0].completedAt
 														)}
 													</p>
-													<div className="flex items-center mt-1">
-														<Shield className="h-3 w-3 text-purple-400 mr-1" />
-														<span className="text-purple-300 text-xs font-mono">
-															Resolved by:{" "}
-															{selectedAlarm.reports[0].resolvedBy.name}
-														</span>
-													</div>
+													{selectedAlarm.reports[0].resolvedBy && (
+														<div className="space-y-1 mt-2">
+															<div className="flex items-center">
+																<User className="h-3 w-3 text-purple-400 mr-1" />
+																<span className="text-purple-300 text-xs font-mono">
+																	Resolved by:{" "}
+																	{selectedAlarm.reports[0].resolvedBy.name}
+																</span>
+															</div>
+															{selectedAlarm.reports[0].assignedTo?.company
+																?.name && (
+																<div className="flex items-center">
+																	<Building className="h-3 w-3 text-purple-400 mr-1" />
+																	<span className="text-purple-300 text-xs font-mono">
+																		Company:{" "}
+																		{
+																			selectedAlarm.reports[0].assignedTo
+																				.company.name
+																		}
+																	</span>
+																</div>
+															)}
+														</div>
+													)}
 													{selectedAlarm.reports[0].resolutionDescription && (
 														<div className="mt-2 p-2 bg-green-900/30 rounded border border-green-500/20">
 															<p className="text-green-200 text-xs font-mono">
-																Resolution:{" "}
+																<strong>Resolution Details:</strong>{" "}
 																{selectedAlarm.reports[0].resolutionDescription}
 															</p>
 														</div>
@@ -1018,7 +1089,7 @@ export default function EnhancedAlarmsPage() {
 											LOCATION
 										</CardTitle>
 									</CardHeader>
-									<CardContent className="grid grid-cols-2 space-x-3">
+									<CardContent className="grid grid-cols-2 gap-3">
 										<div>
 											<Label className="text-sm font-medium text-slate-400 font-mono">
 												Location Name
@@ -1073,7 +1144,6 @@ export default function EnhancedAlarmsPage() {
 												{selectedAlarm.branch.woreda || "N/A"}
 											</p>
 										</div>
-
 										<div>
 											<Label className="text-sm font-medium text-slate-400 font-mono">
 												Manager Name
@@ -1116,23 +1186,26 @@ export default function EnhancedAlarmsPage() {
 
 							{/* Tactical Map */}
 							<Card className="bg-slate-800/50 border-slate-700">
+								{" "}
 								<CardHeader>
+									{" "}
 									<CardTitle className="text-lg font-mono text-slate-200 flex items-center">
-										<Navigation className="h-5 w-5 mr-2 text-blue-400" />
-										MAP
-									</CardTitle>
-								</CardHeader>
+										{" "}
+										<Navigation className="h-5 w-5 mr-2 text-blue-400" /> MAP{" "}
+									</CardTitle>{" "}
+								</CardHeader>{" "}
 								<CardContent>
+									{" "}
 									<AlarmLocationMap
 										coordinates={selectedAlarm.coordinates}
 										latitude={selectedAlarm.latitude}
 										longitude={selectedAlarm.longitude}
 										location={selectedAlarm.location}
-									/>
-								</CardContent>
+									/>{" "}
+								</CardContent>{" "}
 							</Card>
 
-							{/* Incident Description */}
+							{/* Enhanced Incident Description */}
 							<Card className="bg-slate-800/50 border-slate-700">
 								<CardHeader>
 									<CardTitle className="text-lg font-mono text-slate-200 flex items-center">
@@ -1142,25 +1215,68 @@ export default function EnhancedAlarmsPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="space-y-4">
-										{selectedAlarm.status === "RESOLVED" && (
+										{/* Incident Description */}
+										<div>
+											<Label className="text-sm font-medium text-slate-400 font-mono">
+												INCIDENT DESCRIPTION
+											</Label>
+											<div className="mt-2 p-4 bg-slate-900/50 rounded-lg border border-slate-600">
+												<p className="text-white font-mono leading-relaxed">
+													{selectedAlarm.description ||
+														"No description provided"}
+												</p>
+											</div>
+										</div>
+
+										{/* Additional Notes */}
+										{selectedAlarm.additionalNotes && (
+											<div>
+												<Label className="text-sm font-medium text-slate-400 font-mono">
+													ADDITIONAL NOTES
+												</Label>
+												<div className="mt-2 p-4 bg-slate-900/50 rounded-lg border border-slate-600">
+													<p className="text-white font-mono leading-relaxed">
+														{selectedAlarm.additionalNotes}
+													</p>
+												</div>
+											</div>
+										)}
+
+										{/* Resolution Report */}
+										{selectedAlarm.reports?.[0]?.resolutionDescription && (
 											<div>
 												<Label className="text-sm font-medium text-green-400 font-mono">
 													RESOLUTION REPORT
 												</Label>
 												<div className="mt-2 p-4 bg-green-900/20 rounded-lg border border-green-500/30">
 													<p className="text-green-200 font-mono leading-relaxed">
-														{selectedAlarm.updatedAt
-															? `Alarm successfully resolved in ${selectedAlarm.updatedAt}.`
-															: "Alarm successfully resolved. No further action required."}
+														{selectedAlarm.reports[0].resolutionDescription}
 													</p>
 												</div>
 											</div>
 										)}
+
+										{/* Fallback Resolution for older format */}
+										{selectedAlarm.status === "RESOLVED" &&
+											!selectedAlarm.reports?.[0]?.resolutionDescription && (
+												<div>
+													<Label className="text-sm font-medium text-green-400 font-mono">
+														RESOLUTION REPORT
+													</Label>
+													<div className="mt-2 p-4 bg-green-900/20 rounded-lg border border-green-500/30">
+														<p className="text-green-200 font-mono leading-relaxed">
+															Alarm successfully resolved. No further action
+															required.
+														</p>
+													</div>
+												</div>
+											)}
 									</div>
 								</CardContent>
 							</Card>
 						</div>
 					)}
+
 					<DialogFooter className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
 						<Button
 							variant="outline"

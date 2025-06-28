@@ -22,8 +22,10 @@ import {
 	Copy,
 	ExternalLink,
 	Info,
+	Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Label } from "./ui/label";
 
 interface Alarm {
 	id: string;
@@ -46,6 +48,31 @@ interface Alarm {
 			logo: string;
 		};
 	};
+	reports: {
+		id: string;
+		acknowledgedAt?: string;
+		acknowledgedBy?: {
+			id: string;
+			name: string;
+			email: string;
+		};
+		completedAt?: string;
+		resolvedBy?: {
+			id: string;
+			name: string;
+			email: string;
+		};
+		status: "PENDING" | "COMPLETED" | "RESOLVED";
+		assignedTo?: {
+			id: string;
+			name: string;
+			email: string;
+			company?: {
+				id: string;
+				name: string;
+			};
+		};
+	}[];
 	location: string;
 	latitude: string;
 	longitude: string;
@@ -56,6 +83,7 @@ interface Alarm {
 	createdBy: {
 		id: string;
 		name: string;
+		email: string;
 	};
 	createdAt: string;
 	isRealTime?: boolean;
@@ -300,6 +328,19 @@ export function PersistentAlarmModal({
 		return null;
 	}
 
+	// Date formatting function for better readability
+	const formatDateTime = (dateString: string) => {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+			hour12: true,
+		});
+	};
+
 	return (
 		<>
 			{/* Minimized State */}
@@ -344,7 +385,7 @@ export function PersistentAlarmModal({
 							"relative bg-slate-900 border-2 text-white max-h-[95vh] w-1/2 overflow-y-auto rounded-xl shadow-2xl m-4 z-[9999]",
 							getSeverityBorderColor(currentAlarm.severity)
 						)}>
-						{/* Enhanced Header */}
+						{/* Header */}
 						<div className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700 p-4 z-10">
 							<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
 								{/* Emergency Alert & Company */}
@@ -505,7 +546,7 @@ export function PersistentAlarmModal({
 							)}
 						</div>
 
-						{/* Enhanced Content */}
+						{/* Content */}
 						<div className="p-4 space-y-4">
 							{/* Alarm Type & Priority Banner */}
 							<div
@@ -584,42 +625,213 @@ export function PersistentAlarmModal({
 											</CardContent>
 										</Card>
 									)}
-
-									{/* Incident Description */}
-									<Card className="bg-slate-800 border-slate-700">
-										<CardContent className="p-3">
-											<div className="flex items-center space-x-2 mb-2">
-												<Info className="h-4 w-4 text-blue-400" />
-												<span className="text-white font-medium text-sm">
-													Incident Details
-												</span>
-											</div>
-											<p className="text-slate-300 text-sm mb-2">
-												{currentAlarm.description}
-											</p>
-											{currentAlarm.additionalNotes && (
-												<>
-													<Separator className="my-2 bg-slate-600" />
-													<p className="text-slate-400 text-xs font-medium mb-1">
-														Additional Notes:
-													</p>
-													<p className="text-slate-300 text-sm">
-														{currentAlarm.additionalNotes}
-													</p>
-												</>
-											)}
-										</CardContent>
-									</Card>
 								</div>
 							</div>
 
-							<div className="grid grid-cols-3 space-x-4">
+							<div className="grid grid-cols-2 space-x-4">
 								{/* Right Column - Details */}
 
 								{/* Time & Creator */}
 								<Card className="bg-slate-800 col-span-1  border-slate-700">
 									<CardContent className="p-3 space-y-3">
 										<div>
+											<Label className="text-slate-400 text-sm font-medium mb-2 block">
+												Timeline
+											</Label>
+											<div className="space-y-3">
+												{/* Enhanced Created Section */}
+												<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+													<div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
+													<div className="flex-1">
+														<div className="flex items-center justify-between mb-1">
+															<span className="text-white text-sm font-medium">
+																Created
+															</span>
+															<span className="text-slate-400 text-xs">
+																{formatDateTime(currentAlarm.createdAt)}
+															</span>
+														</div>
+														{currentAlarm.createdBy && (
+															<div className="space-y-1">
+																<div className="flex items-center space-x-2">
+																	<User className="h-3 w-3 text-slate-400" />
+																	<span className="text-slate-300 text-xs">
+																		{currentAlarm.createdBy.name}
+																	</span>
+																</div>
+																<div className="flex items-center space-x-2">
+																	<Mail className="h-3 w-3 text-slate-400" />
+																	<span className="text-slate-300 text-xs">
+																		{currentAlarm.createdBy.email ||
+																			"Not provided"}
+																	</span>
+																</div>
+															</div>
+														)}
+														{/* {currentAlarm.reports[0].assignedTo?.company
+															?.name && (
+															<div className="flex items-center space-x-2">
+																<Building className="h-3 w-3 text-slate-400" />
+																<span className="text-slate-300 text-xs">
+																	Assigned to:{" "}
+																	{
+																		currentAlarm.reports[0].assignedTo.company
+																			.name
+																	}
+																</span>
+															</div>
+														)} */}
+													</div>
+												</div>
+
+												{/* Enhanced Acknowledged Section */}
+												{currentAlarm.reports &&
+													currentAlarm.reports.length > 0 &&
+													currentAlarm.reports[0].acknowledgedAt && (
+														<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+															<div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
+															<div className="flex-1">
+																<div className="flex items-center justify-between mb-1">
+																	<span className="text-white text-sm font-medium">
+																		Acknowledged
+																	</span>
+																	<span className="text-slate-400 text-xs">
+																		{formatDateTime(
+																			currentAlarm.reports[0].acknowledgedAt
+																		)}
+																	</span>
+																</div>
+																<div className="space-y-1">
+																	{currentAlarm.reports[0].acknowledgedBy && (
+																		<div className="flex items-center space-x-2">
+																			<User className="h-3 w-3 text-slate-400" />
+																			<span className="text-slate-300 text-xs">
+																				By:{" "}
+																				{
+																					currentAlarm.reports[0].acknowledgedBy
+																						.name
+																				}
+																			</span>
+																		</div>
+																	)}
+																	{currentAlarm.reports[0].assignedTo?.company
+																		?.name && (
+																		<div className="flex items-center space-x-2">
+																			<Building className="h-3 w-3 text-slate-400" />
+																			<span className="text-slate-300 text-xs">
+																				Assigned to:{" "}
+																				{
+																					currentAlarm.reports[0].assignedTo
+																						.company.name
+																				}
+																			</span>
+																		</div>
+																	)}
+																</div>
+															</div>
+														</div>
+													)}
+
+												{/* Enhanced Completed/Resolved Section */}
+												{currentAlarm.reports &&
+													currentAlarm.reports.length > 0 &&
+													currentAlarm.reports[0].completedAt && (
+														<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+															<div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+															<div className="flex-1">
+																<div className="flex items-center justify-between mb-1">
+																	<span className="text-white text-sm font-medium">
+																		Resolved
+																	</span>
+																	<span className="text-slate-400 text-xs">
+																		{formatDateTime(
+																			currentAlarm.reports[0].completedAt
+																		)}
+																	</span>
+																</div>
+																<div className="space-y-1">
+																	{currentAlarm.reports[0].resolvedBy && (
+																		<div className="flex items-center space-x-2">
+																			<User className="h-3 w-3 text-slate-400" />
+																			<span className="text-slate-300 text-xs">
+																				By:{" "}
+																				{
+																					currentAlarm.reports[0].resolvedBy
+																						.name
+																				}
+																			</span>
+																		</div>
+																	)}
+																	{currentAlarm.reports[0].assignedTo?.company
+																		?.name && (
+																		<div className="flex items-center space-x-2">
+																			<Building className="h-3 w-3 text-slate-400" />
+																			<span className="text-slate-300 text-xs">
+																				Company:{" "}
+																				{
+																					currentAlarm.reports[0].assignedTo
+																						.company.name
+																				}
+																			</span>
+																		</div>
+																	)}
+																</div>
+															</div>
+														</div>
+													)}
+											</div>
+										</div>
+
+										{/* Assignment Information - add this as a new section */}
+										{currentAlarm.reports &&
+											currentAlarm.reports.length > 0 &&
+											currentAlarm.reports[0].assignedTo && (
+												<div>
+													<Label className="text-slate-400 text-sm font-medium mb-2 block">
+														Assignment Details
+													</Label>
+													<div className="bg-slate-900/50 p-3 rounded-lg border border-slate-600">
+														<div className="space-y-2">
+															<div className="flex items-center justify-between">
+																<span className="text-slate-400 text-sm">
+																	Assigned To:
+																</span>
+																<span className="text-white text-sm font-medium">
+																	{currentAlarm.reports[0].assignedTo.company
+																		?.name ||
+																		currentAlarm.reports[0].assignedTo.name}
+																</span>
+															</div>
+															<div className="flex items-center justify-between">
+																<span className="text-slate-400 text-sm">
+																	Contact Person:
+																</span>
+																<span className="text-white text-sm">
+																	{currentAlarm.reports[0].assignedTo.name}
+																</span>
+															</div>
+															<div className="flex items-center justify-between">
+																<span className="text-slate-400 text-sm">
+																	Status:
+																</span>
+																<Badge
+																	variant="outline"
+																	className={`text-xs ${
+																		currentAlarm.reports[0].status === "PENDING"
+																			? "bg-yellow-900/30 border-yellow-500 text-yellow-300"
+																			: currentAlarm.reports[0].status ===
+																			  "COMPLETED"
+																			? "bg-green-900/30 border-green-500 text-green-300"
+																			: "bg-slate-900/30 border-slate-500 text-slate-300"
+																	}`}>
+																	{currentAlarm.reports[0].status}
+																</Badge>
+															</div>
+														</div>
+													</div>
+												</div>
+											)}
+										{/* <div>
 											<div className="flex items-center space-x-2 mb-1">
 												<Clock className="h-3 w-3 text-green-400" />
 												<span className="text-slate-300 text-xs font-medium">
@@ -649,12 +861,12 @@ export function PersistentAlarmModal({
 											<p className="text-white text-sm">
 												{currentAlarm.createdBy.name}
 											</p>
-										</div>
+										</div> */}
 									</CardContent>
 								</Card>
 
-								{/* GPS Coordinates */}
-								<Card className="bg-slate-800 col-span-1 border-slate-700">
+								{/* Quick Stats */}
+								<Card className="bg-slate-800 border-slate-700">
 									<CardContent className="p-3">
 										<div className="flex items-center space-x-2 mb-2">
 											<MapPin className="h-3 w-3 text-purple-400" />
@@ -685,10 +897,6 @@ export function PersistentAlarmModal({
 											</div>
 										)}
 									</CardContent>
-								</Card>
-
-								{/* Quick Stats */}
-								<Card className="bg-slate-800 border-slate-700">
 									<CardContent className="p-3">
 										<div className="grid grid-cols-2 gap-2">
 											<div className="bg-slate-900/50 p-2 rounded text-center">
@@ -717,6 +925,32 @@ export function PersistentAlarmModal({
 									</CardContent>
 								</Card>
 							</div>
+
+							{/* Incident Description */}
+							<Card className="bg-slate-800 border-slate-700">
+								<CardContent className="p-3">
+									<div className="flex items-center space-x-2 mb-2">
+										<Info className="h-4 w-4 text-blue-400" />
+										<span className="text-white font-medium text-sm">
+											Incident Details
+										</span>
+									</div>
+									<p className="text-slate-300 text-sm mb-2">
+										{currentAlarm.description}
+									</p>
+									{currentAlarm.additionalNotes && (
+										<>
+											<Separator className="my-2 bg-slate-600" />
+											<p className="text-slate-400 text-xs font-medium mb-1">
+												Additional Notes:
+											</p>
+											<p className="text-slate-300 text-sm">
+												{currentAlarm.additionalNotes}
+											</p>
+										</>
+									)}
+								</CardContent>
+							</Card>
 
 							{/* Enhanced Action Buttons */}
 							<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
