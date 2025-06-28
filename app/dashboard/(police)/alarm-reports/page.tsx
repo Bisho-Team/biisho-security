@@ -58,6 +58,8 @@ import {
 	Clock,
 	Map,
 	Mail,
+	CheckCircle2,
+	Timer,
 } from "lucide-react";
 
 import { Phone, Info, BarChart3, X, Copy, ExternalLink } from "lucide-react";
@@ -306,6 +308,18 @@ export default function EnhancedAlarmReportsPage() {
 				"_blank"
 			);
 		}
+	};
+
+	const formatTimeAgo = (dateString: string) => {
+		const now = new Date();
+		const date = new Date(dateString);
+		const diffInMinutes = Math.floor(
+			(now.getTime() - date.getTime()) / (1000 * 60)
+		);
+
+		if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+		if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+		return `${Math.floor(diffInMinutes / 1440)}d ago`;
 	};
 
 	return (
@@ -583,7 +597,8 @@ export default function EnhancedAlarmReportsPage() {
 				</Card>
 
 				{/* Alarms List */}
-				<div className="space-y-4">
+
+				<div className="space-y-3">
 					{filteredAlarms.length === 0 ? (
 						<Card className="bg-slate-900/50 border-slate-700">
 							<CardContent className="p-8 text-center">
@@ -604,223 +619,265 @@ export default function EnhancedAlarmReportsPage() {
 							</CardContent>
 						</Card>
 					) : (
-						filteredAlarms.map((alarm) => (
+						filteredAlarms.map((alarm: any) => (
 							<Card
 								key={alarm.id}
 								className={cn(
-									"group relative overflow-hidden bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/50 hover:scale-[1.02]",
+									"group relative overflow-hidden bg-gradient-to-br from-slate-900/90 to-slate-800/70 border border-slate-700/60 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/30 hover:scale-[1.01] hover:border-slate-600/80",
 									alarm.isRealTime &&
 										"ring-2 ring-cyan-400/60 shadow-lg shadow-cyan-400/20 animate-pulse",
 									alarm.severity === "CRITICAL" &&
-										"border-red-500/60 bg-gradient-to-br from-red-950/30 to-red-900/20 shadow-red-500/20",
+										"border-red-500/70 bg-gradient-to-br from-red-950/40 to-red-900/30",
 									alarm.status === "ACTIVE" &&
 										(audioEnabled || modalEnabled) &&
-										"ring-1 ring-red-400/40"
+										"ring-1 ring-red-400/50"
 								)}>
-								{/* Severity Indicator Strip */}
+								{/* Enhanced Severity Indicator Strip */}
 								<div
 									className={cn(
-										"absolute top-0 left-0 right-0 h-1",
+										"absolute top-0 left-0 right-0 h-0.5",
 										alarm.severity === "CRITICAL" &&
-											"bg-gradient-to-r from-red-500 to-red-600",
+											"bg-gradient-to-r from-red-500 via-red-400 to-red-600",
 										alarm.severity === "HIGH" &&
-											"bg-gradient-to-r from-orange-500 to-orange-600",
+											"bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600",
 										alarm.severity === "MEDIUM" &&
-											"bg-gradient-to-r from-yellow-500 to-yellow-600",
+											"bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-600",
 										alarm.severity === "LOW" &&
-											"bg-gradient-to-r from-blue-500 to-blue-600"
+											"bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600"
 									)}
 								/>
 
-								{/* Background Pattern */}
-								<div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzM3NDE1MSIgZmlsbC1vcGFjaXR5PSIwLjEiLz4KPC9zdmc+')] opacity-30" />
+								{/* Status Progress Indicator */}
+								{/* <div className="absolute top-1.5 left-0 right-0 h-0.5 bg-slate-700/50">
+									<div
+										className={cn(
+											"h-full transition-all duration-500",
+											alarm.status === "ACTIVE" && "w-1/3 bg-red-400",
+											alarm.status === "ACKNOWLEDGED" && "w-2/3 bg-yellow-400",
+											alarm.status === "RESOLVED" && "w-full bg-green-400"
+										)}
+									/>
+								</div> */}
 
-								<CardContent className="relative p-6">
-									<div className="flex items-start justify-between">
-										<div className="flex-1 space-y-4">
-											{/* Header Section with Company Logo and Info */}
-											<div className="flex items-center space-x-4">
-												{/* Company Logo */}
-												<div className="relative">
-													{(alarm as any)?.branch?.company?.logo && (
-														<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-1 shadow-lg">
-															<img
-																src={`http://8436insight.et:3003${(
-																	alarm as any
-																)?.branch?.company?.logo.replace(
-																	"/var/www/html/koppa-security-api",
-																	""
-																)}`}
-																alt={`${alarm.branch.company?.name} logo`}
-																className="w-full h-full object-cover rounded-xl"
-																onError={(e) => {
-																	e.currentTarget.style.display = "none";
-																}}
-															/>
-														</div>
-													)}
-
-													{/* Severity Badge on Logo */}
-													<div
-														className={cn(
-															"absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg",
-															alarm.severity === "CRITICAL" && "bg-red-500",
-															alarm.severity === "HIGH" && "bg-orange-500",
-															alarm.severity === "MEDIUM" && "bg-yellow-500",
-															alarm.severity === "LOW" && "bg-blue-500"
-														)}>
-														{alarm.severity === "CRITICAL" && "!"}
-														{alarm.severity === "HIGH" && "H"}
-														{alarm.severity === "MEDIUM" && "M"}
-														{alarm.severity === "LOW" && "L"}
-													</div>
+								<CardContent className="relative p-4">
+									<div className="flex items-start gap-4">
+										{/* Company Logo & Severity Badge */}
+										<div className="relative flex-shrink-0">
+											{alarm?.branch?.company?.logo ? (
+												<div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 p-1 shadow-lg border border-slate-600/50">
+													<img
+														src={`http://8436insight.et:3003${alarm.branch.company.logo.replace(
+															"/var/www/html/koppa-security-api",
+															""
+														)}`}
+														alt={`${alarm.branch.company?.name} logo`}
+														className="w-full h-full object-cover rounded-lg"
+														onError={(e) => {
+															e.currentTarget.style.display = "none";
+														}}
+													/>
 												</div>
+											) : (
+												<div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-slate-600/50">
+													<Building className="h-6 w-6 text-slate-400" />
+												</div>
+											)}
 
-												{/* Company and Branch Info */}
+											{/* Severity Badge */}
+											<div
+												className={cn(
+													"absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 border-slate-900",
+													alarm.severity === "CRITICAL" && "bg-red-500",
+													alarm.severity === "HIGH" && "bg-orange-500",
+													alarm.severity === "MEDIUM" && "bg-yellow-500",
+													alarm.severity === "LOW" && "bg-blue-500"
+												)}>
+												{alarm.severity === "CRITICAL" && "!"}
+												{alarm.severity === "HIGH" && "H"}
+												{alarm.severity === "MEDIUM" && "M"}
+												{alarm.severity === "LOW" && "L"}
+											</div>
+										</div>
+
+										{/* Main Content */}
+										<div className="flex-1 min-w-0 space-y-3">
+											{/* Header with Company & Status */}
+											<div className="flex items-start justify-between">
 												<div className="flex-1 min-w-0">
-													<div className="flex items-center space-x-3 mb-2">
-														<h2 className="text-xl font-bold text-white truncate">
+													<div className="flex items-center gap-2 mb-1">
+														<h3 className="text-lg font-bold text-white truncate">
 															{alarm.branch.company?.name || "Unknown Company"}
-														</h2>
-													</div>
-
-													<div className="flex items-center space-x-3">
-														<div className="flex items-center space-x-2">
-															<Building className="h-4 w-4 text-slate-400" />
-															<span className="text-slate-300 font-medium">
-																{alarm.branch?.name}
-															</span>
-														</div>
-
+														</h3>
 														<Badge
 															variant="outline"
 															className={cn(
-																"font-medium",
+																"text-xs font-medium",
 																alarm.status === "ACTIVE" &&
-																	"bg-red-100/10 text-red-300 border-red-400/30",
+																	"bg-red-100/10 text-red-300 border-red-400/40",
 																alarm.status === "ACKNOWLEDGED" &&
-																	"bg-yellow-100/10 text-yellow-300 border-yellow-400/30",
+																	"bg-yellow-100/10 text-yellow-300 border-yellow-400/40",
 																alarm.status === "RESOLVED" &&
-																	"bg-green-100/10 text-green-300 border-green-400/30"
+																	"bg-green-100/10 text-green-300 border-green-400/40"
 															)}>
 															{alarm.status}
 														</Badge>
+													</div>
 
-														<Badge className="bg-slate-700/50 text-slate-300 border-slate-600/50 font-mono text-xs">
-															#{alarm.id.slice(-8)}
-														</Badge>
+													<div className="flex items-center gap-2 text-sm text-slate-400">
+														<Building className="h-3 w-3" />
+														<span className="truncate">
+															{alarm.branch?.name}
+														</span>
+														<span className="text-slate-600">•</span>
+														<span className="font-mono text-xs">
+															#{alarm.id.slice(-6)}
+														</span>
 													</div>
 												</div>
+
+												{/* Time Ago Badge */}
+												<Badge className="bg-slate-700/50 text-slate-300 border-slate-600/50 text-xs">
+													{formatTimeAgo(alarm.createdAt)}
+												</Badge>
 											</div>
 
-											{/* Alarm Type and Description */}
-											<div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-												<div className="flex items-center space-x-2 mb-2">
+											{/* Alarm Type */}
+											<div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/40">
+												<div className="flex items-center gap-2">
 													<AlertTriangle
 														className={cn(
-															"h-5 w-5",
+															"h-4 w-4 flex-shrink-0",
 															alarm.severity === "CRITICAL" && "text-red-400",
 															alarm.severity === "HIGH" && "text-orange-400",
 															alarm.severity === "MEDIUM" && "text-yellow-400",
 															alarm.severity === "LOW" && "text-blue-400"
 														)}
 													/>
-													<h3 className="text-lg font-bold text-white">
+													<span className="text-white font-semibold text-sm truncate">
 														{alarm.type}
-													</h3>
+													</span>
 												</div>
-												{/* <p className="text-slate-300 leading-relaxed">
-													{alarm.description}
-												</p> */}
 											</div>
 
-											{/* Details Grid */}
-											<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-												<div className="flex items-center space-x-3 bg-slate-800/20 rounded-lg p-3 border border-slate-700/20">
-													<div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-														<MapPin className="h-4 w-4 text-purple-400" />
-													</div>
-													<div>
-														<p className="text-xs text-slate-500 uppercase tracking-wide">
-															Location
-														</p>
-														<p className="text-slate-300 font-medium">
-															{alarm.branch.name}
-														</p>
-													</div>
-												</div>
-
-												<div className="flex items-center space-x-3 bg-slate-800/20 rounded-lg p-3 border border-slate-700/20">
-													<div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-														<Users className="h-4 w-4 text-blue-400" />
-													</div>
-													<div>
-														<p className="text-xs text-slate-500 uppercase tracking-wide">
-															Created By
-														</p>
-														<p className="text-slate-300 font-medium">
-															{alarm.createdBy.name}
-														</p>
+											{/* Enhanced Info Grid */}
+											<div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+												{/* Location */}
+												<div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/30">
+													<div className="flex items-center gap-2">
+														<div className="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center">
+															<MapPin className="h-3 w-3 text-purple-400" />
+														</div>
+														<div className="min-w-0 flex-1">
+															<p className="text-xs text-slate-500 uppercase tracking-wide">
+																Location
+															</p>
+															<p className="text-slate-300 text-xs font-medium truncate">
+																{alarm.branch.city || alarm.branch.name}
+															</p>
+														</div>
 													</div>
 												</div>
 
-												<div className="flex items-center space-x-3 bg-slate-800/20 rounded-lg p-3 border border-slate-700/20">
-													<div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-														<Calendar className="h-4 w-4 text-green-400" />
+												{/* Creator */}
+												<div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/30">
+													<div className="flex items-center gap-2">
+														<div className="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center">
+															<User className="h-3 w-3 text-blue-400" />
+														</div>
+														<div className="min-w-0 flex-1">
+															<p className="text-xs text-slate-500 uppercase tracking-wide">
+																Creator
+															</p>
+															<p className="text-slate-300 text-xs font-medium truncate">
+																{alarm.createdBy.name}
+															</p>
+														</div>
 													</div>
-													<div>
-														<p className="text-xs text-slate-500 uppercase tracking-wide">
-															Created
-														</p>
-														<p className="text-slate-300 font-medium">
-															{new Date(alarm.createdAt).toLocaleDateString(
-																"en-US",
-																{
-																	month: "short",
-																	day: "numeric",
-																	year: "numeric",
-																}
-															)}{" "}
-															{new Date(alarm.createdAt).toLocaleTimeString(
-																"en-US",
-																{
-																	hour: "numeric",
-																	minute: "2-digit",
-																	hour12: true,
-																}
+												</div>
+
+												{/* Assignment Status */}
+												{alarm.reports?.[0]?.assignedTo && (
+													<div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/30">
+														<div className="flex items-center gap-2">
+															<div className="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center">
+																<Shield className="h-3 w-3 text-cyan-400" />
+															</div>
+															<div className="min-w-0 flex-1">
+																<p className="text-xs text-slate-500 uppercase tracking-wide">
+																	Assigned
+																</p>
+																<p className="text-slate-300 text-xs font-medium truncate">
+																	{alarm.reports[0].assignedTo.company?.name ||
+																		alarm.reports[0].assignedTo.name}
+																</p>
+															</div>
+														</div>
+													</div>
+												)}
+
+												{/* Timeline Status */}
+												<div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/30">
+													<div className="flex items-center gap-2">
+														<div className="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center">
+															{alarm.status === "RESOLVED" ? (
+																<CheckCircle2 className="h-3 w-3 text-green-400" />
+															) : alarm.status === "ACKNOWLEDGED" ? (
+																<Clock className="h-3 w-3 text-yellow-400" />
+															) : (
+																<Timer className="h-3 w-3 text-red-400" />
 															)}
-														</p>
+														</div>
+														<div className="min-w-0 flex-1">
+															<p className="text-xs text-slate-500 uppercase tracking-wide">
+																{alarm.status === "RESOLVED"
+																	? "Resolved"
+																	: alarm.status === "ACKNOWLEDGED"
+																	? "Ack'd"
+																	: "Created"}
+															</p>
+															<p className="text-slate-300 text-xs font-medium">
+																{alarm.status === "RESOLVED" &&
+																alarm.reports?.[0]?.completedAt
+																	? formatDateTime(alarm.reports[0].completedAt)
+																	: alarm.status === "ACKNOWLEDGED" &&
+																	  alarm.reports?.[0]?.acknowledgedAt
+																	? formatDateTime(
+																			alarm.reports[0].acknowledgedAt
+																	  )
+																	: formatDateTime(alarm.createdAt)}
+															</p>
+														</div>
 													</div>
 												</div>
 											</div>
 
-											{/* Specific Location if available */}
-											{alarm.location && (
-												<div className="flex items-center space-x-3 bg-slate-800/20 rounded-lg p-3 border border-slate-700/20">
-													<div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
-														<Navigation className="h-4 w-4 text-orange-400" />
-													</div>
-													<div>
-														<p className="text-xs text-slate-500 uppercase tracking-wide">
-															Sub City
-														</p>
-														<p className="text-slate-300 font-medium">
-															{alarm.location}
-														</p>
+											{/* Resolution Preview */}
+											{alarm.reports?.[0]?.resolutionDescription && (
+												<div className="bg-green-900/20 rounded-lg p-2 border border-green-500/30">
+													<div className="flex items-start gap-2">
+														<CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
+														<div className="min-w-0 flex-1">
+															<p className="text-xs text-green-400 uppercase tracking-wide mb-1">
+																Resolution
+															</p>
+															<p className="text-green-200 text-xs leading-relaxed line-clamp-2">
+																{alarm.reports[0].resolutionDescription}
+															</p>
+														</div>
 													</div>
 												</div>
 											)}
 										</div>
 
 										{/* Action Buttons */}
-										<div className="flex flex-col space-y-3 ml-6">
+										<div className="flex flex-col gap-2 flex-shrink-0">
 											<Button
 												variant="outline"
 												size="sm"
 												onClick={() => viewAlarmDetails(alarm.id)}
-												className="group/btn border-slate-600/50 bg-slate-700/30 text-slate-300 hover:bg-slate-600/50 hover:border-slate-500 transition-all duration-300 backdrop-blur-sm">
-												<Eye className="h-4 w-4 mr-2 group-hover/btn:text-blue-400 transition-colors" />
-												Details
+												className="group/btn border-slate-600/50 bg-slate-700/30 text-slate-300 hover:bg-slate-600/50 hover:border-slate-500 transition-all duration-200 backdrop-blur-sm h-8 px-3">
+												<Eye className="h-3 w-3 mr-1.5 group-hover/btn:text-blue-400 transition-colors" />
+												<span className="text-xs">View</span>
 											</Button>
 
 											{alarm.status === "ACTIVE" && (
@@ -829,13 +886,13 @@ export default function EnhancedAlarmReportsPage() {
 													size="sm"
 													onClick={() => acknowledgeAlarm(alarm.id)}
 													disabled={updating}
-													className="group/btn border-yellow-500/50 bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all duration-300 backdrop-blur-sm">
+													className="group/btn border-yellow-500/50 bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all duration-200 backdrop-blur-sm h-8 px-3">
 													{updating ? (
-														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+														<Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
 													) : (
-														<CheckCircle className="h-4 w-4 mr-2 group-hover/btn:text-yellow-200 transition-colors" />
+														<CheckCircle className="h-3 w-3 mr-1.5 group-hover/btn:text-yellow-200 transition-colors" />
 													)}
-													Acknowledge
+													<span className="text-xs">Ack</span>
 												</Button>
 											)}
 
@@ -847,9 +904,9 @@ export default function EnhancedAlarmReportsPage() {
 														setSelectedAlarm(alarm);
 														setIsResolutionDialogOpen(true);
 													}}
-													className="group/btn border-green-500/50 bg-green-500/10 text-green-300 hover:bg-green-500/20 hover:border-green-400 transition-all duration-300 backdrop-blur-sm">
-													<Target className="h-4 w-4 mr-2 group-hover/btn:text-green-200 transition-colors" />
-													Resolve
+													className="group/btn border-green-500/50 bg-green-500/10 text-green-300 hover:bg-green-500/20 hover:border-green-400 transition-all duration-200 backdrop-blur-sm h-8 px-3">
+													<Target className="h-3 w-3 mr-1.5 group-hover/btn:text-green-200 transition-colors" />
+													<span className="text-xs">Resolve</span>
 												</Button>
 											)}
 										</div>
@@ -857,7 +914,7 @@ export default function EnhancedAlarmReportsPage() {
 								</CardContent>
 
 								{/* Hover Effect Overlay */}
-								<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+								<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 							</Card>
 						))
 					)}
