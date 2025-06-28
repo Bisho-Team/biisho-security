@@ -57,6 +57,7 @@ import {
 	User,
 	Clock,
 	Map,
+	Mail,
 } from "lucide-react";
 
 import { Phone, Info, BarChart3, X, Copy, ExternalLink } from "lucide-react";
@@ -208,6 +209,8 @@ export default function EnhancedAlarmReportsPage() {
 				description: "Alarm resolved successfully",
 			});
 
+			await fetchAlarms();
+
 			setIsResolutionDialogOpen(false);
 			setResolutionDescription("");
 			setSelectedAlarm(null);
@@ -222,42 +225,23 @@ export default function EnhancedAlarmReportsPage() {
 		}
 	};
 
+	const formatDateTime = (dateString: string) => {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+			hour12: true,
+		});
+	};
+
 	const viewAlarmDetails = (alarmId: string) => {
 		const alarm = alarms.find((a) => a.id === alarmId);
 		if (alarm) {
 			setSelectedAlarm(alarm);
 			setIsDetailsDialogOpen(true);
-		}
-	};
-
-	// Helper functions
-	const getSeverityPriority = (severity: string): number => {
-		switch (severity) {
-			case "CRITICAL":
-				return 1;
-			case "HIGH":
-				return 2;
-			case "MEDIUM":
-				return 3;
-			case "LOW":
-				return 4;
-			default:
-				return 5;
-		}
-	};
-
-	const getSeverityColor = (severity: string) => {
-		switch (severity) {
-			case "CRITICAL":
-				return "bg-red-600 text-white";
-			case "HIGH":
-				return "bg-orange-600 text-white";
-			case "MEDIUM":
-				return "bg-yellow-600 text-white";
-			case "LOW":
-				return "bg-blue-600 text-white";
-			default:
-				return "bg-gray-600 text-white";
 		}
 	};
 
@@ -1085,8 +1069,239 @@ export default function EnhancedAlarmReportsPage() {
 												</div>
 											)}
 
-											{/* Timeline */}
 											<div>
+												<Label className="text-slate-400 text-sm font-medium mb-2 block">
+													Timeline
+												</Label>
+												<div className="space-y-3">
+													{/* Enhanced Created Section */}
+													<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+														<div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
+														<div className="flex-1">
+															<div className="flex items-center justify-between mb-1">
+																<span className="text-white text-sm font-medium">
+																	Created
+																</span>
+																<span className="text-slate-400 text-xs">
+																	{formatDateTime(selectedAlarm.createdAt)}
+																</span>
+															</div>
+															{selectedAlarm.createdBy && (
+																<div className="space-y-1">
+																	<div className="flex items-center space-x-2">
+																		<User className="h-3 w-3 text-slate-400" />
+																		<span className="text-slate-300 text-xs">
+																			{selectedAlarm.createdBy.name}
+																		</span>
+																	</div>
+																	<div className="flex items-center space-x-2">
+																		<Mail className="h-3 w-3 text-slate-400" />
+																		<span className="text-slate-300 text-xs font-mono">
+																			{selectedAlarm.createdBy.email}
+																		</span>
+																	</div>
+																</div>
+															)}
+														</div>
+													</div>
+
+													{/* Enhanced Acknowledged Section */}
+													{selectedAlarm.reports &&
+														selectedAlarm.reports.length > 0 &&
+														selectedAlarm.reports[0].acknowledgedAt && (
+															<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+																<div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
+																<div className="flex-1">
+																	<div className="flex items-center justify-between mb-1">
+																		<span className="text-white text-sm font-medium">
+																			Acknowledged
+																		</span>
+																		<span className="text-slate-400 text-xs">
+																			{formatDateTime(
+																				selectedAlarm.reports[0].acknowledgedAt
+																			)}
+																		</span>
+																	</div>
+																	<div className="space-y-1">
+																		{selectedAlarm.reports[0]
+																			.acknowledgedBy && (
+																			<div className="flex items-center space-x-2">
+																				<User className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					By:{" "}
+																					{
+																						selectedAlarm.reports[0]
+																							.acknowledgedBy.name
+																					}
+																				</span>
+																			</div>
+																		)}
+																		{selectedAlarm.reports[0].assignedTo
+																			?.company?.name && (
+																			<div className="flex items-center space-x-2">
+																				<Building className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					Assigned to:{" "}
+																					{
+																						selectedAlarm.reports[0].assignedTo
+																							.company.name
+																					}
+																				</span>
+																			</div>
+																		)}
+																	</div>
+																</div>
+															</div>
+														)}
+
+													{/* Enhanced Completed/Resolved Section */}
+													{selectedAlarm.reports &&
+														selectedAlarm.reports.length > 0 &&
+														selectedAlarm.reports[0].completedAt && (
+															<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+																<div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+																<div className="flex-1">
+																	<div className="flex items-center justify-between mb-1">
+																		<span className="text-white text-sm font-medium">
+																			Resolved
+																		</span>
+																		<span className="text-slate-400 text-xs">
+																			{formatDateTime(
+																				selectedAlarm.reports[0].completedAt
+																			)}
+																		</span>
+																	</div>
+																	<div className="space-y-1">
+																		{selectedAlarm.reports[0].resolvedBy && (
+																			<div className="flex items-center space-x-2">
+																				<User className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					By:{" "}
+																					{
+																						selectedAlarm.reports[0].resolvedBy
+																							.name
+																					}
+																				</span>
+																			</div>
+																		)}
+																		{selectedAlarm.reports[0].assignedTo
+																			?.company?.name && (
+																			<div className="flex items-center space-x-2">
+																				<Building className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					Company:{" "}
+																					{
+																						selectedAlarm.reports[0].assignedTo
+																							.company.name
+																					}
+																				</span>
+																			</div>
+																		)}
+																	</div>
+																</div>
+															</div>
+														)}
+
+													{/* Fallback for resolved status without completedAt */}
+													{selectedAlarm.status === "RESOLVED" &&
+														(!selectedAlarm.reports ||
+															!selectedAlarm.reports[0]?.completedAt) && (
+															<div className="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-600">
+																<div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+																<div className="flex-1">
+																	<div className="flex items-center justify-between">
+																		<span className="text-white text-sm font-medium">
+																			Resolved
+																		</span>
+																		<span className="text-slate-400 text-xs">
+																			{formatDateTime(
+																				selectedAlarm.updatedAt ||
+																					selectedAlarm.createdAt
+																			)}
+																		</span>
+																	</div>
+																</div>
+															</div>
+														)}
+												</div>
+											</div>
+
+											{/* Resolution Description - add this after the timeline */}
+											{selectedAlarm.reports &&
+												selectedAlarm.reports.length > 0 &&
+												selectedAlarm.reports[0].resolutionDescription && (
+													<div>
+														<Label className="text-slate-400 text-sm font-medium">
+															Resolution Description
+														</Label>
+														<p className="text-white mt-1 bg-green-900/20 p-3 rounded-lg border border-green-700 text-sm">
+															{selectedAlarm.reports[0].resolutionDescription}
+														</p>
+													</div>
+												)}
+
+											{/* Assignment Information - add this as a new section */}
+											{selectedAlarm.reports &&
+												selectedAlarm.reports.length > 0 &&
+												selectedAlarm.reports[0].assignedTo && (
+													<div>
+														<Label className="text-slate-400 text-sm font-medium mb-2 block">
+															Assignment Details
+														</Label>
+														<div className="bg-slate-900/50 p-3 rounded-lg border border-slate-600">
+															<div className="space-y-2">
+																<div className="flex items-center justify-between">
+																	<span className="text-slate-400 text-sm">
+																		Assigned To:
+																	</span>
+																	<span className="text-white text-sm font-medium">
+																		{selectedAlarm.reports[0].assignedTo.company
+																			?.name ||
+																			selectedAlarm.reports[0].assignedTo.name}
+																	</span>
+																</div>
+																<div className="flex items-center justify-between">
+																	<span className="text-slate-400 text-sm">
+																		Contact Person:
+																	</span>
+																	<span className="text-white text-sm">
+																		{selectedAlarm.reports[0].assignedTo.name}
+																	</span>
+																</div>
+																<div className="flex items-center justify-between">
+																	<span className="text-slate-400 text-sm">
+																		Status:
+																	</span>
+																	<Badge
+																		variant="outline"
+																		className={`text-xs ${
+																			selectedAlarm.reports[0].status ===
+																			"PENDING"
+																				? "bg-yellow-900/30 border-yellow-500 text-yellow-300"
+																				: selectedAlarm.reports[0].status ===
+																				  "COMPLETED"
+																				? "bg-green-900/30 border-green-500 text-green-300"
+																				: "bg-slate-900/30 border-slate-500 text-slate-300"
+																		}`}>
+																		{selectedAlarm.reports[0].status}
+																	</Badge>
+																</div>
+																{selectedAlarm.reports[0].notes && (
+																	<div className="pt-2 border-t border-slate-600">
+																		<span className="text-slate-400 text-sm">
+																			Notes:
+																		</span>
+																		<p className="text-white text-sm mt-1">
+																			{selectedAlarm.reports[0].notes}
+																		</p>
+																	</div>
+																)}
+															</div>
+														</div>
+													</div>
+												)}
+
+											{/* <div>
 												<Label className="text-slate-400 text-sm font-medium mb-2 block">
 													Timeline
 												</Label>
@@ -1138,7 +1353,7 @@ export default function EnhancedAlarmReportsPage() {
 														</div>
 													)}
 												</div>
-											</div>
+											</div> */}
 										</div>
 
 										{/* Right: GPS & Quick Stats */}
@@ -1280,22 +1495,6 @@ export default function EnhancedAlarmReportsPage() {
 												Resolve with Details
 											</Button>
 										)}
-
-										{/* {selectedAlarm.status === "RESOLVED" && (
-											<Button
-												onClick={() =>
-													changeAlarmStatus(selectedAlarm.id, "ACTIVE")
-												}
-												disabled={updating}
-												className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white">
-												{updating ? (
-													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-												) : (
-													<AlertTriangle className="h-4 w-4 mr-2" />
-												)}
-												Reopen
-											</Button>
-										)} */}
 
 										<Button
 											variant="outline"
