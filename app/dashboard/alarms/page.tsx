@@ -61,6 +61,7 @@ const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
 
 interface Alarm {
 	id: string;
+	alarmCode: string;
 	type: string;
 	location: string;
 	longitude?: string;
@@ -875,7 +876,7 @@ export default function EnhancedAlarmsPage() {
 													INCIDENT ID
 												</Label>
 												<p className="text-sm text-white font-mono bg-slate-900/50 p-2 rounded border">
-													{selectedAlarm.id}
+													{selectedAlarm?.alarmCode}
 												</p>
 											</div>
 											<div>
