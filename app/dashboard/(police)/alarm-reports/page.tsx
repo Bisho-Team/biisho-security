@@ -730,7 +730,7 @@ export default function EnhancedAlarmReportsPage() {
 														</span>
 														<span className="text-slate-600">•</span>
 														<span className="font-mono text-xs">
-															#{alarm.id.slice(-6)}
+															#{alarm.alarmCode || alarm.id.slice(0, 8)}
 														</span>
 													</div>
 												</div>
@@ -1022,7 +1022,9 @@ export default function EnhancedAlarmReportsPage() {
 												</Badge>
 											</div>
 											<span className="text-xs text-slate-400">
-												ID: {selectedAlarm.id}
+												ID:{" "}
+												{selectedAlarm.alarmCode ||
+													selectedAlarm.id.slice(0, 8)}
 											</span>
 										</div>
 									</div>
@@ -1148,13 +1150,13 @@ export default function EnhancedAlarmReportsPage() {
 																	<div className="flex items-center space-x-2">
 																		<User className="h-3 w-3 text-slate-400" />
 																		<span className="text-slate-300 text-xs">
-																			{selectedAlarm.createdBy.name}
+																			Operator: {selectedAlarm.createdBy.name}
 																		</span>
 																	</div>
 																	<div className="flex items-center space-x-2">
 																		<Mail className="h-3 w-3 text-slate-400" />
 																		<span className="text-slate-300 text-xs font-mono">
-																			{selectedAlarm.createdBy.email}
+																			Email: {selectedAlarm.createdBy.email}
 																		</span>
 																	</div>
 																</div>
@@ -1193,12 +1195,27 @@ export default function EnhancedAlarmReportsPage() {
 																				</span>
 																			</div>
 																		)}
+
+																		{selectedAlarm.reports[0]
+																			.acknowledgedBy && (
+																			<div className="flex items-center space-x-2">
+																				<User className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					Email:{" "}
+																					{
+																						selectedAlarm.reports[0]
+																							.acknowledgedBy.email
+																					}
+																				</span>
+																			</div>
+																		)}
+
 																		{selectedAlarm.reports[0].assignedTo
 																			?.company?.name && (
 																			<div className="flex items-center space-x-2">
 																				<Building className="h-3 w-3 text-slate-400" />
 																				<span className="text-slate-300 text-xs">
-																					Assigned to:{" "}
+																					Company:{" "}
 																					{
 																						selectedAlarm.reports[0].assignedTo
 																							.company.name
@@ -1237,6 +1254,18 @@ export default function EnhancedAlarmReportsPage() {
 																					{
 																						selectedAlarm.reports[0].resolvedBy
 																							.name
+																					}
+																				</span>
+																			</div>
+																		)}
+																		{selectedAlarm.reports[0].resolvedBy && (
+																			<div className="flex items-center space-x-2">
+																				<User className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					Email:{" "}
+																					{
+																						selectedAlarm.reports[0].resolvedBy
+																							.email
 																					}
 																				</span>
 																			</div>
@@ -1325,7 +1354,7 @@ export default function EnhancedAlarmReportsPage() {
 																		{selectedAlarm.reports[0].assignedTo.name}
 																	</span>
 																</div>
-																<div className="flex items-center justify-between">
+																{/* <div className="flex items-center justify-between">
 																	<span className="text-slate-400 text-sm">
 																		Status:
 																	</span>
@@ -1342,7 +1371,7 @@ export default function EnhancedAlarmReportsPage() {
 																		}`}>
 																		{selectedAlarm.reports[0].status}
 																	</Badge>
-																</div>
+																</div> */}
 																{selectedAlarm.reports[0].notes && (
 																	<div className="pt-2 border-t border-slate-600">
 																		<span className="text-slate-400 text-sm">
@@ -1489,7 +1518,7 @@ export default function EnhancedAlarmReportsPage() {
 											</div>
 
 											{/* Created By */}
-											<div>
+											{/* <div>
 												<Label className="text-slate-400 text-sm font-medium mb-2 block">
 													Created By
 												</Label>
@@ -1501,7 +1530,7 @@ export default function EnhancedAlarmReportsPage() {
 														</span>
 													</div>
 												</div>
-											</div>
+											</div> */}
 										</div>
 									</div>
 								</div>

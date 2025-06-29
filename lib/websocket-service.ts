@@ -16,6 +16,8 @@ interface WebSocketMessage {
 interface WebSocketClientOptions {
 	onAlarmCreated?: (alarm: any) => void;
 	onAlarmUpdated?: (alarm: any) => void;
+	onOfficeAlarmNotification?: (alarm: any) => void; // NEW
+	onOfficeAlarmUpdated?: (alarm: any) => void; // NEW
 	onSystemNotification?: (notification: any) => void;
 	onConnectionEstablished?: (userInfo: any) => void;
 	onConnectionStatusUpdate?: (data: any) => void; // New callback
@@ -182,6 +184,16 @@ export class WebSocketClient {
 			case "alarm_updated":
 				console.log("🔄 Alarm update received:", data.alarm);
 				this.options.onAlarmUpdated?.(data.alarm);
+				break;
+
+			case "office_alarm_notification":
+				console.log("🏢 Office alarm notification received:", data.alarm);
+				this.options.onOfficeAlarmNotification?.(data.alarm);
+				break;
+
+			case "office_alarm_updated":
+				console.log("🏢 Office alarm update received:", data.alarm);
+				this.options.onOfficeAlarmUpdated?.(data.alarm);
 				break;
 
 			case "system_notification":
