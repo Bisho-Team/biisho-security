@@ -190,6 +190,7 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 				// }
 
 				// Transform the alarm data to match our interface
+
 				const transformedAlarm: Alarm = {
 					id: newAlarm.id,
 					type: newAlarm.type,
