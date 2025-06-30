@@ -585,8 +585,7 @@ export function PersistentAlarmModal({
 									</span>
 									<span className="text-slate-400">•</span>
 									<span className="text-slate-300">
-										ID: #
-										{currentAlarm?.alarmCode || currentAlarm.id.slice(0, 8)}
+										ID: #{currentAlarm?.alarmCode}
 									</span>
 								</div>
 							</div>
@@ -669,7 +668,6 @@ export function PersistentAlarmModal({
 																		Operator: {currentAlarm.createdBy.name}
 																	</span>
 																</div>
-
 																<div className="flex items-center space-x-2">
 																	<Mail className="h-3 w-3 text-slate-400" />
 																	<span className="text-slate-300 text-xs">
