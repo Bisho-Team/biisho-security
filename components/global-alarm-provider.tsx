@@ -43,6 +43,7 @@ interface Alarm {
 	createdBy: {
 		id: string;
 		name: string;
+		email: string; // Added email for createdBy
 	};
 	createdAt: string;
 	acknowledgedAt?: string;
@@ -216,6 +217,7 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 					createdBy: {
 						id: newAlarm.createdBy?.id || "",
 						name: newAlarm.createdBy || "Unknown User",
+						email: newAlarm.createdByEmail || "N/A",
 					},
 					createdAt: newAlarm.createdAt,
 					priority: newAlarm.priority || getSeverityPriority(newAlarm.severity),
