@@ -17,6 +17,7 @@ import { PersistentAlarmModal } from "@/components/persistent-alarm-modal";
 
 interface Alarm {
 	id: string;
+	alarmCode?: string; // Optional for real-time alarms
 	type: string;
 	branchId: string;
 	branch: {
@@ -190,8 +191,10 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 				// }
 
 				// Transform the alarm data to match our interface
+
 				const transformedAlarm: Alarm = {
 					id: newAlarm.id,
+					alarmCode: newAlarm.alarmCode || newAlarm.id,
 					type: newAlarm.type,
 					branchId: newAlarm.branchId,
 					branch: branchData,
