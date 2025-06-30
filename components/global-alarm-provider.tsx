@@ -22,13 +22,11 @@ interface Alarm {
 	branch: {
 		id: string;
 		name: string;
-		company?:
-			| {
-					id: string;
-					name: string;
-					logo?: string;
-			  }
-			| undefined;
+		company?: {
+			id: string;
+			name: string;
+			logo?: string;
+		};
 	};
 	location: string;
 	latitude: string;
