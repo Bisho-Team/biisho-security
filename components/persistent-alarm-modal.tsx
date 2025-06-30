@@ -429,7 +429,7 @@ export function PersistentAlarmModal({
 									<div className="flex items-center space-x-2">
 										<Building className="h-3 w-3 text-blue-400" />
 										<span className="text-sm text-slate-300 truncate">
-											{currentAlarm.branch.name}
+											Location: {currentAlarm.branch.name}
 										</span>
 									</div>
 									{currentAlarm.branch.locationType && (
@@ -443,9 +443,17 @@ export function PersistentAlarmModal({
 										<div className="flex items-center space-x-2">
 											<MapPin className="h-3 w-3 text-green-400" />
 											<span className="text-xs text-slate-400">
-												{currentAlarm.branch.city}
+												City: {currentAlarm.branch.city}
+											</span>
+										</div>
+									)}
+									{currentAlarm.branch.city && (
+										<div className="flex items-center space-x-2">
+											<MapPin className="h-3 w-3 text-green-400" />
+											<span className="text-xs text-slate-400">
+												Sub City:
 												{currentAlarm.branch.subCity &&
-													`, ${currentAlarm.branch.subCity}`}
+													`${currentAlarm.branch.subCity}`}
 											</span>
 										</div>
 									)}
@@ -467,7 +475,7 @@ export function PersistentAlarmModal({
 													<div className="flex items-center space-x-2">
 														<User className="h-3 w-3 text-slate-400" />
 														<span className="text-white text-xs">
-															{currentAlarm.branch.managerName}
+															Manager: {currentAlarm.branch.managerName}
 														</span>
 													</div>
 												)}
@@ -475,7 +483,7 @@ export function PersistentAlarmModal({
 													<div className="flex items-center space-x-2">
 														<Phone className="h-3 w-3 text-slate-400" />
 														<span className="text-white text-xs font-mono">
-															{currentAlarm.branch.phoneNumber}
+															Contact: {currentAlarm.branch.phoneNumber}
 														</span>
 													</div>
 												)}
@@ -494,11 +502,11 @@ export function PersistentAlarmModal({
 
 								{/* Controls & Status */}
 								<div className="flex items-center justify-between">
-									<div className="flex items-center space-x-2">
+									{/* <div className="flex items-center space-x-2">
 										<Badge className="bg-red-600 text-white" variant="outline">
 											{currentAlarm.status}
 										</Badge>
-									</div>
+									</div> */}
 									<div className="flex items-center space-x-2">
 										<Button
 											variant="ghost"
@@ -577,7 +585,8 @@ export function PersistentAlarmModal({
 									</span>
 									<span className="text-slate-400">•</span>
 									<span className="text-slate-300">
-										ID: #{currentAlarm.alarmCode || currentAlarm.id.slice(0, 8)}
+										ID: #
+										{currentAlarm?.alarmCode || currentAlarm.id.slice(0, 8)}
 									</span>
 								</div>
 							</div>
@@ -657,12 +666,14 @@ export function PersistentAlarmModal({
 																<div className="flex items-center space-x-2">
 																	<User className="h-3 w-3 text-slate-400" />
 																	<span className="text-slate-300 text-xs">
-																		{currentAlarm.createdBy.name}
+																		Operator: {currentAlarm.createdBy.name}
 																	</span>
 																</div>
+
 																<div className="flex items-center space-x-2">
 																	<Mail className="h-3 w-3 text-slate-400" />
 																	<span className="text-slate-300 text-xs">
+																		Email:{" "}
 																		{currentAlarm.createdBy.email ||
 																			"Not provided"}
 																	</span>
@@ -811,7 +822,7 @@ export function PersistentAlarmModal({
 																	{currentAlarm.reports[0].assignedTo.name}
 																</span>
 															</div>
-															<div className="flex items-center justify-between">
+															{/* <div className="flex items-center justify-between">
 																<span className="text-slate-400 text-sm">
 																	Status:
 																</span>
@@ -827,7 +838,7 @@ export function PersistentAlarmModal({
 																	}`}>
 																	{currentAlarm.reports[0].status}
 																</Badge>
-															</div>
+															</div> */}
 														</div>
 													</div>
 												</div>

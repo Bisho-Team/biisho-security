@@ -17,6 +17,7 @@ import { PersistentAlarmModal } from "@/components/persistent-alarm-modal";
 
 interface Alarm {
 	id: string;
+	alarmCode: string; // Unique code for the alarm, can be derived from ID
 	type: string;
 	branchId: string;
 	branch: {
@@ -42,6 +43,7 @@ interface Alarm {
 	createdBy: {
 		id: string;
 		name: string;
+		email?: string; // Optional email field for createdBy
 	};
 	createdAt: string;
 	acknowledgedAt?: string;
@@ -156,42 +158,10 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 					},
 				};
 
-				// try {
-				// 	// Try to get complete branch data with company info
-				// 	const branchResponse = await apiClient.getBranches();
-				// 	const fullBranch = branchResponse?.find(
-				// 		(b: any) => b.id === newAlarm.branchId
-				// 	);
-				// 	if (fullBranch && fullBranch.company) {
-				// 		branchData = {
-				// 			id: fullBranch.id,
-				// 			name: fullBranch.name,
-				// 			company: {
-				// 				id: fullBranch.company.id,
-				// 				name: fullBranch.company.name,
-				// 				logo: fullBranch.company.logo,
-				// 			},
-				// 		};
-				// 		console.log(
-				// 			"✅ [GLOBAL] Company data loaded for alarm:",
-				// 			branchData.company
-				// 		);
-				// 	} else {
-				// 		console.warn(
-				// 			"⚠️ [GLOBAL] No company data found for branch:",
-				// 			newAlarm.branchId
-				// 		);
-				// 	}
-				// } catch (error) {
-				// 	console.error(
-				// 		"❌ [GLOBAL] Could not fetch complete branch data:",
-				// 		error
-				// 	);
-				// }
-
 				// Transform the alarm data to match our interface
 				const transformedAlarm: Alarm = {
 					id: newAlarm.id,
+					alarmCode: newAlarm.alarmCode || newAlarm.id.slice(0, 8), // Use alarmCode if available, otherwise fallback to first 8 chars of ID
 					type: newAlarm.type,
 					branchId: newAlarm.branchId,
 					branch: branchData,
@@ -213,6 +183,7 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 					createdBy: {
 						id: newAlarm.createdBy?.id || "",
 						name: newAlarm.createdBy || "Unknown User",
+						email: newAlarm.createdBy?.email || "N/A",
 					},
 					createdAt: newAlarm.createdAt,
 					priority: newAlarm.priority || getSeverityPriority(newAlarm.severity),
