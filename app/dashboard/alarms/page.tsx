@@ -57,6 +57,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
+import { useWebSocket } from "@/hooks/use-websocket";
 const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
 
 interface Alarm {
@@ -230,11 +231,149 @@ export default function EnhancedAlarmsPage() {
 	const [updating, setUpdating] = useState(false);
 	const { toast } = useToast();
 	const { user } = useAuth();
+	const [connectionStatusData, setConnectionStatusData] = useState<any>(null);
+
+	const fetchAlarms = useCallback(async () => {
+		try {
+			setLoading(true);
+			const response = await apiService.get("/alarms");
+			console.log("Fetched alarms__:", (response as any).alarms);
+
+			const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+				...alarm,
+				time: alarm.createdAt,
+				coordinates:
+					alarm.coordinates ||
+					(alarm.latitude && alarm.longitude
+						? {
+								lat: Number.parseFloat(alarm.latitude),
+								lng: Number.parseFloat(alarm.longitude),
+						  }
+						: undefined),
+			}));
+
+			setMockAlarms(alarmsWithCoords);
+			setAlarmHistory(alarmsWithCoords);
+			// setLastRefresh(new Date());
+		} catch (error) {
+			toast({
+				title: "Error",
+				description: "Failed to fetch alarms",
+				variant: "destructive",
+			});
+		} finally {
+			setLoading(false);
+		}
+	}, [toast]);
+
+	// const fetchAlarmsHistory = useCallback(async () => {
+	// 	try {
+	// 		const response = await apiService.get("/alarms");
+	// 		console.log("Fetched alarm history:", response);
+
+	// 		const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+	// 			...alarm,
+	// 			time: alarm.createdAt,
+	// 			coordinates:
+	// 				alarm.coordinates ||
+	// 				(alarm.latitude && alarm.longitude
+	// 					? {
+	// 							lat: Number.parseFloat(alarm.latitude),
+	// 							lng: Number.parseFloat(alarm.longitude),
+	// 					  }
+	// 					: undefined),
+	// 		}));
+
+	// 		setAlarmHistory(alarmsWithCoords);
+	// 	} catch (error) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Failed to fetch alarm history",
+	// 			variant: "destructive",
+	// 		});
+	// 	}
+	// }, [toast]);
+
+	const token =
+		typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+	// WebSocket connection with enhanced debugging
+	const { isConnected, connect, disconnect } = useWebSocket(token, {
+		autoConnect: true,
+		onAlarmCreated: (alarm) => {
+			console.log("🚨 NEW ALARM CREATED via WebSocket:", alarm);
+
+			// Refresh alarms data when new alarm is created
+			fetchAlarms();
+			// fetchAlarmsHistory();
+
+			toast({
+				title: "🚨 New Alarm Created",
+				description: `${alarm.type} at ${alarm.location}`,
+				variant: "destructive",
+			});
+		},
+		onAlarmUpdated: async (alarm) => {
+			console.log("🔄 ALARM UPDATED via WebSocket:", alarm);
+			console.log("🔄 Full alarm object:", JSON.stringify(alarm, null, 2));
+
+			// Refresh alarms data when alarm is updated
+			fetchAlarms();
+
+			toast({
+				title: "🔄 Alarm Updated",
+				description: `${alarm.type} status changed to ${alarm.status}`,
+			});
+		},
+		onConnectionStatusUpdate: (data) => {
+			console.log("📊 CONNECTION STATUS UPDATE:", data);
+			setConnectionStatusData(data);
+
+			// Update the police status card
+			if ((window as any).updatePoliceStatus) {
+				(window as any).updatePoliceStatus(data);
+			}
+		},
+		onConnectionEstablished: (userInfo) => {
+			console.log("🎉 CONNECTION ESTABLISHED:", userInfo);
+
+			toast({
+				title: "Connected",
+				description: "Real-time connection established",
+			});
+		},
+		onError: (error) => {
+			console.error("❌ WEBSOCKET ERROR:", error);
+
+			toast({
+				title: "Connection Error",
+				description: "WebSocket connection failed",
+				variant: "destructive",
+			});
+		},
+		onClose: (event) => {
+			console.log("🔌 WEBSOCKET CLOSED:", event);
+
+			if (event.code !== 1000) {
+				toast({
+					title: "Connection Lost",
+					description: "Attempting to reconnect...",
+					variant: "destructive",
+				});
+			}
+		},
+	});
 
 	useEffect(() => {
 		fetchAlarms();
-		fetchAlarmsHistory();
-	}, []);
+	}, [fetchAlarms]);
+
+	// Add debug logging for connection status
+	// useEffect(() => {
+	// 	console.log("🔍 WebSocket Connection Status:", isConnected);
+	// 	console.log("🔍 Auth Token:", token ? "Present" : "Missing");
+	// 	console.log("🔍 Debug Info:", wsDebugInfo);
+	// }, [isConnected, token, wsDebugInfo]);
 
 	// const fetchAlarms = async () => {
 	// 	try {
@@ -298,65 +437,68 @@ export default function EnhancedAlarmsPage() {
 
 	// WebSocket integration with automatic data refresh
 
-	const fetchAlarms = useCallback(async () => {
-		try {
-			setLoading(true);
-			const response = await apiService.get("/alarms");
-			console.log("Fetched alarms:", response);
+	// const fetchAlarms = useCallback(async () => {
+	// 	try {
+	// 		setLoading(true);
+	// 		const response = await apiService.get("/alarms");
+	// 		console.log("Fetched alarms:", response);
 
-			const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
-				...alarm,
-				time: alarm.createdAt,
-				coordinates:
-					alarm.coordinates ||
-					(alarm.latitude && alarm.longitude
-						? {
-								lat: Number.parseFloat(alarm.latitude),
-								lng: Number.parseFloat(alarm.longitude),
-						  }
-						: undefined),
-			}));
+	// 		const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+	// 			...alarm,
+	// 			time: alarm.createdAt,
+	// 			coordinates:
+	// 				alarm.coordinates ||
+	// 				(alarm.latitude && alarm.longitude
+	// 					? {
+	// 							lat: Number.parseFloat(alarm.latitude),
+	// 							lng: Number.parseFloat(alarm.longitude),
+	// 					  }
+	// 					: undefined),
+	// 		}));
 
-			setMockAlarms(alarmsWithCoords);
-			// setLastRefresh(new Date());
-		} catch (error) {
-			toast({
-				title: "Error",
-				description: "Failed to fetch alarms",
-				variant: "destructive",
-			});
-		} finally {
-			setLoading(false);
-		}
-	}, [toast]);
+	// 		setMockAlarms(alarmsWithCoords);
+	// 		// setLastRefresh(new Date());
+	// 	} catch (error) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Failed to fetch alarms",
+	// 			variant: "destructive",
+	// 		});
+	// 	} finally {
+	// 		setLoading(false);
+	// 	}
+	// }, [toast]);
 
-	const fetchAlarmsHistory = useCallback(async () => {
-		try {
-			const response = await apiService.get("/alarms");
-			console.log("Fetched alarm history:", response);
+	// const fetchAlarmsHistory = useCallback(async () => {
+	// 	try {
+	// 		const response = await apiService.get("/alarms");
+	// 		console.log("Fetched alarm history:", response);
 
-			const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
-				...alarm,
-				time: alarm.createdAt,
-				coordinates:
-					alarm.coordinates ||
-					(alarm.latitude && alarm.longitude
-						? {
-								lat: Number.parseFloat(alarm.latitude),
-								lng: Number.parseFloat(alarm.longitude),
-						  }
-						: undefined),
-			}));
+	// 		const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+	// 			...alarm,
+	// 			time: alarm.createdAt,
+	// 			coordinates:
+	// 				alarm.coordinates ||
+	// 				(alarm.latitude && alarm.longitude
+	// 					? {
+	// 							lat: Number.parseFloat(alarm.latitude),
+	// 							lng: Number.parseFloat(alarm.longitude),
+	// 					  }
+	// 					: undefined),
+	// 		}));
 
-			setAlarmHistory(alarmsWithCoords);
-		} catch (error) {
-			toast({
-				title: "Error",
-				description: "Failed to fetch alarm history",
-				variant: "destructive",
-			});
-		}
-	}, [toast]);
+	// 		setAlarmHistory(alarmsWithCoords);
+	// 	} catch (error) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Failed to fetch alarm history",
+	// 			variant: "destructive",
+	// 		});
+	// 	}
+	// }, [toast]);
+
+	// const token =
+	// 	typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
 	const handleUpdateAlarm = async () => {
 		if (!selectedAlarm) return;
@@ -378,7 +520,6 @@ export default function EnhancedAlarmsPage() {
 			setIsEditDialogOpen(false);
 			setSelectedAlarm(null);
 			fetchAlarms();
-			fetchAlarmsHistory();
 		} catch (error: any) {
 			toast({
 				title: "Error",
@@ -561,28 +702,7 @@ export default function EnhancedAlarmsPage() {
 						</div>
 					</CardContent>
 				</Card>
-				{/* <Card
-					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
-					style={{ animationDelay: "0.2s" }}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Dispatched</CardTitle>
-						<div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/20">
-							<Send className="h-4 w-4 text-blue-500" />
-						</div>
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-blue-600">
-							{mockAlarms.filter((a) => a.status === "DISPATCHED").length}
-						</div>
-						<div className="flex justify-between items-center">
-							<p className="text-xs text-muted-foreground">
-								Security team dispatched
-							</p>
-							{mockAlarms.filter((a) => a.status === "DISPATCHED").length >
-								0 && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
-						</div>
-					</CardContent>
-				</Card> */}
+
 				<Card
 					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
 					style={{ animationDelay: "0.3s" }}>
