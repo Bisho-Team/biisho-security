@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -236,7 +236,69 @@ export default function EnhancedAlarmsPage() {
 		fetchAlarmsHistory();
 	}, []);
 
-	const fetchAlarms = async () => {
+	// const fetchAlarms = async () => {
+	// 	try {
+	// 		setLoading(true);
+	// 		const response = await apiService.get("/alarms");
+	// 		console.log("Fetched alarms:", response);
+
+	// 		const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+	// 			...alarm,
+	// 			time: alarm.createdAt,
+	// 			coordinates:
+	// 				alarm.coordinates ||
+	// 				(alarm.latitude && alarm.longitude
+	// 					? {
+	// 							lat: Number.parseFloat(alarm.latitude),
+	// 							lng: Number.parseFloat(alarm.longitude),
+	// 					  }
+	// 					: undefined),
+	// 		}));
+
+	// 		setMockAlarms(alarmsWithCoords);
+	// 	} catch (error) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Failed to fetch alarms",
+	// 			variant: "destructive",
+	// 		});
+	// 	} finally {
+	// 		setLoading(false);
+	// 	}
+	// };
+
+	// const fetchAlarmsHistory = async () => {
+	// 	try {
+	// 		const response = await apiService.get("/alarms");
+	// 		console.log("Fetched alarm history:", response);
+
+	// 		// Add mock coordinates for demo purposes
+	// 		const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+	// 			...alarm,
+	// 			time: alarm.createdAt,
+	// 			coordinates:
+	// 				alarm.coordinates ||
+	// 				(alarm.latitude && alarm.longitude
+	// 					? {
+	// 							lat: Number.parseFloat(alarm.latitude),
+	// 							lng: Number.parseFloat(alarm.longitude),
+	// 					  }
+	// 					: undefined),
+	// 		}));
+
+	// 		setAlarmHistory(alarmsWithCoords);
+	// 	} catch (error) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Failed to fetch alarm history",
+	// 			variant: "destructive",
+	// 		});
+	// 	}
+	// };
+
+	// WebSocket integration with automatic data refresh
+
+	const fetchAlarms = useCallback(async () => {
 		try {
 			setLoading(true);
 			const response = await apiService.get("/alarms");
@@ -256,6 +318,7 @@ export default function EnhancedAlarmsPage() {
 			}));
 
 			setMockAlarms(alarmsWithCoords);
+			// setLastRefresh(new Date());
 		} catch (error) {
 			toast({
 				title: "Error",
@@ -265,14 +328,13 @@ export default function EnhancedAlarmsPage() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [toast]);
 
-	const fetchAlarmsHistory = async () => {
+	const fetchAlarmsHistory = useCallback(async () => {
 		try {
 			const response = await apiService.get("/alarms");
 			console.log("Fetched alarm history:", response);
 
-			// Add mock coordinates for demo purposes
 			const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
 				...alarm,
 				time: alarm.createdAt,
@@ -294,7 +356,7 @@ export default function EnhancedAlarmsPage() {
 				variant: "destructive",
 			});
 		}
-	};
+	}, [toast]);
 
 	const handleUpdateAlarm = async () => {
 		if (!selectedAlarm) return;
