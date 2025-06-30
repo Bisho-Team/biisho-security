@@ -39,19 +39,6 @@ const createUserSchema = zod_1.z.object({
     operatorType: zod_1.z.enum(["OFFICE", "POLICE"]).optional(),
     assignedBranches: zod_1.z.array(zod_1.z.string()).optional(),
 });
-// 6|koppa-backend  |     id: 'op-1750073914934',
-// 6|koppa-backend  |     name: 'Abenezer Kebede',
-// 6|koppa-backend  |     email: 'abenikeb79@gmail22.com',
-// 6|koppa-backend  |     phone: '09667772272',
-// 6|koppa-backend  |     status: 'ACTIVE',
-// 6|koppa-backend  |     role: 'OPERATOR',
-// 6|koppa-backend  |     managedById: 'cmbc08g7d0004eyprjcy9377g',
-// 6|koppa-backend  |     operatorType: 'OFFICE',
-// 6|koppa-backend  |     createdBy: 'cmbc08g7d0004eyprjcy9377g',
-// 6|koppa-backend  |     companyId: 'cmbc08fbl0000eyprqm39rfsl',
-// 6|koppa-backend  |     createdAt: '2025-06-16T11:38:34.934Z',
-// 6|koppa-backend  |     assignedBranches: [],
-// 6|koppa-backend  |     lastActive: '2025-06-16T11:38:34.934Z'
 const updateUserSchema = zod_1.z.object({
     name: zod_1.z.string().min(1).optional(),
     companyId: zod_1.z.string().optional(),
@@ -61,37 +48,61 @@ const updateUserSchema = zod_1.z.object({
 // Get all users (Super Admin only)
 router.get("/", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { page = 1, limit = 10, role, status, search } = req.query;
+        const { page = 1, limit = 10, role, status, search, operatorType } = req.query;
         const where = {};
-        if (role)
+        // Role filtering
+        if (role && role !== "all") {
             where.role = role;
-        if (status)
+        }
+        // Status filtering
+        if (status && status !== "all") {
             where.status = status;
-        if (search) {
+        }
+        // Operator type filtering for OPERATOR role
+        if (operatorType && operatorType !== "all") {
+            where.operatorType = operatorType;
+        }
+        // Search functionality
+        if (typeof search === "string" && search.trim() !== "") {
             where.OR = [
                 { name: { contains: search, mode: "insensitive" } },
                 { email: { contains: search, mode: "insensitive" } },
+                { phone: { contains: search, mode: "insensitive" } },
             ];
         }
+        // Get total count for pagination
+        const total = yield prisma.user.count({ where });
+        // Calculate pagination values
+        const pageNum = Math.max(1, Number(page));
+        const limitNum = Math.max(1, Math.min(100, Number(limit))); // Max 100 per page
+        const skip = (pageNum - 1) * limitNum;
+        const totalPages = Math.ceil(total / limitNum);
+        // Fetch users with pagination
         const users = yield prisma.user.findMany({
             where,
             include: {
-                company: true,
+                company: {
+                    select: {
+                        id: true,
+                        name: true,
+                        type: true,
+                        status: true,
+                    },
+                },
                 managedBy: {
                     select: { id: true, name: true, email: true },
                 },
                 _count: {
                     select: {
                         managedUsers: true,
-                        // assignedBranches: true,
                     },
                 },
             },
-            skip: (Number(page) - 1) * Number(limit),
-            take: Number(limit),
+            skip,
+            take: limitNum,
             orderBy: { createdAt: "desc" },
         });
-        const total = yield prisma.user.count({ where });
+        // Remove passwords from response
         const usersWithoutPasswords = users.map((_a) => {
             var { password } = _a, user = __rest(_a, ["password"]);
             return user;
@@ -99,17 +110,79 @@ router.get("/", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN", "OFFIC
         res.json({
             users: usersWithoutPasswords,
             pagination: {
-                page: Number(page),
-                limit: Number(limit),
+                page: pageNum,
+                limit: limitNum,
                 total,
-                pages: Math.ceil(total / Number(limit)),
+                pages: totalPages,
+                hasNext: pageNum < totalPages,
+                hasPrev: pageNum > 1,
+            },
+            filters: {
+                role: role || "all",
+                status: status || "all",
+                search: search || "",
+                operatorType: operatorType || "all",
             },
         });
     }
     catch (error) {
-        res.status(500).json({ error: "Failed to fetch users" });
+        console.error("Error fetching users:", error);
+        res.status(500).json({
+            error: "Failed to fetch users",
+            message: error instanceof Error ? error.message : String(error),
+        });
     }
 }));
+// router.get(
+// 	"/",
+// 	authenticate,
+// 	authorize("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"),
+// 	async (req: AuthRequest, res) => {
+// 		try {
+// 			const { page = 1, limit = 10, role, status, search } = req.query;
+// 			const where: any = {};
+// 			if (role) where.role = role;
+// 			if (status) where.status = status;
+// 			if (search) {
+// 				where.OR = [
+// 					{ name: { contains: search as string, mode: "insensitive" } },
+// 					{ email: { contains: search as string, mode: "insensitive" } },
+// 				];
+// 			}
+// 			const users = await prisma.user.findMany({
+// 				where,
+// 				include: {
+// 					company: true,
+// 					managedBy: {
+// 						select: { id: true, name: true, email: true },
+// 					},
+// 					_count: {
+// 						select: {
+// 							managedUsers: true,
+// 							// assignedBranches: true,
+// 						},
+// 					},
+// 				},
+// 				skip: (Number(page) - 1) * Number(limit),
+// 				take: Number(limit),
+// 				orderBy: { createdAt: "desc" },
+// 			});
+// 			const total = await prisma.user.count({ where });
+// 			const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+// 			res.json({
+// 				users: usersWithoutPasswords,
+// 				pagination: {
+// 					page: Number(page),
+// 					limit: Number(limit),
+// 					total,
+// 					pages: Math.ceil(total / Number(limit)),
+// 				},
+// 			});
+// 		} catch (error) {
+// 			res.status(500).json({ error: "Failed to fetch users" });
+// 		}
+// 	}
+// );
 router.get("/filtered", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { page = 1, limit = 15, role, status, search, operatorType } = req.query;
@@ -193,36 +266,6 @@ router.get("/filtered", auth_1.authenticate, (req, res) => __awaiter(void 0, voi
         res.status(500).json({ error: "Failed to fetch users" });
     }
 }));
-// // Get users by manager (Office/Police Managers)
-// router.get(
-// 	"/my-operators",
-// 	authenticate,
-// 	authorize("OFFICE_MANAGER", "POLICE_MANAGER"),
-// 	async (req: AuthRequest, res) => {
-// 		try {
-// 			const operators = await prisma.user.findMany({
-// 				where: {
-// 					managedById: req.user!.id,
-// 					role: "OPERATOR",
-// 				},
-// 				// include: {
-// 				// 	assignedBranches: {
-// 				// 		include: {
-// 				// 			branch: true,
-// 				// 		},
-// 				// 	},
-// 				// },
-// 				orderBy: { createdAt: "desc" },
-// 			});
-// 			const operatorsWithoutPasswords = operators.map(
-// 				({ password, ...operator }) => operator
-// 			);
-// 			res.json(operatorsWithoutPasswords);
-// 		} catch (error) {
-// 			res.status(500).json({ error: "Failed to fetch operators" });
-// 		}
-// 	}
-// );
 // Get operators managed by current user
 router.get("/my-operators", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "POLICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -309,6 +352,13 @@ router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, vo
         else {
             return res.status(403).json({ error: "Insufficient permissions" });
         }
+        // ✅ Check if email already exists
+        const existingUser = yield prisma.user.findUnique({
+            where: { email: data.email },
+        });
+        if (existingUser) {
+            return res.status(400).json({ error: "Email is already in use" });
+        }
         const hashedPassword = yield (0, auth_1.hashPassword)(data.password);
         const userData = {
             email: data.email,
@@ -339,12 +389,6 @@ router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, vo
         });
         // Assign branches to operator
         if (data.role === "OPERATOR" && data.companyId) {
-            // await prisma.branchOperator.createMany({
-            // 	data: data.assignedBranches.map((branchId) => ({
-            // 		userId: user.id,
-            // 		branchId,
-            // 	})),
-            // });
             yield prisma.companyOperator.create({
                 data: {
                     operatorId: user.id,
@@ -359,175 +403,15 @@ router.post("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, vo
         });
     }
     catch (error) {
-        if (error instanceof zod_1.z.ZodError) {
+        if (error) {
             return res
                 .status(400)
-                .json({ error: "Validation failed", details: error.errors });
+                .json({ error: "Validation failed", details: error });
         }
         console.error("Error creating user:", error);
         res.status(500).json({ error: "Failed to create user" });
     }
 }));
-// Update user
-// router.put("/:id", authenticate, async (req: AuthRequest, res) => {
-// 	try {
-// 		const { id } = req.params;
-// 		const data = updateUserSchema.parse(req.body);
-// 		// Check if user exists and permissions
-// 		const existingUser = await prisma.user.findUnique({
-// 			where: { id },
-// 		});
-// 		if (!existingUser) {
-// 			return res.status(404).json({ error: "User not found" });
-// 		}
-// 		// Authorization checks
-// 		if (req.user?.role !== "SUPER_ADMIN") {
-// 			if (existingUser.managedById !== req.user?.id) {
-// 				return res
-// 					.status(403)
-// 					.json({ error: "You can only update users you manage" });
-// 			}
-// 		}
-// 		const user = await prisma.user.update({
-// 			where: { id },
-// 			data: {
-// 				name: data.name,
-// 				status: data.status,
-// 			},
-// 			include: {
-// 				company: true,
-// 				managedBy: {
-// 					select: { id: true, name: true, email: true },
-// 				},
-// 			},
-// 		});
-// 		// Update company assignment for operator
-// 		if (existingUser.role === "OPERATOR") {
-// 			// Remove existing company assignment
-// 			await prisma.companyOperator.deleteMany({
-// 				where: { operatorId: id },
-// 			});
-// 			// Assign new company (if provided)
-// 			if (data.companyId) {
-// 				await prisma.companyOperator.create({
-// 					data: {
-// 						operatorId: id,
-// 						companyId: data.companyId,
-// 					},
-// 				});
-// 			}
-// 		}
-// 		// // Update branch assignments for operators
-// 		// if (data.assignedBranches && existingUser.role === "OPERATOR") {
-// 		// 	await prisma.branchOperator.deleteMany({
-// 		// 		where: { userId: id },
-// 		// 	});
-// 		// 	if (data.assignedBranches.length > 0) {
-// 		// 		await prisma.branchOperator.createMany({
-// 		// 			data: data.assignedBranches.map((branchId) => ({
-// 		// 				userId: id,
-// 		// 				branchId,
-// 		// 			})),
-// 		// 		});
-// 		// 	}
-// 		// }
-// 		const { password: _, ...userWithoutPassword } = user;
-// 		res.json({
-// 			message: "User updated successfully",
-// 			user: userWithoutPassword,
-// 		});
-// 	} catch (error) {
-// 		if (error instanceof z.ZodError) {
-// 			return res
-// 				.status(400)
-// 				.json({ error: "Validation failed", details: error.errors });
-// 		}
-// 		res.status(500).json({ error: "Failed to update user" });
-// 	}
-// });
-// Update user
-// router.put("/:id", authenticate, authorize("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"), async (req:AuthRequest, res) => {
-// 	try {
-// 	  const { id } = req.params
-// 	  const { name, email, operatorType, status } = req.body;
-// 		const companyId = req.body.companyId || req.user?.companyId;
-// 		console.log({
-// 		name,
-// 		email,
-// 		operatorType,
-// 		companyId,
-// 		status,
-// 		});
-// 	  // Check if user exists
-// 	  const existingUser = await prisma.user.findUnique({
-// 		where: { id },
-// 	  })
-// 	  if (!existingUser) {
-// 		return res.status(404).json({ error: "User not found" })
-// 	  }
-// 	  // Role-based access control
-// 	  if (req.user!.role !== "SUPER_ADMIN") {
-// 		if (existingUser.managedById !== req.user!.id && existingUser.companyId !== req.user!.companyId) {
-// 		  return res.status(403).json({ error: "Access denied" })
-// 		}
-// 	  }
-// 	  // Check if email is already taken by another user
-// 	  if (email && email !== existingUser.email) {
-// 		const emailExists = await prisma.user.findUnique({
-// 		  where: { email },
-// 		})
-// 		if (emailExists) {
-// 		  return res.status(400).json({ error: "Email already exists" })
-// 		}
-// 	  }
-// 	  const updatedUser = await prisma.user.update({
-// 		where: { id },
-// 		data: {
-// 		  name,
-// 		  email,
-// 		  operatorType: existingUser.role === "OPERATOR" ? operatorType : existingUser.operatorType,
-// 		  companyId: req.user!.role === "SUPER_ADMIN" ? companyId : existingUser.companyId,
-// 		  status: req.user!.role === "SUPER_ADMIN" ? status : existingUser.status,
-// 		},
-// 		include: {
-// 		  company: {
-// 			select: { id: true, name: true, status: true },
-// 		  },
-// 		  managedBy: {
-// 			select: { id: true, name: true, email: true, role: true },
-// 		  },
-// 		  _count: {
-// 			select: {
-// 			  managedUsers: true,
-// 			  createdAlarms: true,
-// 			  createdReports: true,
-// 			},
-// 		  },
-// 		},
-// 	  })
-// 	  		// Update company assignment for operator
-// 		if (existingUser.role === "OPERATOR") {
-// 			// Remove existing company assignment
-// 			await prisma.companyOperator.deleteMany({
-// 				where: { operatorId: id },
-// 			});
-// 			// Assign new company (if provided)
-// 			if (companyId) {
-// 				await prisma.companyOperator.create({
-// 					data: {
-// 						operatorId: id,
-// 						companyId: companyId,
-// 					},
-// 				});
-// 			}
-// 		}
-// 	  const { password, ...userWithoutPassword } = updatedUser
-// 	  res.json(userWithoutPassword)
-// 	} catch (error) {
-// 	  console.error("Error updating user:", error)
-// 	  res.status(500).json({ error: "Failed to update user" })
-// 	}
-//   })
 router.put("/:id", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -612,7 +496,6 @@ router.put("/:id", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN", "OF
         res.status(500).json({ error: "Failed to update user" });
     }
 }));
-// Delete user
 // Update user status
 router.patch("/:id/status", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -803,20 +686,4 @@ router.delete("/assign-company/:operatorId/:companyId", auth_1.authenticate, (0,
         res.status(500).json({ error: "Failed to remove operator from company" });
     }
 }));
-// router.delete(
-// 	"/:id",
-// 	authenticate,
-// 	authorize("SUPER_ADMIN"),
-// 	async (req: AuthRequest, res) => {
-// 		try {
-// 			const { id } = req.params;
-// 			await prisma.user.delete({
-// 				where: { id },
-// 			});
-// 			res.json({ message: "User deleted successfully" });
-// 		} catch (error) {
-// 			res.status(500).json({ error: "Failed to delete user" });
-// 		}
-// 	}
-// );
 exports.default = router;

@@ -53,6 +53,7 @@ router.get("/", authenticate, authorize("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE
 			select: {
 			  users: true,
 			  branches: true,
+			  CompanyOperator:true
 			},
 		  },
 		},

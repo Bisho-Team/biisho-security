@@ -58,6 +58,7 @@ router.get("/", auth_1.authenticate, (0, auth_1.authorize)("SUPER_ADMIN", "OFFIC
                     select: {
                         users: true,
                         branches: true,
+                        CompanyOperator: true
                     },
                 },
             },

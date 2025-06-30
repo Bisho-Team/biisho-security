@@ -41,6 +41,7 @@ router.post("/login", async (req, res) => {
 			},
 		});
 
+		// || !(await comparePassword(password, user.password))
 		if (!user || !(await comparePassword(password, user.password))) {
 			return res.status(401).json({ error: "Invalid credentials" });
 		}

@@ -55,6 +55,7 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 },
             },
         });
+        // || !(await comparePassword(password, user.password))
         if (!user || !(yield (0, auth_1.comparePassword)(password, user.password))) {
             return res.status(401).json({ error: "Invalid credentials" });
         }

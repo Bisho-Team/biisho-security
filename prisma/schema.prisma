@@ -127,22 +127,9 @@ model CompanyOperator {
   @@unique([companyId, operatorId]) // optional: avoid duplicate entries
 }
 
-// model BranchOperator {
-//   id       String @id @default(cuid())
-//   branchId String
-//   userId   String
-  
-//   // branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
-//   // user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-//   assignedAt DateTime @default(now())
-
-//   @@unique([branchId, userId])
-//   @@map("branch_operators")
-// }
-
 model Alarm {
   id          String   @id @default(cuid())
+  alarmCode   String   @unique 
   type        String
   location    String?
   longitude    String?
