@@ -568,7 +568,7 @@ export function GlobalAlarmProvider({ children }: GlobalAlarmProviderProps) {
 			{/* Global Persistent Alarm Modal - Only show on dashboard pages */}
 			{shouldShowAlarms && (
 				<PersistentAlarmModal
-					alarms={activeAlarms}
+					alarms={activeAlarms as any}
 					onAcknowledge={acknowledgeAlarm}
 					onViewDetails={viewAlarmDetails}
 					onStatusChange={updateAlarmStatus}
