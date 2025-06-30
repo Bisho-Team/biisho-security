@@ -103,6 +103,17 @@ interface Alarm {
 	isRealTime?: boolean;
 }
 
+interface PaginationInfo {
+	currentPage: number;
+	totalPages: number;
+	totalCount: number;
+	limit: number;
+	hasNextPage: boolean;
+	hasPrevPage: boolean;
+	startIndex: number;
+	endIndex: number;
+}
+
 export default function EnhancedAlarmReportsPage() {
 	const [updating, setUpdating] = useState(false);
 	const [selectedAlarm, setSelectedAlarm] = useState<any | null>(null);
@@ -117,6 +128,15 @@ export default function EnhancedAlarmReportsPage() {
 	const [activeTab, setActiveTab] = useState<
 		"all" | "active" | "acknowledged" | "resolved"
 	>("active");
+
+	// Pagination state
+	const [currentPage, setCurrentPage] = useState(1);
+	const [pageSize, setPageSize] = useState(10);
+	const [paginatedAlarms, setPaginatedAlarms] = useState<Alarm[]>([]);
+	const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(
+		null
+	);
+	const [loading, setLoading] = useState(false);
 
 	const { toast } = useToast();
 
