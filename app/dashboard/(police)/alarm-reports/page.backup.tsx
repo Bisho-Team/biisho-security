@@ -645,7 +645,7 @@ export default function EnhancedAlarmReportsPage() {
 													{(alarm as any)?.branch?.company?.logo && (
 														<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-1 shadow-lg">
 															<img
-																src={`http://8436insight.et:3003${(
+																src={`https://frt.et${(
 																	alarm as any
 																)?.branch?.company?.logo.replace(
 																	"/var/www/html/koppa-security-api",
@@ -897,7 +897,7 @@ export default function EnhancedAlarmReportsPage() {
 																"http"
 															)
 																? selectedAlarm.branch.company.logo
-																: `http://8436insight.et:3003${selectedAlarm.branch.company.logo.replace(
+																: `https://frt.et${selectedAlarm.branch.company.logo.replace(
 																		"/var/www/html/koppa-security-api",
 																		""
 																  )}`

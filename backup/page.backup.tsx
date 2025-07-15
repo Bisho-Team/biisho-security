@@ -1264,7 +1264,7 @@
 //                                                     src={
 //                                                         selectedAlarm.branch.company.logo.startsWith("http")
 //                                                             ? selectedAlarm.branch.company.logo
-//                                                             : `http://8436insight.et:3003${(
+//                                                             : `https://frt.et${(
 //                                                                     selectedAlarm as any
 //                                                               )?.branch?.company?.logo.replace(
 //                                                                     "/var/www/html/koppa-security-api",
@@ -2695,7 +2695,7 @@
 // // 										{selectedAlarm.branch.company?.logo && (
 // // 											<div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center">
 // // 												<img
-// // 													src={`http://8436insight.et:3003${selectedAlarm.branch.company.logo.replace(
+// // 													src={`https://frt.et${selectedAlarm.branch.company.logo.replace(
 // // 														"/var/www/html/koppa-security-api",
 // // 														""
 // // 													)}`}

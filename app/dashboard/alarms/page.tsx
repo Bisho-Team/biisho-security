@@ -58,7 +58,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { useWebSocket } from "@/hooks/use-websocket";
-const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
+const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 interface Alarm {
 	id: string;
