@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Search, Wifi, WifiOff } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -68,6 +69,10 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 		}
 	};
 
+	// Get token from localStorage or your auth system
+	const token =
+		typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
 	return (
 		<header className="header-enhanced flex h-16 shrink-0 items-center gap-2 px-6 sticky top-0 z-50">
 			<SidebarTrigger className="-ml-1 h-8 w-8" />
@@ -77,15 +82,6 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 			<div className="flex items-center gap-3">
 				{/* Action Buttons */}
 				<div className="flex items-center gap-1">
-					{/* <Button variant="ghost" size="icon" className="h-9 w-9 relative"> */}
-					{/* <Bell className="h-4 w-4" /> */}
-					{/* {notifications > 0 && (
-							<Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500 text-white border-2 border-background">
-								{notifications}
-							</Badge>
-						)} */}
-					{/* </Button> */}
-
 					<ThemeToggle />
 				</div>
 
@@ -95,6 +91,7 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 						<div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold text-sm">
 							{user.name.charAt(0).toUpperCase()}
 						</div>
+
 						<div className="text-right">
 							<p className="text-sm font-medium">{user.name}</p>
 							<Badge

@@ -128,6 +128,139 @@ interface Alarm {
 	};
 }
 
+interface AlarmsResponse {
+	alarms: Alarm[];
+	pagination: PaginationData;
+}
+
+interface PaginationData {
+	currentPage: number;
+	totalPages: number;
+	totalCount: number;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
+}
+
+// Pagination Component
+const PaginationControls = ({
+	pagination,
+	onPageChange,
+	loading,
+}: {
+	pagination: PaginationData;
+	onPageChange: (page: number) => void;
+	loading: boolean;
+}) => {
+	const { currentPage, totalPages, totalCount, hasNextPage, hasPreviousPage } =
+		pagination;
+
+	const getPageNumbers = () => {
+		const pages = [];
+		const maxVisiblePages = 5;
+
+		if (totalPages <= maxVisiblePages) {
+			for (let i = 1; i <= totalPages; i++) {
+				pages.push(i);
+			}
+		} else {
+			if (currentPage <= 3) {
+				for (let i = 1; i <= 4; i++) {
+					pages.push(i);
+				}
+				pages.push("...");
+				pages.push(totalPages);
+			} else if (currentPage >= totalPages - 2) {
+				pages.push(1);
+				pages.push("...");
+				for (let i = totalPages - 3; i <= totalPages; i++) {
+					pages.push(i);
+				}
+			} else {
+				pages.push(1);
+				pages.push("...");
+				for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+					pages.push(i);
+				}
+				pages.push("...");
+				pages.push(totalPages);
+			}
+		}
+
+		return pages;
+	};
+
+	if (totalPages <= 1) return null;
+
+	return (
+		<div className="flex items-center justify-between px-2 py-4">
+			<div className="flex items-center text-sm text-muted-foreground">
+				<span>
+					Showing {(currentPage - 1) * 10 + 1} to{" "}
+					{Math.min(currentPage * 10, totalCount)} of {totalCount} results
+				</span>
+			</div>
+
+			<div className="flex items-center space-x-2">
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => onPageChange(1)}
+					disabled={!hasPreviousPage || loading}
+					className="h-8 w-8 p-0">
+					<ChevronsLeft className="h-4 w-4" />
+				</Button>
+
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => onPageChange(currentPage - 1)}
+					disabled={!hasPreviousPage || loading}
+					className="h-8 w-8 p-0">
+					<ChevronLeft className="h-4 w-4" />
+				</Button>
+
+				<div className="flex items-center space-x-1">
+					{getPageNumbers().map((page, index) => (
+						<Button
+							key={index}
+							variant={page === currentPage ? "default" : "outline"}
+							size="sm"
+							onClick={() =>
+								typeof page === "number" ? onPageChange(page) : undefined
+							}
+							disabled={loading || page === "..."}
+							className={cn(
+								"h-8 w-8 p-0",
+								page === currentPage && "bg-primary text-primary-foreground",
+								page === "..." && "cursor-default"
+							)}>
+							{page}
+						</Button>
+					))}
+				</div>
+
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => onPageChange(currentPage + 1)}
+					disabled={!hasNextPage || loading}
+					className="h-8 w-8 p-0">
+					<ChevronRight className="h-4 w-4" />
+				</Button>
+
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => onPageChange(totalPages)}
+					disabled={!hasNextPage || loading}
+					className="h-8 w-8 p-0">
+					<ChevronsRight className="h-4 w-4" />
+				</Button>
+			</div>
+		</div>
+	);
+};
+
 // Google Maps component for alarm location
 const AlarmLocationMap = ({
 	coordinates,
@@ -229,42 +362,162 @@ export default function EnhancedAlarmsPage() {
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [updating, setUpdating] = useState(false);
+
+	// Pagination states
+	const [activePagination, setActivePagination] = useState<PaginationData>({
+		currentPage: 1,
+		totalPages: 1,
+		totalCount: 0,
+		hasNextPage: false,
+		hasPreviousPage: false,
+	});
+	const [historyPagination, setHistoryPagination] = useState<PaginationData>({
+		currentPage: 1,
+		totalPages: 1,
+		totalCount: 0,
+		hasNextPage: false,
+		hasPreviousPage: false,
+	});
+
 	const { toast } = useToast();
 	const { user } = useAuth();
 	const [connectionStatusData, setConnectionStatusData] = useState<any>(null);
 
-	const fetchAlarms = useCallback(async () => {
-		try {
-			setLoading(true);
-			const response = await apiService.get("/alarms");
-			console.log("Fetched alarms__:", (response as any).alarms);
+	const fetchAlarms = useCallback(
+		async (page = 1, status?: string) => {
+			try {
+				setLoading(true);
+				const params = new URLSearchParams({
+					page: page.toString(),
+					limit: "10",
+					...(status && status !== "all" && { status }),
+					...(searchTerm && { search: searchTerm }),
+					...(filterSeverity !== "all" && { severity: filterSeverity }),
+				});
 
-			const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
-				...alarm,
-				time: alarm.createdAt,
-				coordinates:
-					alarm.coordinates ||
-					(alarm.latitude && alarm.longitude
-						? {
-								lat: Number.parseFloat(alarm.latitude),
-								lng: Number.parseFloat(alarm.longitude),
-						  }
-						: undefined),
-			}));
+				const response = await apiService.get(`/alarms?${params.toString()}`);
+				console.log("Fetched alarms with pagination:", response);
 
-			setMockAlarms(alarmsWithCoords);
-			setAlarmHistory(alarmsWithCoords);
-			// setLastRefresh(new Date());
-		} catch (error) {
-			toast({
-				title: "Error",
-				description: "Failed to fetch alarms",
-				variant: "destructive",
-			});
-		} finally {
-			setLoading(false);
-		}
-	}, [toast]);
+				const alarmsWithCoords = (
+					response as unknown as AlarmsResponse
+				).alarms.map((alarm: any) => ({
+					...alarm,
+					time: alarm.createdAt,
+					coordinates:
+						alarm.coordinates ||
+						(alarm.latitude && alarm.longitude
+							? {
+									lat: Number.parseFloat(alarm.latitude),
+									lng: Number.parseFloat(alarm.longitude),
+							  }
+							: undefined),
+				}));
+
+				// Update the appropriate state based on status filter
+				if (!status || status === "all") {
+					setMockAlarms(alarmsWithCoords);
+					setActivePagination(
+						(response as unknown as AlarmsResponse).pagination
+					);
+				} else if (status === "RESOLVED") {
+					setAlarmHistory(alarmsWithCoords);
+					setHistoryPagination(
+						(response as unknown as AlarmsResponse).pagination
+					);
+				} else {
+					setMockAlarms(alarmsWithCoords);
+					setActivePagination(
+						(response as unknown as AlarmsResponse).pagination
+					);
+				}
+			} catch (error) {
+				toast({
+					title: "Error",
+					description: "Failed to fetch alarms",
+					variant: "destructive",
+				});
+			} finally {
+				setLoading(false);
+			}
+		},
+		[toast, searchTerm, filterSeverity]
+	);
+
+	const fetchAlarmsHistory = useCallback(
+		async (page = 1) => {
+			try {
+				const params = new URLSearchParams({
+					page: page.toString(),
+					limit: "10",
+					status: "RESOLVED",
+					...(searchTerm && { search: searchTerm }),
+				});
+
+				const response = await apiService.get(`/alarms?${params.toString()}`);
+				console.log("Fetched alarm history with pagination:", response);
+
+				const alarmsWithCoords = (
+					response as unknown as AlarmsResponse
+				).alarms.map((alarm: any) => ({
+					...alarm,
+					time: alarm.createdAt,
+					coordinates:
+						alarm.coordinates ||
+						(alarm.latitude && alarm.longitude
+							? {
+									lat: Number.parseFloat(alarm.latitude),
+									lng: Number.parseFloat(alarm.longitude),
+							  }
+							: undefined),
+				}));
+
+				setAlarmHistory(alarmsWithCoords);
+				setHistoryPagination(
+					(response as unknown as AlarmsResponse).pagination
+				);
+			} catch (error) {
+				toast({
+					title: "Error",
+					description: "Failed to fetch alarm history",
+					variant: "destructive",
+				});
+			}
+		},
+		[toast, searchTerm]
+	);
+
+	// const fetchAlarms = useCallback(async () => {
+	// 	try {
+	// 		setLoading(true);
+	// 		const response = await apiService.get("/alarms");
+	// 		console.log("Fetched alarms__:", (response as any).alarms);
+
+	// 		const alarmsWithCoords = (response as any).alarms.map((alarm: any) => ({
+	// 			...alarm,
+	// 			time: alarm.createdAt,
+	// 			coordinates:
+	// 				alarm.coordinates ||
+	// 				(alarm.latitude && alarm.longitude
+	// 					? {
+	// 							lat: Number.parseFloat(alarm.latitude),
+	// 							lng: Number.parseFloat(alarm.longitude),
+	// 					  }
+	// 					: undefined),
+	// 		}));
+
+	// 		setMockAlarms(alarmsWithCoords);
+	// 		setAlarmHistory(alarmsWithCoords);
+	// 		// setLastRefresh(new Date());
+	// 	} catch (error) {
+	// 		toast({
+	// 			title: "Error",
+	// 			description: "Failed to fetch alarms",
+	// 			variant: "destructive",
+	// 		});
+	// 	} finally {
+	// 		setLoading(false);
+	// 	}
+	// }, [toast]);
 
 	// const fetchAlarmsHistory = useCallback(async () => {
 	// 	try {
@@ -304,8 +557,8 @@ export default function EnhancedAlarmsPage() {
 			console.log("🚨 NEW ALARM CREATED via WebSocket:", alarm);
 
 			// Refresh alarms data when new alarm is created
-			fetchAlarms();
-			// fetchAlarmsHistory();
+			fetchAlarms(activePagination.currentPage);
+			fetchAlarmsHistory(historyPagination.currentPage);
 
 			toast({
 				title: "🚨 New Alarm Created",
@@ -318,7 +571,8 @@ export default function EnhancedAlarmsPage() {
 			console.log("🔄 Full alarm object:", JSON.stringify(alarm, null, 2));
 
 			// Refresh alarms data when alarm is updated
-			fetchAlarms();
+			fetchAlarms(activePagination.currentPage);
+			fetchAlarmsHistory(historyPagination.currentPage);
 
 			toast({
 				title: "🔄 Alarm Updated",
@@ -364,9 +618,23 @@ export default function EnhancedAlarmsPage() {
 		},
 	});
 
+	// useEffect(() => {
+	// 	fetchAlarms();
+	// }, [fetchAlarms]);
 	useEffect(() => {
-		fetchAlarms();
-	}, [fetchAlarms]);
+		fetchAlarms(1);
+		fetchAlarmsHistory(1);
+	}, []);
+
+	// Debounced search effect
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			fetchAlarms(1);
+			fetchAlarmsHistory(1);
+		}, 500);
+
+		return () => clearTimeout(timeoutId);
+	}, [searchTerm, filterStatus, filterSeverity]);
 
 	// Add debug logging for connection status
 	// useEffect(() => {
@@ -633,7 +901,11 @@ export default function EnhancedAlarmsPage() {
 		return matchesSearch;
 	});
 
-	if (loading) {
+	if (
+		loading &&
+		activePagination.currentPage === 1 &&
+		historyPagination.currentPage === 1
+	) {
 		return (
 			<div className="flex items-center justify-center min-h-[400px]">
 				<div className="text-center space-y-4 animate-fade-in">
@@ -643,6 +915,17 @@ export default function EnhancedAlarmsPage() {
 			</div>
 		);
 	}
+
+	// if (loading) {
+	// 	return (
+	// 		<div className="flex items-center justify-center min-h-[400px]">
+	// 			<div className="text-center space-y-4 animate-fade-in">
+	// 				<Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+	// 				<p className="text-muted-foreground">Loading alarms...</p>
+	// 			</div>
+	// 		</div>
+	// 	);
+	// }
 
 	// const formatDateTime = (dateString: string) => {
 	// 	const date = new Date(dateString);
@@ -763,7 +1046,7 @@ export default function EnhancedAlarmsPage() {
 							Active Alarms
 							{activeAlarms.length > 0 && (
 								<span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-									{activeAlarms.length}
+									{activePagination.length}
 								</span>
 							)}
 						</TabsTrigger>
@@ -771,7 +1054,7 @@ export default function EnhancedAlarmsPage() {
 							Alarm History
 							{resolvedAlarms.length > 0 && (
 								<span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-[10px] text-white">
-									{resolvedAlarms.length}
+									{historyPagination.length}
 								</span>
 							)}
 						</TabsTrigger>
@@ -812,129 +1095,137 @@ export default function EnhancedAlarmsPage() {
 							</p>
 						</div>
 					) : (
-						<div className="grid gap-4">
-							{filteredActiveAlarms.map((alarm, index) => (
-								<Card
-									key={alarm.id}
-									className={cn(
-										"animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20",
-										alarm.status === "ACTIVE" &&
-											alarm.severity === "CRITICAL" &&
-											"border-l-4 border-l-red-500"
-									)}
-									style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
-									<CardContent className="p-6">
-										<div className="flex items-center justify-between">
-											<div className="flex items-center space-x-4">
-												{alarm.branch?.company?.logo ? (
-													<Image
-														src={`${NEXT_PUBLIC_API_URL}${alarm.branch?.company?.logo.replace(
-															"/var/www/html/koppa-security-api",
-															""
-														)}`}
-														width={20}
-														height={20}
-														alt={`${alarm.branch?.company?.name} logo`}
-														className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
-													/>
-												) : (
-													<div
-														className={cn(
-															"p-3 rounded-lg",
-															alarm.status === "ACTIVE"
-																? "bg-red-100 dark:bg-red-900/20"
-																: alarm.status === "ACKNOWLEDGED"
-																? "bg-blue-100 dark:bg-blue-900/20"
-																: "bg-yellow-100 dark:bg-yellow-900/20"
-														)}>
-														{getStatusIcon(alarm.status)}
-													</div>
-												)}
-
-												<div className="space-y-1">
-													<h4 className="font-semibold text-lg">
-														{alarm.type}
-													</h4>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<Building className="h-3 w-3" />
-														<span>{alarm.branch?.company?.name}</span>
-													</div>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<MapPin className="h-3 w-3" />
-														<span>{alarm.branch.name}</span>
-													</div>
-													<div className="flex items-center gap-2 text-xs text-muted-foreground">
-														<Clock className="h-3 w-3" />
-														<span>{formatTimeAgo(alarm.createdAt)}</span>
-													</div>
-													{alarm.reports?.[0]?.assignedTo && (
-														<div className="flex items-center gap-2 text-sm">
-															<Shield className="h-3 w-3 text-blue-500" />
-															<span className="text-blue-600 dark:text-blue-400">
-																{alarm.reports[0].assignedTo.name}
-															</span>
+						<>
+							<div className="grid gap-4">
+								{filteredActiveAlarms.map((alarm, index) => (
+									<Card
+										key={alarm.id}
+										className={cn(
+											"animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20",
+											alarm.status === "ACTIVE" &&
+												alarm.severity === "CRITICAL" &&
+												"border-l-4 border-l-red-500"
+										)}
+										style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+										<CardContent className="p-6">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center space-x-4">
+													{alarm.branch?.company?.logo ? (
+														<Image
+															src={`${NEXT_PUBLIC_API_URL}${alarm.branch?.company?.logo.replace(
+																"/var/www/html/koppa-security-api",
+																""
+															)}`}
+															width={20}
+															height={20}
+															alt={`${alarm.branch?.company?.name} logo`}
+															className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
+														/>
+													) : (
+														<div
+															className={cn(
+																"p-3 rounded-lg",
+																alarm.status === "ACTIVE"
+																	? "bg-red-100 dark:bg-red-900/20"
+																	: alarm.status === "ACKNOWLEDGED"
+																	? "bg-blue-100 dark:bg-blue-900/20"
+																	: "bg-yellow-100 dark:bg-yellow-900/20"
+															)}>
+															{getStatusIcon(alarm.status)}
 														</div>
 													)}
-												</div>
-											</div>
-											<div className="flex items-center space-x-3">
-												<div className="text-left space-y-2">
-													<div className="">
-														<Badge
-															className={cn(
-																"text-xs font-medium shadow-sm",
-																getStatusColor(alarm.status)
-															)}>
-															{alarm.status}
-														</Badge>
-													</div>
 
-													{alarm?.updatedAt && (
-														<p className="text-xs text-muted-foreground">
-															{formatDateTime(alarm.updatedAt)}
-														</p>
-													)}
+													<div className="space-y-1">
+														<h4 className="font-semibold text-lg">
+															{alarm.type}
+														</h4>
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<Building className="h-3 w-3" />
+															<span>{alarm.branch?.company?.name}</span>
+														</div>
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<MapPin className="h-3 w-3" />
+															<span>{alarm.branch.name}</span>
+														</div>
+														<div className="flex items-center gap-2 text-xs text-muted-foreground">
+															<Clock className="h-3 w-3" />
+															<span>{formatTimeAgo(alarm.createdAt)}</span>
+														</div>
+														{alarm.reports?.[0]?.assignedTo && (
+															<div className="flex items-center gap-2 text-sm">
+																<Shield className="h-3 w-3 text-blue-500" />
+																<span className="text-blue-600 dark:text-blue-400">
+																	{alarm.reports[0].assignedTo.name}
+																</span>
+															</div>
+														)}
+													</div>
 												</div>
-												<DropdownMenu>
-													<DropdownMenuTrigger asChild>
-														<Button
-															variant="outline"
-															size="sm"
-															className="h-8 w-8 p-0">
-															<MoreHorizontal className="h-4 w-4" />
-														</Button>
-													</DropdownMenuTrigger>
-													<DropdownMenuContent align="end" className="glass">
-														<DropdownMenuItem
-															className="cursor-pointer"
-															onClick={() => {
-																setSelectedAlarm(alarm);
-																setIsViewDialogOpen(true);
-															}}>
-															<Eye className="h-4 w-4 mr-2" />
-															View Details
-														</DropdownMenuItem>
-														<DropdownMenuItem
-															className="cursor-pointer"
-															onClick={() => {
-																setSelectedAlarm(alarm);
-																setIsEditDialogOpen(true);
-															}}>
-															<Edit className="h-4 w-4 mr-2" />
-															Edit Alarm
-														</DropdownMenuItem>
-														<DropdownMenuItem className="cursor-pointer">
-															<Send className="h-4 w-4 mr-2" />
-															Dispatch
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
+												<div className="flex items-center space-x-3">
+													<div className="text-left space-y-2">
+														<div className="">
+															<Badge
+																className={cn(
+																	"text-xs font-medium shadow-sm",
+																	getStatusColor(alarm.status)
+																)}>
+																{alarm.status}
+															</Badge>
+														</div>
+
+														{alarm?.updatedAt && (
+															<p className="text-xs text-muted-foreground">
+																{formatDateTime(alarm.updatedAt)}
+															</p>
+														)}
+													</div>
+													<DropdownMenu>
+														<DropdownMenuTrigger asChild>
+															<Button
+																variant="outline"
+																size="sm"
+																className="h-8 w-8 p-0">
+																<MoreHorizontal className="h-4 w-4" />
+															</Button>
+														</DropdownMenuTrigger>
+														<DropdownMenuContent align="end" className="glass">
+															<DropdownMenuItem
+																className="cursor-pointer"
+																onClick={() => {
+																	setSelectedAlarm(alarm);
+																	setIsViewDialogOpen(true);
+																}}>
+																<Eye className="h-4 w-4 mr-2" />
+																View Details
+															</DropdownMenuItem>
+															<DropdownMenuItem
+																className="cursor-pointer"
+																onClick={() => {
+																	setSelectedAlarm(alarm);
+																	setIsEditDialogOpen(true);
+																}}>
+																<Edit className="h-4 w-4 mr-2" />
+																Edit Alarm
+															</DropdownMenuItem>
+															<DropdownMenuItem className="cursor-pointer">
+																<Send className="h-4 w-4 mr-2" />
+																Dispatch
+															</DropdownMenuItem>
+														</DropdownMenuContent>
+													</DropdownMenu>
+												</div>
 											</div>
-										</div>
-									</CardContent>
-								</Card>
-							))}
-						</div>
+										</CardContent>
+									</Card>
+								))}
+							</div>
+							{/* Active Alarms Pagination */}
+							<PaginationControls
+								pagination={activePagination}
+								onPageChange={(page) => fetchAlarms(page)}
+								loading={loading}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -950,76 +1241,84 @@ export default function EnhancedAlarmsPage() {
 							</p>
 						</div>
 					) : (
-						<div className="grid gap-4">
-							{filteredResolvedAlarms.map((alarm, index) => (
-								<Card
-									key={alarm.id}
-									className="animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20 border-l-4 border-l-green-500"
-									style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
-									<CardContent className="p-6">
-										<div className="flex items-center justify-between">
-											<div className="flex items-center space-x-4">
-												<div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20">
-													<CheckCircle className="h-4 w-4 text-green-500" />
-												</div>
-												<div className="space-y-1">
-													<h4 className="font-semibold text-lg">
-														{alarm.type}
-													</h4>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<Building className="h-3 w-3" />
-														<span>{alarm.branch?.company?.name}</span>
+						<>
+							<div className="grid gap-4">
+								{filteredResolvedAlarms.map((alarm, index) => (
+									<Card
+										key={alarm.id}
+										className="animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20 border-l-4 border-l-green-500"
+										style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+										<CardContent className="p-6">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center space-x-4">
+													<div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20">
+														<CheckCircle className="h-4 w-4 text-green-500" />
 													</div>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<MapPin className="h-3 w-3" />
-														<span>
-															{alarm.location} • {alarm.branch.name}
-														</span>
-													</div>
-													<div className="flex items-center gap-2 text-xs text-muted-foreground">
-														<Clock className="h-3 w-3" />
-														<span>{formatTimeAgo(alarm.createdAt)}</span>
-													</div>
-													{alarm.reports?.[0]?.assignedTo && (
-														<div className="flex items-center gap-2 text-sm">
-															<Shield className="h-3 w-3 text-blue-500" />
-															<span className="text-blue-600 dark:text-blue-400">
-																{alarm.reports[0].assignedTo.name}
+													<div className="space-y-1">
+														<h4 className="font-semibold text-lg">
+															{alarm.type}
+														</h4>
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<Building className="h-3 w-3" />
+															<span>{alarm.branch?.company?.name}</span>
+														</div>
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<MapPin className="h-3 w-3" />
+															<span>
+																{alarm.location} • {alarm.branch.name}
 															</span>
 														</div>
-													)}
-												</div>
-											</div>
-											<div className="flex items-center space-x-3">
-												<div className="text-right space-y-2">
-													<div className="flex gap-2">
-														<Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-md text-xs font-medium">
-															RESOLVED
-														</Badge>
+														<div className="flex items-center gap-2 text-xs text-muted-foreground">
+															<Clock className="h-3 w-3" />
+															<span>{formatTimeAgo(alarm.createdAt)}</span>
+														</div>
+														{alarm.reports?.[0]?.assignedTo && (
+															<div className="flex items-center gap-2 text-sm">
+																<Shield className="h-3 w-3 text-blue-500" />
+																<span className="text-blue-600 dark:text-blue-400">
+																	{alarm.reports[0].assignedTo.name}
+																</span>
+															</div>
+														)}
 													</div>
-													{alarm.updatedAt && (
-														<p className="text-xs text-green-600 font-medium">
-															{formatDateTime(alarm.updatedAt)}{" "}
-														</p>
-													)}
 												</div>
-												<Button
-													variant="outline"
-													size="sm"
-													onClick={() => {
-														setSelectedAlarm(alarm);
-														setIsViewDialogOpen(true);
-													}}
-													className="hover:bg-green-50 dark:hover:bg-green-900/20">
-													<Eye className="h-4 w-4 mr-2" />
-													View Report
-												</Button>
+												<div className="flex items-center space-x-3">
+													<div className="text-right space-y-2">
+														<div className="flex gap-2">
+															<Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-md text-xs font-medium">
+																RESOLVED
+															</Badge>
+														</div>
+														{alarm.updatedAt && (
+															<p className="text-xs text-green-600 font-medium">
+																{formatDateTime(alarm.updatedAt)}{" "}
+															</p>
+														)}
+													</div>
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => {
+															setSelectedAlarm(alarm);
+															setIsViewDialogOpen(true);
+														}}
+														className="hover:bg-green-50 dark:hover:bg-green-900/20">
+														<Eye className="h-4 w-4 mr-2" />
+														View Report
+													</Button>
+												</div>
 											</div>
-										</div>
-									</CardContent>
-								</Card>
-							))}
-						</div>
+										</CardContent>
+									</Card>
+								))}
+							</div>
+							{/* History Pagination */}
+							<PaginationControls
+								pagination={historyPagination}
+								onPageChange={(page) => fetchAlarmsHistory(page)}
+								loading={loading}
+							/>
+						</>
 					)}
 				</TabsContent>
 			</Tabs>
