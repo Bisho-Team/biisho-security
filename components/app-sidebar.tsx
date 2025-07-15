@@ -330,13 +330,13 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							<img
 								src={
 									user?.company?.logo
-										? `http://8436insight.et:3003${user.company.logo.replace(
+										? `https://frt.et${user.company.logo.replace(
 												"/var/www/html/koppa-security-api",
 												""
 										  )}`
 										: "/logo-shield.png"
 								}
-								// 	`http://8436insight.et:3003${selectedAlarm.branch.company.logo.replace(
+								// 	`https://frt.et${selectedAlarm.branch.company.logo.replace(
 								// 		"/var/www/html/koppa-security-api",
 								// 		""
 								//   )}`

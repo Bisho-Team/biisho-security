@@ -131,7 +131,7 @@ export default function CompaniesPage() {
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 	const { toast } = useToast();
 
-	const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
+	const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 	const [newCompany, setNewCompany] = useState({
 		name: "",
@@ -227,7 +227,7 @@ export default function CompaniesPage() {
 
 			const token = localStorage.getItem("authToken");
 
-			await axios.post("http://8436insight.et:3003/api/companies", formData, {
+			await axios.post("https://frt.et/api/companies", formData, {
 				headers: {
 					"Content-Type": "multipart/form-data",
 					...(token && { Authorization: `Bearer ${token}` }),
@@ -1526,7 +1526,7 @@ export default function CompaniesPage() {
 // 	const [filterStatus, setFilterStatus] = useState("all");
 // 	const { toast } = useToast();
 // 	const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-// 	const NEXT_PUBLIC_API_URL = "http://167.235.24.44:3003";
+// 	const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 // 	const [newCompany, setNewCompany] = useState({
 // 		name: "",
@@ -1586,7 +1586,7 @@ export default function CompaniesPage() {
 // 			const token = localStorage.getItem("authToken");
 
 // 			// await apiService.post("/companies", formData);
-// 			await axios.post("http://8436insight.et:3003/api/companies", formData, {
+// 			await axios.post("https://frt.et/api/companies", formData, {
 // 				headers: {
 // 					"Content-Type": "multipart/form-data",
 // 					...(token && { Authorization: `Bearer ${token}` }),

@@ -92,7 +92,7 @@ export default function ProfilePage() {
 	const fetchProfile = async () => {
 		try {
 			setLoading(true);
-			const response = await fetch("http://8436insight.et:3003/api/profile", {
+			const response = await fetch("https://frt.et/api/profile", {
 				headers: {
 					Authorization: `Bearer ${getAuthToken()}`,
 				},
@@ -124,7 +124,7 @@ export default function ProfilePage() {
 		setSuccessMessage("");
 
 		try {
-			const response = await fetch("http://8436insight.et:3003/api/profile", {
+			const response = await fetch("https://frt.et/api/profile", {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -174,7 +174,7 @@ export default function ProfilePage() {
 
 		try {
 			const response = await fetch(
-				"http://8436insight.et:3003/api/profile/change-password",
+				"https://frt.et/api/profile/change-password",
 				{
 					method: "POST",
 					headers: {

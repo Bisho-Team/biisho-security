@@ -396,7 +396,7 @@ export function PersistentAlarmModal({
 										{currentAlarm.branch?.company?.logo ? (
 											<div className="flex items-start flex-col space-x-2 mt-1">
 												<img
-													src={`http://8436insight.et:3003${currentAlarm.branch.company.logo.replace(
+													src={`https://frt.et${currentAlarm.branch.company.logo.replace(
 														"/var/www/html/koppa-security-api",
 														""
 													)}`}
