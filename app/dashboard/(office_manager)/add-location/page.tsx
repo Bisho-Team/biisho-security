@@ -100,6 +100,7 @@ const sampleWoredas = [
 	"Woreda 08",
 	"Woreda 09",
 	"Woreda 10",
+	"Not Specified",
 ];
 
 export default function AddBranchPage() {

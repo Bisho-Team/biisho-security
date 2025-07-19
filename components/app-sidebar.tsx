@@ -150,7 +150,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 			case "POLICE_MANAGER":
 				return [
 					{
-						title: "Alarm Reports",
+						title: "Alarms",
 						url: "/dashboard/alarm-reports",
 						icon: AlertTriangle,
 						description: "Emergency responses",
@@ -160,6 +160,12 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 						title: "Operators",
 						url: "/dashboard/police-operators",
 						icon: Shield,
+						description: "Police personnel",
+					},
+					{
+						title: "Reports",
+						url: "/dashboard/police-reports",
+						icon: BarChart3,
 						description: "Police personnel",
 					},
 					{
