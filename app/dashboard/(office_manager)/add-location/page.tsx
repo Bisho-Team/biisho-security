@@ -74,12 +74,14 @@ const ethiopianCities = [
 	"Asella",
 	"Harar",
 	"Dilla",
+	"Other",
 ];
 
 const addisAbabaSubCities = [
 	"Addis Ketema",
 	"Akaky Kaliti",
 	"Arada",
+	"Lemi Kura",
 	"Bole",
 	"Gullele",
 	"Kirkos",
@@ -87,6 +89,7 @@ const addisAbabaSubCities = [
 	"Lideta",
 	"Nifas Silk-Lafto",
 	"Yeka",
+	"Other",
 ];
 
 const sampleWoredas = [
@@ -100,6 +103,21 @@ const sampleWoredas = [
 	"Woreda 08",
 	"Woreda 09",
 	"Woreda 10",
+	"Woreda 11",
+	"Woreda 12",
+	"Woreda 13",
+	"Woreda 14",
+	"Woreda 15",
+	"Woreda 16",
+	"Woreda 17",
+	"Woreda 18",
+	"Woreda 19",
+	"Woreda 20",
+	"Woreda 21",
+	"Woreda 22",
+	"Woreda 23",
+	"Woreda 24",
+	"Woreda 25",
 	"Not Specified",
 ];
 
@@ -109,7 +127,6 @@ export default function AddBranchPage() {
 		name: "",
 		locationType: "",
 		gpsAddress: "",
-
 		latitude: "",
 		longitude: "",
 		location: "",
@@ -185,7 +202,6 @@ export default function AddBranchPage() {
 			await apiClient.createBranch(formData);
 			setSubmitted(true);
 
-			// Redirect after 2 seconds
 			setTimeout(() => {
 				router.push("/dashboard/locations");
 			}, 2000);

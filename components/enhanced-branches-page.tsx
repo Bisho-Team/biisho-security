@@ -153,6 +153,7 @@ const ethiopianCities = [
 	"Asella",
 	"Harar",
 	"Dilla",
+	"Other",
 ];
 
 const addisAbabaSubCities = [
@@ -166,6 +167,7 @@ const addisAbabaSubCities = [
 	"Lideta",
 	"Nifas Silk-Lafto",
 	"Yeka",
+	"Other",
 ];
 
 const sampleWoredas = [
@@ -179,6 +181,22 @@ const sampleWoredas = [
 	"Woreda 08",
 	"Woreda 09",
 	"Woreda 10",
+	"Woreda 11",
+	"Woreda 12",
+	"Woreda 13",
+	"Woreda 14",
+	"Woreda 15",
+	"Woreda 16",
+	"Woreda 17",
+	"Woreda 18",
+	"Woreda 19",
+	"Woreda 20",
+	"Woreda 21",
+	"Woreda 22",
+	"Woreda 23",
+	"Woreda 24",
+	"Woreda 25",
+	"Not Specified",
 ];
 
 // Google Maps component
