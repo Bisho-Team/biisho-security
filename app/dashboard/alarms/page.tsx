@@ -96,6 +96,7 @@ interface Alarm {
 		id: string;
 		name: string;
 		email?: string;
+		phone?: string;
 	};
 	reports: Array<{
 		id: string;
@@ -108,7 +109,7 @@ interface Alarm {
 			id: string;
 			name: string;
 			email?: string;
-			phoneNumber?: string;
+			phone?: string;
 			company?: {
 				name: string;
 			};
@@ -116,10 +117,12 @@ interface Alarm {
 		acknowledgedBy?: {
 			id: string;
 			name: string;
+			phone?: string;
 		};
 		resolvedBy?: {
 			id: string;
 			name: string;
+			phone?: string;
 		};
 	}>;
 	coordinates?: {
@@ -1128,6 +1131,12 @@ export default function EnhancedAlarmsPage() {
 																Email: {selectedAlarm.createdBy.email}
 															</span>
 														</div>
+														<div className="flex items-center">
+															<Mail className="h-3 w-3 text-blue-400 mr-1" />
+															<span className="text-blue-300 text-xs font-mono">
+																Phone: {selectedAlarm.createdBy.phone || "N/A"}
+															</span>
+														</div>
 													</div>
 												)}
 											</div>
@@ -1164,6 +1173,13 @@ export default function EnhancedAlarmsPage() {
 																{selectedAlarm.reports[0].assignedTo.name}
 															</span>
 														</div>
+														<div className="flex items-center">
+															<User className="h-3 w-3 text-yellow-400 mr-1" />
+															<span className="text-yellow-300 text-xs font-mono">
+																Contact Phone:{" "}
+																{selectedAlarm.reports[0].assignedTo.phone}
+															</span>
+														</div>
 													</div>
 												</div>
 											</div>
@@ -1191,6 +1207,14 @@ export default function EnhancedAlarmsPage() {
 																<span className="text-green-300 text-xs font-mono">
 																	Acknowledged by:{" "}
 																	{selectedAlarm.reports[0].acknowledgedBy.name}
+																</span>
+															</div>
+															<div className="flex items-center">
+																<User className="h-3 w-3 text-green-400 mr-1" />
+																<span className="text-green-300 text-xs font-mono">
+																	Phone:{" "}
+																	{selectedAlarm.reports[0].acknowledgedBy
+																		.phone || "N/A"}
 																</span>
 															</div>
 															{selectedAlarm.reports[0].assignedTo?.company
@@ -1234,6 +1258,14 @@ export default function EnhancedAlarmsPage() {
 																<span className="text-purple-300 text-xs font-mono">
 																	Resolved by:{" "}
 																	{selectedAlarm.reports[0].resolvedBy.name}
+																</span>
+															</div>
+															<div className="flex items-center">
+																<User className="h-3 w-3 text-purple-400 mr-1" />
+																<span className="text-purple-300 text-xs font-mono">
+																	Phone:{" "}
+																	{selectedAlarm.reports[0].resolvedBy.phone ||
+																		"N/A"}
 																</span>
 															</div>
 															{selectedAlarm.reports[0].assignedTo?.company

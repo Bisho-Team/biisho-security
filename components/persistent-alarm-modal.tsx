@@ -56,12 +56,14 @@ interface Alarm {
 			id: string;
 			name: string;
 			email: string;
+			phone?: string;
 		};
 		completedAt?: string;
 		resolvedBy?: {
 			id: string;
 			name: string;
 			email: string;
+			phone?: string;
 		};
 		status: "PENDING" | "COMPLETED" | "RESOLVED";
 		assignedTo?: {
@@ -85,6 +87,7 @@ interface Alarm {
 		id: string;
 		name: string;
 		email: string;
+		phone?: string;
 	};
 	createdAt: string;
 	isRealTime?: boolean;
@@ -673,6 +676,14 @@ export function PersistentAlarmModal({
 																	<span className="text-slate-300 text-xs">
 																		Email:{" "}
 																		{currentAlarm.createdBy.email ||
+																			"Not provided"}
+																	</span>
+																</div>
+																<div className="flex items-center space-x-2">
+																	<Mail className="h-3 w-3 text-slate-400" />
+																	<span className="text-slate-300 text-xs">
+																		Phone:{" "}
+																		{currentAlarm.createdBy.phone ||
 																			"Not provided"}
 																	</span>
 																</div>

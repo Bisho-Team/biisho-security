@@ -287,9 +287,7 @@ class ApiService {
 	async getCurrentUser() {
 		return this.get<any>("/auth/me");
 	}
-
 	// ==================== REPORTS METHODS ====================
-
 	// Get comprehensive alarm statistics
 	async getAlarmStats(
 		filters?: ReportFilters
@@ -340,13 +338,30 @@ class ApiService {
 		reportData?: any
 	): Promise<void> {
 		try {
-			const response = await this.post<Blob>("/reports/export/pdf", {
-				filters,
-				reportData,
+			const token = localStorage.getItem("authToken");
+
+			const response = await fetch(`${API_BASE_URL}/reports/export/pdf`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					...(token && { Authorization: `Bearer ${token}` }),
+				},
+				body: JSON.stringify({
+					filters,
+					reportData,
+				}),
 			});
 
-			// Create blob URL and download
-			const blob = new Blob([response.data], { type: "application/pdf" });
+			if (!response.ok) {
+				throw new Error(
+					`PDF export failed: ${response.status} ${response.statusText}`
+				);
+			}
+
+			// Get the PDF blob directly
+			const blob = await response.blob();
+
+			// Create download link
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
@@ -440,6 +455,110 @@ class ApiService {
 			responseTimeAnalytics: any;
 		}>("/reports/detailed", filters);
 	}
+
+	operatorApiService = {
+		// Get all operators
+		async getOperators(filters?: any) {
+			return apiService.get("/users/my-operators", filters);
+		},
+
+		// Get operator details
+		async getOperatorDetails(operatorId: string) {
+			return apiService.get(`/users/operators/${operatorId}`);
+		},
+
+		// Get operator metrics
+		async getOperatorMetrics(operatorId: string) {
+			return apiService.get(`/users/operators/${operatorId}/metrics`);
+		},
+
+		// Get operator activity log
+		async getOperatorActivity(
+			operatorId: string,
+			filters?: {
+				dateFrom?: string;
+				dateTo?: string;
+				activityType?: string;
+				limit?: number;
+			}
+		) {
+			return apiService.get(`/users/operators/${operatorId}/activity`, filters);
+		},
+
+		// Export operator report to CSV
+		async exportOperatorCSV(operatorId: string, filters?: any) {
+			const params = new URLSearchParams(filters).toString();
+			const filename = `operator-report-${operatorId}-${
+				new Date().toISOString().split("T")[0]
+			}.csv`;
+			return apiService.downloadFile(
+				`/users/operators/${operatorId}/export/csv?${params}`,
+				filename
+			);
+		},
+
+		// Export operator report to PDF
+		async exportOperatorPDF(operatorId: string, filters?: any) {
+			try {
+				const token = localStorage.getItem("authToken");
+
+				const response = await fetch(
+					`/api/users/operators/${operatorId}/export/pdf`,
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							...(token && { Authorization: `Bearer ${token}` }),
+						},
+						body: JSON.stringify({ filters }),
+					}
+				);
+
+				if (!response.ok) {
+					throw new Error(
+						`PDF export failed: ${response.status} ${response.statusText}`
+					);
+				}
+
+				const blob = await response.blob();
+				const url = window.URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `operator-report-${operatorId}-${
+					new Date().toISOString().split("T")[0]
+				}.pdf`;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				window.URL.revokeObjectURL(url);
+			} catch (error) {
+				console.error("PDF export failed:", error);
+				throw error;
+			}
+		},
+
+		// Create operator
+		async createOperator(operatorData: any) {
+			return apiService.post("/users/operators", operatorData);
+		},
+
+		// Update operator
+		async updateOperator(operatorId: string, operatorData: any) {
+			return apiService.put(`/users/operators/${operatorId}`, operatorData);
+		},
+
+		// Delete operator
+		async deleteOperator(operatorId: string) {
+			return apiService.delete(`/users/operators/${operatorId}`);
+		},
+
+		// Update operator status
+		async updateOperatorStatus(operatorId: string, status: string) {
+			return apiService.patch(`/users/operators/${operatorId}/status`, {
+				status,
+			});
+		},
+	};
 }
 
 export const apiService = new ApiService();

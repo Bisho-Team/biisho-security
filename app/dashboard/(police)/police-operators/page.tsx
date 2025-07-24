@@ -61,6 +61,7 @@ import { apiService } from "@/lib/api-operator-service";
 interface UserType {
 	id: string;
 	email: string;
+	phone: string;
 	name: string;
 	role: "SUPER_ADMIN" | "OFFICE_MANAGER" | "POLICE_MANAGER" | "OPERATOR";
 	status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
@@ -95,6 +96,7 @@ interface CreateOperatorData {
 	email: string;
 	password: string;
 	operatorType: "POLICE";
+	phone: string;
 	// companyId: string;
 	// managedById?: string;
 }
@@ -103,6 +105,7 @@ interface UpdateOperatorData {
 	name: string;
 	email: string;
 	operatorType: "POLICE";
+	phone: string;
 	// companyId: string;
 	status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 }
@@ -133,12 +136,14 @@ export default function OperatorsManagementPage() {
 		name: "",
 		email: "",
 		password: "",
+		phone: "",
 		operatorType: "POLICE",
 	});
 
 	const [editForm, setEditForm] = useState<UpdateOperatorData>({
 		name: "",
 		email: "",
+		phone: "",
 		operatorType: "POLICE",
 		status: "ACTIVE",
 	});
@@ -235,6 +240,7 @@ export default function OperatorsManagementPage() {
 				name: "",
 				email: "",
 				password: "",
+				phone: "",
 				operatorType: "POLICE",
 				// companyId: "",
 				// managedById: "",
@@ -333,7 +339,7 @@ export default function OperatorsManagementPage() {
 	};
 
 	const validateForm = (data: any, isCreate = true) => {
-		if (!data.name || !data.email || !data.operatorType) {
+		if (!data.name || !data.email || !data.operatorType || !data.phone) {
 			toast({
 				title: "Validation Error",
 				description: "Please fill in all required fields",
@@ -369,6 +375,8 @@ export default function OperatorsManagementPage() {
 		setEditForm({
 			name: operator.name,
 			email: operator.email,
+			phone: operator.phone || "",
+
 			operatorType: operator.operatorType || "POLICE",
 			// companyId: operator.companyId || "",
 			status: operator.status,
@@ -512,6 +520,19 @@ export default function OperatorsManagementPage() {
 							</div>
 
 							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<Label htmlFor="phone">Phone Number *</Label>
+									<Input
+										id="phone"
+										value={createForm.phone}
+										onChange={(e) =>
+											setCreateForm({ ...createForm, phone: e.target.value })
+										}
+										placeholder="+251911123456"
+										className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+										required
+									/>
+								</div>
 								<div className="space-y-2">
 									<Label htmlFor="password">Password *</Label>
 									<Input
@@ -1362,9 +1383,21 @@ export default function OperatorsManagementPage() {
 							</div>
 						</div>
 
-						{/* <div className="space-y-2">
-							<Label htmlFor="edit-company">Company *</Label>
-							<Select
+						<div className="space-y-2">
+							{/* <Label htmlFor="edit-company">Company *</Label> */}
+							<div className="space-y-2">
+								<Label htmlFor="edit-phone">Phone Number *</Label>
+								<Input
+									id="edit-phone"
+									value={editForm.phone}
+									onChange={(e) =>
+										setEditForm({ ...editForm, phone: e.target.value })
+									}
+									className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+								/>
+							</div>
+
+							{/* <Select
 								value={editForm.companyId}
 								onValueChange={(value) =>
 									setEditForm({ ...editForm, companyId: value })
@@ -1381,8 +1414,8 @@ export default function OperatorsManagementPage() {
 											</SelectItem>
 										))}
 								</SelectContent>
-							</Select>
-						</div> */}
+							</Select> */}
+						</div>
 					</div>
 					<DialogFooter>
 						<Button

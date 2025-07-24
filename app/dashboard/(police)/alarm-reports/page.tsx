@@ -1179,6 +1179,14 @@ export default function EnhancedAlarmReportsPage() {
 																			Email: {selectedAlarm.createdBy.email}
 																		</span>
 																	</div>
+																	{selectedAlarm.createdBy.phone && (
+																		<div className="flex items-center space-x-2">
+																			<Mail className="h-3 w-3 text-slate-400" />
+																			<span className="text-slate-300 text-xs font-mono">
+																				Phone: {selectedAlarm.createdBy.phone}
+																			</span>
+																		</div>
+																	)}
 																</div>
 															)}
 														</div>
@@ -1211,6 +1219,20 @@ export default function EnhancedAlarmReportsPage() {
 																					{
 																						selectedAlarm.reports[0]
 																							.acknowledgedBy.name
+																					}
+																				</span>
+																			</div>
+																		)}
+
+																		{selectedAlarm.reports[0].acknowledgedBy
+																			?.phone && (
+																			<div className="flex items-center space-x-2">
+																				<User className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					Phone:{" "}
+																					{
+																						selectedAlarm.reports[0]
+																							.acknowledgedBy.phone
 																					}
 																				</span>
 																			</div>
@@ -1274,6 +1296,19 @@ export default function EnhancedAlarmReportsPage() {
 																					{
 																						selectedAlarm.reports[0].resolvedBy
 																							.name
+																					}
+																				</span>
+																			</div>
+																		)}
+																		{selectedAlarm.reports[0].resolvedBy
+																			?.phone && (
+																			<div className="flex items-center space-x-2">
+																				<User className="h-3 w-3 text-slate-400" />
+																				<span className="text-slate-300 text-xs">
+																					Phone:{" "}
+																					{
+																						selectedAlarm.reports[0].resolvedBy
+																							.phone
 																					}
 																				</span>
 																			</div>
