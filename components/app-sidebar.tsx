@@ -140,6 +140,13 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 					},
 
 					{
+						title: "Reports",
+						url: "/dashboard/police-reports",
+						icon: BarChart3,
+						description: "Report",
+					},
+
+					{
 						title: "Profile",
 						url: "/dashboard/profile",
 						icon: UserIcon,
