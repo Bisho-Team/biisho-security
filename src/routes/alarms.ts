@@ -3,9 +3,11 @@ import express from "express";
 import { z } from "zod";
 import { PrismaClient } from "@prisma/client";
 import { authenticate, authorize, type AuthRequest } from "../lib/auth";
-import { formatISO } from "date-fns"; // install with `npm install date-fns` if not already installed
 import { broadcastAlarmToPolice,
 	broadcastAlarmUpdate, } from "../lib/websocket-server";
+import { formatISO, subDays, startOfDay } from "date-fns"
+import PDFDocument from "pdfkit"
+
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -63,7 +65,7 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 				},
 			  },
 			  createdBy: {
-				select: { id: true, name: true, email: true },
+				select: { id: true, name: true, email: true, phone:true },
 			  },
 			  reports: {
 				select: {
@@ -77,6 +79,7 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 					select: {
 					  id: true,
 					  name: true,
+					  phone:true,
 					  company: {
 						select: {
 						  name: true,
@@ -85,10 +88,10 @@ router.get("/", authenticate, async (req: AuthRequest, res) => {
 					},
 				  },
 				acknowledgedBy: {
-					select: { id: true, name: true, email:true },
+					select: { id: true, name: true, email:true, phone:true },
 				},
 				resolvedBy: {
-					select: { id: true, name: true, email:true },
+					select: { id: true, name: true, email:true, phone:true },
 				},
 				},
 			  },
@@ -159,10 +162,10 @@ router.get("/:id", authenticate, async (req, res) => {
 					},
 				},
 				createdBy: {
-					select: { id: true, name: true, email: true },
+					select: { id: true, name: true, email: true, phone:true },
 				},
 				reports: {
-					select: {
+					select: { 
 						id: true,
 						status: true,
 						acknowledgedAt: true,
@@ -173,6 +176,7 @@ router.get("/:id", authenticate, async (req, res) => {
 							select: {
 								id: true,
 								name: true,
+								phone:true,
 								company: {
 									select: {
 										name: true,
@@ -181,10 +185,10 @@ router.get("/:id", authenticate, async (req, res) => {
 							},
 						},
 						acknowledgedBy: {
-							select: { id: true, name: true, email:true },
+							select: { id: true, name: true, email:true, phone:true },
 						},
 						resolvedBy: {
-							select: { id: true, name: true, email:true },
+							select: { id: true, name: true, email:true, phone:true },
 						},
 					},
 				},
@@ -294,7 +298,7 @@ router.post(
 				include: {
 					branch: true,
 					createdBy: {
-						select: { id: true, name: true, email: true },
+						select: { id: true, name: true, email: true, phone:true },
 					},
 				},
 			});
@@ -352,6 +356,7 @@ router.post(
 				description: alarm.description,
 				createdBy: `${alarm.createdBy.name}`,
 				createdByEmail: `${alarm.createdBy.email}`,
+				createdByPhone: `${alarm.createdBy?.phone}` || "",
 				createdAt: alarm.createdAt,
 				status: alarm.status,
 			});
@@ -466,21 +471,6 @@ router.put("/:id", authenticate, async (req: AuthRequest, res) => {
 			}
 		}
 
-
-		// const alarmUpdateData = {
-		// 	id: updatedAlarm.id,
-		// 	alarmCode: updatedAlarm.alarmCode,
-		// 	type: updatedAlarm.type,
-		// 	branchId: updatedAlarm.branchId,
-		// 	branchName: updatedAlarm.branch.name,
-		// 	companyId: updatedAlarm.companyId,
-		// 	location: updatedAlarm.location,
-		// 	severity: updatedAlarm.severity,
-		// 	description: updatedAlarm.description,
-		// 	createdBy: updatedAlarm.createdBy.name,
-		// 	createdAt: updatedAlarm.createdAt,
-		// 	status: updatedAlarm.status,
-		// }
 		// Broadcast update
 		broadcastAlarmUpdate({
 			id: updatedAlarm.id,

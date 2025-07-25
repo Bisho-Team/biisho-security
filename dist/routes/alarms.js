@@ -16,8 +16,8 @@ const express_1 = __importDefault(require("express"));
 const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
 const auth_1 = require("../lib/auth");
-const date_fns_1 = require("date-fns"); // install with `npm install date-fns` if not already installed
 const websocket_server_1 = require("../lib/websocket-server");
+const date_fns_1 = require("date-fns");
 const router = express_1.default.Router();
 const prisma = new client_1.PrismaClient();
 const createAlarmSchema = zod_1.z.object({
@@ -72,7 +72,7 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
                     },
                 },
                 createdBy: {
-                    select: { id: true, name: true, email: true },
+                    select: { id: true, name: true, email: true, phone: true },
                 },
                 reports: {
                     select: {
@@ -86,6 +86,7 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
                             select: {
                                 id: true,
                                 name: true,
+                                phone: true,
                                 company: {
                                     select: {
                                         name: true,
@@ -94,10 +95,10 @@ router.get("/", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, voi
                             },
                         },
                         acknowledgedBy: {
-                            select: { id: true, name: true, email: true },
+                            select: { id: true, name: true, email: true, phone: true },
                         },
                         resolvedBy: {
-                            select: { id: true, name: true, email: true },
+                            select: { id: true, name: true, email: true, phone: true },
                         },
                     },
                 },
@@ -154,7 +155,7 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                     },
                 },
                 createdBy: {
-                    select: { id: true, name: true, email: true },
+                    select: { id: true, name: true, email: true, phone: true },
                 },
                 reports: {
                     select: {
@@ -168,6 +169,7 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                             select: {
                                 id: true,
                                 name: true,
+                                phone: true,
                                 company: {
                                     select: {
                                         name: true,
@@ -176,10 +178,10 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                             },
                         },
                         acknowledgedBy: {
-                            select: { id: true, name: true, email: true },
+                            select: { id: true, name: true, email: true, phone: true },
                         },
                         resolvedBy: {
-                            select: { id: true, name: true, email: true },
+                            select: { id: true, name: true, email: true, phone: true },
                         },
                     },
                 },
@@ -198,7 +200,7 @@ router.get("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
     }
 }));
 router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "OPERATOR"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     try {
         console.log("Creating alarm with data:", req.body);
         const data = createAlarmSchema.parse(req.body);
@@ -263,7 +265,7 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "O
             include: {
                 branch: true,
                 createdBy: {
-                    select: { id: true, name: true, email: true },
+                    select: { id: true, name: true, email: true, phone: true },
                 },
             },
         });
@@ -312,6 +314,7 @@ router.post("/", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "O
             description: alarm.description,
             createdBy: `${alarm.createdBy.name}`,
             createdByEmail: `${alarm.createdBy.email}`,
+            createdByPhone: `${(_d = alarm.createdBy) === null || _d === void 0 ? void 0 : _d.phone}` || "",
             createdAt: alarm.createdAt,
             status: alarm.status,
         });
@@ -412,20 +415,6 @@ router.put("/:id", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, 
                 });
             }
         }
-        // const alarmUpdateData = {
-        // 	id: updatedAlarm.id,
-        // 	alarmCode: updatedAlarm.alarmCode,
-        // 	type: updatedAlarm.type,
-        // 	branchId: updatedAlarm.branchId,
-        // 	branchName: updatedAlarm.branch.name,
-        // 	companyId: updatedAlarm.companyId,
-        // 	location: updatedAlarm.location,
-        // 	severity: updatedAlarm.severity,
-        // 	description: updatedAlarm.description,
-        // 	createdBy: updatedAlarm.createdBy.name,
-        // 	createdAt: updatedAlarm.createdAt,
-        // 	status: updatedAlarm.status,
-        // }
         // Broadcast update
         (0, websocket_server_1.broadcastAlarmUpdate)({
             id: updatedAlarm.id,

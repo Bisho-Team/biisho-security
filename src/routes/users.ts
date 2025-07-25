@@ -7,7 +7,7 @@ import {
 	type AuthRequest,
 	hashPassword,
 } from "../lib/auth";
-
+import PDFDocument from "pdfkit"
 const router = express.Router();
 const prisma = new PrismaClient();
 
@@ -122,63 +122,7 @@ router.get("/", authenticate, authorize("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE
 		message: error instanceof Error ? error.message : String(error),
 	  })
 	}
-  })
-// router.get(
-// 	"/",
-// 	authenticate,
-// 	authorize("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"),
-// 	async (req: AuthRequest, res) => {
-// 		try {
-// 			const { page = 1, limit = 10, role, status, search } = req.query;
-
-// 			const where: any = {};
-
-// 			if (role) where.role = role;
-// 			if (status) where.status = status;
-// 			if (search) {
-// 				where.OR = [
-// 					{ name: { contains: search as string, mode: "insensitive" } },
-// 					{ email: { contains: search as string, mode: "insensitive" } },
-// 				];
-// 			}
-
-// 			const users = await prisma.user.findMany({
-// 				where,
-// 				include: {
-// 					company: true,
-// 					managedBy: {
-// 						select: { id: true, name: true, email: true },
-// 					},
-// 					_count: {
-// 						select: {
-// 							managedUsers: true,
-// 							// assignedBranches: true,
-// 						},
-// 					},
-// 				},
-// 				skip: (Number(page) - 1) * Number(limit),
-// 				take: Number(limit),
-// 				orderBy: { createdAt: "desc" },
-// 			});
-
-// 			const total = await prisma.user.count({ where });
-
-// 			const usersWithoutPasswords = users.map(({ password, ...user }) => user);
-
-// 			res.json({
-// 				users: usersWithoutPasswords,
-// 				pagination: {
-// 					page: Number(page),
-// 					limit: Number(limit),
-// 					total,
-// 					pages: Math.ceil(total / Number(limit)),
-// 				},
-// 			});
-// 		} catch (error) {
-// 			res.status(500).json({ error: "Failed to fetch users" });
-// 		}
-// 	}
-// );
+})
 
 router.get(
 	"/filtered",
@@ -444,48 +388,48 @@ router.post("/", authenticate, async (req: AuthRequest, res) => {
 router.put("/:id", authenticate, authorize("SUPER_ADMIN", "OFFICE_MANAGER", "POLICE_MANAGER"), async (req: AuthRequest, res) => {
 try {
 	const { id } = req.params;
-	const { name, email, operatorType, status } = req.body;
+	const { name, email, operatorType, status, phone } = req.body;
 	const companyId = req.body.companyId || req.user?.companyId;
 
 	const normalizedEmail = email?.trim().toLowerCase();
 
 	console.log("🔧 Incoming update request", {
-	requestUser: req.user,
-	body: req.body,
-	targetUserId: id,
-	resolvedCompanyId: companyId,
+		requestUser: req.user,
+		body: req.body,
+		targetUserId: id,
+		resolvedCompanyId: companyId,
 	});
 
 	// Check if user exists
 	const existingUser = await prisma.user.findUnique({
-	where: { id },
+		where: { id },
 	});
 
 	console.log({
-	existingUser
+		existingUser
 	})
 	if (!existingUser) {
-	return res.status(404).json({ error: "User not found" });
+		return res.status(404).json({ error: "User not found" });
 	}
 
 	// Access Control
 	if (req.user!.role !== "SUPER_ADMIN") {
-	const notOwner = existingUser.managedById !== req.user!.id;
-	const notSameCompany = existingUser.companyId !== req.user!.companyId;
-	if (notOwner && notSameCompany) {
-		return res.status(403).json({ error: "Access denied" });
-	}
+		const notOwner = existingUser.managedById !== req.user!.id;
+		const notSameCompany = existingUser.companyId !== req.user!.companyId;
+		if (notOwner && notSameCompany) {
+			return res.status(403).json({ error: "Access denied" });
+		}
 	}
 
 	// Check email uniqueness
 	if (normalizedEmail && normalizedEmail !== existingUser.email?.toLowerCase()) {
-	const emailExists = await prisma.user.findUnique({
-		where: { email: normalizedEmail },
-	});
+		const emailExists = await prisma.user.findUnique({
+			where: { email: normalizedEmail },
+		});
 
-	if (emailExists) {
-		return res.status(400).json({ error: "Email already exists" });
-	}
+		if (emailExists) {
+			return res.status(400).json({ error: "Email already exists" });
+		}
 	}
 
 	// Start transaction
@@ -493,22 +437,23 @@ try {
 	prisma.user.update({
 		where: { id },
 		data: {
-		name,
-		email: normalizedEmail,
-		operatorType: existingUser.role === "OPERATOR" ? operatorType : undefined,
-		companyId: req.user!.role === "SUPER_ADMIN" ? companyId : undefined,
-		status: status,
-		},
-		include: {
-		company: { select: { id: true, name: true, status: true } },
-		managedBy: { select: { id: true, name: true, email: true, role: true } },
-		_count: {
-			select: {
-			managedUsers: true,
-			createdAlarms: true,
-			createdReports: true,
+			name,
+			email: normalizedEmail,
+			phone: phone || "",
+			operatorType: existingUser.role === "OPERATOR" ? operatorType : undefined,
+			companyId: req.user!.role === "SUPER_ADMIN" ? companyId : undefined,
+			status: status,
 			},
-		},
+		include: {
+			company: { select: { id: true, name: true, status: true } },
+			managedBy: { select: { id: true, name: true, email: true, role: true } },
+			_count: {
+				select: {
+				managedUsers: true,
+				createdAlarms: true,
+				createdReports: true,
+				},
+			},
 		},
 	}),
 
@@ -764,5 +709,676 @@ async (req:AuthRequest, res) => {
 	}
 },
 )
+
+// Get operator details with enhanced information
+router.get("/operators/:operatorId", authenticate, async (req: AuthRequest, res) => {
+	try {
+	  const { operatorId } = req.params
+	  const user = req.user!
+  
+	  // Verify access permissions
+	  const operator = await prisma.user.findFirst({
+		where: {
+		  id: operatorId,
+		  role: "OPERATOR",
+		  ...(user.role === "OFFICE_MANAGER" && { managedById: user.id }),
+		},
+		include: {
+		  company: {
+			select: { name: true, id: true },
+		  },
+		  createdAlarms: {
+			select: {
+			  id: true,
+			  type: true,
+			  status: true,
+			  severity: true,
+			  createdAt: true,
+			  branch: {
+				select: { name: true, city: true },
+			  },
+			},
+			orderBy: { createdAt: "desc" },
+			take: 20,
+		  },
+		  createdReports: {
+			select: {
+			  id: true,
+			  status: true,
+			  acknowledgedAt: true,
+			  completedAt: true,
+			  createdAt: true,
+			},
+			orderBy: { createdAt: "desc" },
+			take: 10,
+		  },
+		  CompanyOperator: {
+			include: {
+			  company: {
+				include: {
+				  branches: {
+					select: {
+					  id: true,
+					  name: true,
+					  city: true,
+					  locationType: true,
+					},
+				  },
+				},
+			  },
+			},
+		  },
+		},
+	  })
+  
+	  if (!operator) {
+		return res.status(404).json({ error: "Operator not found" })
+	  }
+  
+	  // Format response
+	  const response = {
+		...operator,
+		branches: operator.CompanyOperator.flatMap((co) => co.company.branches),
+		alarms: operator.createdAlarms.map((alarm) => ({
+		  id: alarm.id,
+		  type: alarm.type,
+		  status: alarm.status,
+		  severity: alarm.severity,
+		  timestamp: alarm.createdAt,
+		  branchName: alarm.branch.name,
+		})),
+	  }
+  
+	  res.json(response)
+	} catch (error) {
+	  console.error("Error fetching operator details:", error)
+	  res.status(500).json({ error: "Failed to fetch operator details" })
+	}
+})
+  
+  // Get operator performance metrics
+router.get("/operators/:operatorId/metrics", authenticate, async (req: AuthRequest, res) => {
+try {
+	const { operatorId } = req.params
+	const user = req.user!
+
+	// Verify access permissions
+	const operator = await prisma.user.findFirst({
+	where: {
+		id: operatorId,
+		role: "OPERATOR",
+		...(user.role === "OFFICE_MANAGER" && { managedById: user.id }),
+	},
+	})
+
+	if (!operator) {
+	return res.status(404).json({ error: "Operator not found" })
+	}
+
+	// Calculate metrics
+	const [totalAlarms, alarmsCreated, alarmsAcknowledged, alarmsResolved, reportsSubmitted, branchesAssigned] =
+	await Promise.all([
+		// Total alarms the operator has been involved with
+		prisma.alarm.count({
+		where: {
+			OR: [{ createdById: operatorId }, { reports: { some: { assignedToId: operatorId } } }],
+		},
+		}),
+
+		// Alarms created by operator
+		prisma.alarm.count({
+		where: { createdById: operatorId },
+		}),
+
+		// Alarms acknowledged by operator
+		prisma.alarmReport.count({
+		where: { acknowledgedById: operatorId },
+		}),
+
+		// Alarms resolved by operator
+		prisma.alarmReport.count({
+		where: { resolvedById: operatorId },
+		}),
+
+		// Reports submitted by operator
+		prisma.alarmReport.count({
+		where: { assignedToId: operatorId },
+		}),
+
+		// Branches assigned to operator
+		prisma.companyOperator.count({
+		where: { operatorId },
+		}),
+	])
+
+	// Calculate response and resolution times
+	const acknowledgedReports = await prisma.alarmReport.findMany({
+	where: {
+		acknowledgedById: operatorId,
+		acknowledgedAt: { not: null },
+	},
+	include: {
+		alarm: {
+		select: { createdAt: true },
+		},
+	},
+	})
+
+	const resolvedReports = await prisma.alarmReport.findMany({
+	where: {
+		resolvedById: operatorId,
+		completedAt: { not: null },
+	},
+	include: {
+		alarm: {
+		select: { createdAt: true },
+		},
+	},
+	})
+
+	// Calculate average response time
+	const avgResponseTime =
+	acknowledgedReports.length > 0
+		? acknowledgedReports.reduce((acc, report) => {
+			const responseTime = new Date(report.acknowledgedAt!).getTime() - new Date(report.alarm.createdAt).getTime()
+			return acc + responseTime / (1000 * 60) // Convert to minutes
+		}, 0) / acknowledgedReports.length
+		: 0
+
+	// Calculate average resolution time
+	const avgResolutionTime =
+	resolvedReports.length > 0
+		? resolvedReports.reduce((acc, report) => {
+			const resolutionTime = new Date(report.completedAt!).getTime() - new Date(report.alarm.createdAt).getTime()
+			return acc + resolutionTime / (1000 * 60) // Convert to minutes
+		}, 0) / resolvedReports.length
+		: 0
+
+	// Calculate performance score (0-100)
+	const resolutionRate = totalAlarms > 0 ? (alarmsResolved / totalAlarms) * 100 : 0
+	const responseScore = avgResponseTime > 0 ? Math.max(0, 100 - avgResponseTime / 2) : 100
+	const activityScore = Math.min(100, (alarmsCreated + alarmsAcknowledged + alarmsResolved) * 2)
+
+	const performanceScore = Math.round(resolutionRate * 0.4 + responseScore * 0.3 + activityScore * 0.3)
+
+	// Calculate active hours (mock calculation - in real app, track login/logout times)
+	const activeHours = Math.round(Math.random() * 160 + 40) // 40-200 hours per month
+
+	// Get last login (mock - in real app, track actual login times)
+	const lastLogin = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+
+	const metrics = {
+	totalAlarms,
+	alarmsCreated,
+	alarmsAcknowledged,
+	alarmsResolved,
+	avgResponseTime: Math.round(avgResponseTime),
+	avgResolutionTime: Math.round(avgResolutionTime),
+	totalLogins: Math.round(Math.random() * 100 + 20), // Mock data
+	activeHours,
+	performanceScore,
+	lastLogin,
+	branchesAssigned,
+	reportsSubmitted,
+	}
+
+	res.json(metrics)
+} catch (error) {
+	console.error("Error fetching operator metrics:", error)
+	res.status(500).json({ error: "Failed to fetch operator metrics" })
+}
+})
+
+// Get operator activity log
+router.get("/operators/:operatorId/activity", authenticate, async (req: AuthRequest, res) => {
+try {
+	const { operatorId } = req.params
+	const { dateFrom, dateTo, activityType, limit = 50 } = req.query
+	const user = req.user!
+
+	// Verify access permissions
+	const operator = await prisma.user.findFirst({
+	where: {
+		id: operatorId,
+		role: "OPERATOR",
+		...(user.role === "OFFICE_MANAGER" && { managedById: user.id }),
+	},
+	})
+
+	if (!operator) {
+	return res.status(404).json({ error: "Operator not found" })
+	}
+
+	// Build activity log from various sources
+	const activities: any[] = []
+
+	// Get alarm activities
+	const alarmActivities = await prisma.alarm.findMany({
+	where: {
+		createdById: operatorId,
+		...(dateFrom &&
+		dateTo && {
+			createdAt: {
+			gte: new Date(dateFrom as string),
+			lte: new Date(dateTo as string),
+			},
+		}),
+	},
+	include: {
+		branch: { select: { name: true } },
+	},
+	orderBy: { createdAt: "desc" },
+	take: Number(limit) / 2,
+	})
+
+	alarmActivities.forEach((alarm) => {
+	activities.push({
+		id: `alarm-created-${alarm.id}`,
+		action: "Alarm Created",
+		actionType: "ALARM_CREATED",
+		timestamp: alarm.createdAt,
+		details: `Created ${alarm.type} alarm at ${alarm.branch.name}`,
+		alarmId: alarm.id,
+		metadata: {
+		severity: alarm.severity,
+		type: alarm.type,
+		branch: alarm.branch.name,
+		},
+	})
+	})
+
+	// Get report activities
+	const reportActivities = await prisma.alarmReport.findMany({
+	where: {
+		OR: [{ assignedToId: operatorId }, { acknowledgedById: operatorId }, { resolvedById: operatorId }],
+		...(dateFrom &&
+		dateTo && {
+			createdAt: {
+			gte: new Date(dateFrom as string),
+			lte: new Date(dateTo as string),
+			},
+		}),
+	},
+	include: {
+		alarm: {
+		include: {
+			branch: { select: { name: true } },
+		},
+		},
+	},
+	orderBy: { createdAt: "desc" },
+	take: Number(limit) / 2,
+	})
+
+	reportActivities.forEach((report) => {
+	if (report.acknowledgedById === operatorId && report.acknowledgedAt) {
+		activities.push({
+		id: `alarm-ack-${report.id}`,
+		action: "Alarm Acknowledged",
+		actionType: "ALARM_ACKNOWLEDGED",
+		timestamp: report.acknowledgedAt,
+		details: `Acknowledged ${report.alarm.type} alarm at ${report.alarm.branch.name}`,
+		alarmId: report.alarmId,
+		metadata: {
+			severity: report.alarm.severity,
+			type: report.alarm.type,
+			branch: report.alarm.branch.name,
+		},
+		})
+	}
+
+	if (report.resolvedById === operatorId && report.completedAt) {
+		activities.push({
+		id: `alarm-resolved-${report.id}`,
+		action: "Alarm Resolved",
+		actionType: "ALARM_RESOLVED",
+		timestamp: report.completedAt,
+		details: `Resolved ${report.alarm.type} alarm at ${report.alarm.branch.name}`,
+		alarmId: report.alarmId,
+		metadata: {
+			severity: report.alarm.severity,
+			type: report.alarm.type,
+			branch: report.alarm.branch.name,
+			resolutionDescription: report.resolutionDescription,
+		},
+		})
+	}
+	})
+
+	// Add mock login activities (in real app, track actual login events)
+	const mockLoginCount = Math.floor(Math.random() * 10) + 5
+	for (let i = 0; i < mockLoginCount; i++) {
+	const loginTime = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+	if (
+		!dateFrom ||
+		!dateTo ||
+		(loginTime >= new Date(dateFrom as string) && loginTime <= new Date(dateTo as string))
+	) {
+		activities.push({
+		id: `login-${i}-${operatorId}`,
+		action: "System Login",
+		actionType: "LOGIN",
+		timestamp: loginTime.toISOString(),
+		details: "Logged into the security system",
+		metadata: {
+			sessionDuration: Math.floor(Math.random() * 480) + 60, // 1-8 hours
+			ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
+		},
+		})
+	}
+	}
+
+	// Filter by activity type if specified
+	let filteredActivities = activities
+	if (activityType && activityType !== "all") {
+	filteredActivities = activities.filter((activity) => activity.actionType === activityType)
+	}
+
+	// Sort by timestamp and limit results
+	filteredActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+	filteredActivities = filteredActivities.slice(0, Number(limit))
+
+	res.json({
+	activities: filteredActivities,
+	total: filteredActivities.length,
+	operator: {
+		id: operator.id,
+		name: operator.name,
+		email: operator.email,
+	},
+	})
+} catch (error) {
+	console.error("Error fetching operator activity:", error)
+	res.status(500).json({ error: "Failed to fetch operator activity" })
+}
+})
+
+// Export operator report to CSV
+router.get("/operators/:operatorId/export/csv", authenticate, async (req: AuthRequest, res) => {
+try {
+	const { operatorId } = req.params
+	const { dateFrom, dateTo, activityType, includeMetrics, includeActivityLog, includeAlarmHistory } = req.query
+	const user = req.user!
+
+	// Verify access permissions
+	const operator = await prisma.user.findFirst({
+	where: {
+		id: operatorId,
+		role: "OPERATOR",
+		...(user.role === "OFFICE_MANAGER" && { managedById: user.id }),
+	},
+	})
+
+	if (!operator) {
+	return res.status(404).json({ error: "Operator not found" })
+	}
+
+	// Fetch data based on export options
+	const [metrics, activities, alarms] = await Promise.all([
+	includeMetrics === "true"
+		? fetch(`${req.protocol}://${req.get("host")}/api/operators/${operatorId}/metrics`).then((r) => r.json())
+		: null,
+	includeActivityLog === "true"
+		? fetch(
+			`${req.protocol}://${req.get("host")}/api/operators/${operatorId}/activity?${new URLSearchParams(req.query as any)}`,
+		).then((r) => r.json())
+		: null,
+	includeAlarmHistory === "true"
+		? prisma.alarm.findMany({
+			where: { createdById: operatorId },
+			include: { branch: { select: { name: true } } },
+			orderBy: { createdAt: "desc" },
+		})
+		: null,
+	])
+
+	// Generate CSV content
+	let csvContent = `Operator Report - ${operator.name}\n`
+	csvContent += `Generated on: ${new Date().toLocaleDateString()}\n`
+	csvContent += `Report Period: ${dateFrom || "All time"} to ${dateTo || "Present"}\n\n`
+
+	// Add metrics section
+	if (metrics) {
+	csvContent += "PERFORMANCE METRICS\n"
+	csvContent += "Metric,Value\n"
+	csvContent += `Total Alarms,${metrics.totalAlarms}\n`
+	csvContent += `Alarms Created,${metrics.alarmsCreated}\n`
+	csvContent += `Alarms Acknowledged,${metrics.alarmsAcknowledged}\n`
+	csvContent += `Alarms Resolved,${metrics.alarmsResolved}\n`
+	csvContent += `Average Response Time (min),${metrics.avgResponseTime}\n`
+	csvContent += `Average Resolution Time (min),${metrics.avgResolutionTime}\n`
+	csvContent += `Performance Score,${metrics.performanceScore}\n`
+	csvContent += `Active Hours,${metrics.activeHours}\n`
+	csvContent += `Reports Submitted,${metrics.reportsSubmitted}\n\n`
+	}
+
+	// Add activity log section
+	if (activities && activities.activities) {
+	csvContent += "ACTIVITY LOG\n"
+	csvContent += "Timestamp,Action,Type,Details,Alarm ID,Metadata\n"
+	activities.activities.forEach((activity: any) => {
+		const metadata = activity.metadata ? JSON.stringify(activity.metadata).replace(/"/g, '""') : ""
+		csvContent += `"${activity.timestamp}","${activity.action}","${activity.actionType}","${activity.details}","${activity.alarmId || ""}","${metadata}"\n`
+	})
+	csvContent += "\n"
+	}
+
+	// Add alarm history section
+	if (alarms) {
+	csvContent += "ALARM HISTORY\n"
+	csvContent += "Alarm Code,Type,Status,Severity,Branch,Created At,Description\n"
+	alarms.forEach((alarm: any) => {
+		csvContent += `"${alarm.alarmCode || alarm.id}","${alarm.type}","${alarm.status}","${alarm.severity}","${alarm.branch.name}","${alarm.createdAt}","${alarm.description?.replace(/"/g, '""') || ""}"\n`
+	})
+	}
+
+	// Set response headers for CSV download
+	res.setHeader("Content-Type", "text/csv")
+	res.setHeader(
+	"Content-Disposition",
+	`attachment; filename="operator-report-${operator.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.csv"`,
+	)
+
+	res.send(csvContent)
+} catch (error) {
+	console.error("Error exporting operator CSV:", error)
+	res.status(500).json({ error: "Failed to export operator report" })
+}
+})
+
+// Export operator report to PDF
+router.post("/operators/:operatorId/export/pdf", authenticate, async (req: AuthRequest, res) => {
+let doc: any|  null = null
+
+try {
+	const { operatorId } = req.params
+	const { filters } = req.body
+	const user:any = req.user!
+
+	// Verify access permissions
+	const operator = await prisma.user.findFirst({
+	where: {
+		id: operatorId,
+		role: "OPERATOR",
+		...(user.role === "OFFICE_MANAGER" && { managedById: user.id }),
+	},
+	})
+
+	if (!operator) {
+	return res.status(404).json({ error: "Operator not found" })
+	}
+
+	// Fetch comprehensive data
+	const [metrics, activities, alarms] = await Promise.all([
+	filters.includeMetrics
+		? fetch(`${req.protocol}://${req.get("host")}/api/operators/${operatorId}/metrics`).then((r) => r.json())
+		: null,
+	filters.includeActivityLog
+		? fetch(
+			`${req.protocol}://${req.get("host")}/api/operators/${operatorId}/activity?${new URLSearchParams(filters)}`,
+		).then((r) => r.json())
+		: null,
+	filters.includeAlarmHistory
+		? prisma.alarm.findMany({
+			where: { createdById: operatorId },
+			include: { branch: { select: { name: true } } },
+			orderBy: { createdAt: "desc" },
+			take: 50,
+		})
+		: null,
+	])
+
+	// Create PDF document
+	doc = new PDFDocument({
+	margin: 50,
+	size: "A4",
+	bufferPages: true,
+	})
+
+	// Set response headers
+	res.setHeader("Content-Type", "application/pdf")
+	res.setHeader(
+	"Content-Disposition",
+	`attachment; filename="operator-report-${operator.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf"`,
+	)
+
+	// Pipe PDF to response
+	doc.pipe(res)
+
+	// Add header
+	doc.fontSize(20).font("Helvetica-Bold").text("OPERATOR PERFORMANCE REPORT", { align: "center" })
+	doc.moveDown(0.5)
+
+	// Add operator info
+	doc.fontSize(16).font("Helvetica-Bold").text(`${operator.name}`, { align: "center" })
+	doc.fontSize(12).font("Helvetica").text(`${operator.email}`, { align: "center" })
+	doc.moveDown()
+
+	// Add generation info
+	doc.fontSize(10).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" })
+	doc.text(`Report Period: ${filters.dateFrom || "All time"} to ${filters.dateTo || "Present"}`, { align: "right" })
+	doc.text(`Generated by: ${user.name}`, { align: "right" })
+	doc.moveDown()
+
+	// Add performance metrics
+	if (metrics) {
+	doc.fontSize(14).font("Helvetica-Bold").text("PERFORMANCE METRICS", { underline: true })
+	doc.fontSize(10).font("Helvetica")
+
+	const metricsData = [
+		[`Total Alarms: ${metrics.totalAlarms}`, `Performance Score: ${metrics.performanceScore}%`],
+		[`Alarms Created: ${metrics.alarmsCreated}`, `Active Hours: ${metrics.activeHours}h`],
+		[`Acknowledged: ${metrics.alarmsAcknowledged}`, `Avg Response: ${metrics.avgResponseTime}min`],
+		[`Resolved: ${metrics.alarmsResolved}`, `Avg Resolution: ${metrics.avgResolutionTime}min`],
+	]
+
+	metricsData.forEach(([left, right]) => {
+		doc!.text(left, 50, doc!.y, { width: 200, continued: true })
+		doc!.text(right, 300, doc!.y)
+		doc!.moveDown(0.3)
+	})
+	doc.moveDown()
+	}
+
+	// Add activity summary
+	if (activities && activities.activities) {
+	doc.fontSize(14).font("Helvetica-Bold").text("RECENT ACTIVITY SUMMARY", { underline: true })
+	doc.fontSize(10).font("Helvetica")
+
+	const activitySummary = activities.activities.reduce((acc: any, activity: any) => {
+		acc[activity.actionType] = (acc[activity.actionType] || 0) + 1
+		return acc
+	}, {})
+
+	Object.entries(activitySummary).forEach(([type, count]) => {
+		doc!.text(`${type.replace(/_/g, " ")}: ${count} activities`)
+	})
+	doc.moveDown()
+
+	// Add recent activities table
+	doc.fontSize(12).font("Helvetica-Bold").text("RECENT ACTIVITIES", { underline: true })
+	doc.fontSize(8).font("Helvetica")
+
+	activities.activities.slice(0, 20).forEach((activity: any, index: number) => {
+		if (doc!.y > 700) {
+		doc!.addPage()
+		doc!.fontSize(8).font("Helvetica")
+		}
+
+		const date = new Date(activity.timestamp).toLocaleDateString()
+		const time = new Date(activity.timestamp).toLocaleTimeString()
+
+		doc!.text(`${date} ${time}`, 50, doc!.y, { width: 100, continued: true })
+		doc!.text(activity.action, 150, doc!.y, { width: 150, continued: true })
+		doc!.text(activity.details, 300, doc!.y, { width: 250, ellipsis: true })
+		doc!.moveDown(0.4)
+	})
+	doc.moveDown()
+	}
+
+	// Add alarm history
+	if (alarms && alarms.length > 0) {
+	doc.addPage()
+	doc.fontSize(14).font("Helvetica-Bold").text("ALARM HISTORY", { underline: true })
+	doc.fontSize(8).font("Helvetica")
+
+	// Table headers
+	doc.text("Date", 50, doc.y, { width: 80, continued: true })
+	doc.text("Type", 130, doc.y, { width: 100, continued: true })
+	doc.text("Status", 230, doc.y, { width: 80, continued: true })
+	doc.text("Severity", 310, doc.y, { width: 80, continued: true })
+	doc.text("Branch", 390, doc.y, { width: 150 })
+	doc.moveDown(0.5)
+
+	alarms.slice(0, 30).forEach((alarm: any) => {
+		if (doc!.y > 700) {
+		doc!.addPage()
+		doc!.fontSize(8).font("Helvetica")
+		}
+
+		const date = new Date(alarm.createdAt).toLocaleDateString()
+		doc!.text(date, 50, doc!.y, { width: 80, continued: true })
+		doc!.text(alarm.type, 130, doc!.y, { width: 100, continued: true, ellipsis: true })
+		doc!.text(alarm.status, 230, doc!.y, { width: 80, continued: true })
+		doc!.text(alarm.severity, 310, doc!.y, { width: 80, continued: true })
+		doc!.text(alarm.branch.name, 390, doc!.y, { width: 150, ellipsis: true })
+		doc!.moveDown(0.4)
+	})
+	}
+
+	// Add footer
+	doc.fontSize(8).text("This report was generated by the Police Alert System", 50, doc.page.height - 50, {
+	align: "center",
+	})
+
+	// Finalize PDF
+	doc.end()
+
+	doc.on("end", () => {
+	console.log("Operator PDF report generated successfully")
+	})
+
+	doc.on("error", (error:any) => {
+	console.error("PDF generation error:", error)
+	if (!res.headersSent) {
+		res.status(500).json({ error: "Failed to generate PDF report" })
+	}
+	})
+} catch (error) {
+	console.error("Error generating operator PDF report:", error)
+
+	if (doc) {
+	try {
+		doc.end()
+	} catch (cleanupError) {
+		console.error("Error cleaning up PDF document:", cleanupError)
+	}
+	}
+
+	if (!res.headersSent) {
+	res.status(500).json({ error: "Failed to generate PDF report" })
+	}
+}
+})
 
 export default router;
