@@ -58,6 +58,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { PoliceStatusCard } from "@/components/police-status-card";
 const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 interface Alarm {
@@ -680,352 +681,373 @@ export default function EnhancedAlarmsPage() {
 				)}
 			</div>
 
-			{/* Overview Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				<Card
-					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
-					style={{ animationDelay: "0.1s" }}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Active Alarms</CardTitle>
-						<div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
-							<AlertTriangle className="h-4 w-4 text-red-500" />
-						</div>
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-red-600">
-							{mockAlarms.filter((a) => a.status === "ACTIVE").length}
-						</div>
-						<div className="flex justify-between items-center">
-							<p className="text-xs text-muted-foreground">
-								Require immediate attention
-							</p>
-							{mockAlarms.filter((a) => a.status === "ACTIVE").length > 0 && (
-								<span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-							)}
-						</div>
-					</CardContent>
-				</Card>
-
-				<Card
-					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
-					style={{ animationDelay: "0.3s" }}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Acknowledged</CardTitle>
-						<div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
-							<Clock className="h-4 w-4 text-yellow-500" />
-						</div>
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-yellow-600">
-							{mockAlarms.filter((a) => a.status === "ACKNOWLEDGED").length}
-						</div>
-						<div className="flex justify-between items-center">
-							<p className="text-xs text-muted-foreground">Being handled</p>
-							{mockAlarms.filter((a) => a.status === "ACKNOWLEDGED").length >
-								0 && (
-								<span className="h-2 w-2 rounded-full bg-yellow-500"></span>
-							)}
-						</div>
-					</CardContent>
-				</Card>
-				<Card
-					className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
-					style={{ animationDelay: "0.4s" }}>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
-							Resolved Today
-						</CardTitle>
-						<div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20">
-							<CheckCircle className="h-4 w-4 text-green-500" />
-						</div>
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-600">
-							{mockAlarms.filter((a) => a.status === "RESOLVED").length}
-						</div>
-						<div className="flex justify-between items-center">
-							<p className="text-xs text-muted-foreground">
-								Successfully handled
-							</p>
-							{mockAlarms.filter((a) => a.status === "RESOLVED").length > 0 && (
-								<span className="h-2 w-2 rounded-full bg-green-500"></span>
-							)}
-						</div>
-					</CardContent>
-				</Card>
-			</div>
-
-			{/* Alarm Management Tabs */}
-			<Tabs
-				defaultValue="active"
-				className="space-y-4 animate-slide-up"
-				style={{ animationDelay: "0.5s" }}>
-				<div className="flex justify-between items-center">
-					<TabsList className="glass">
-						<TabsTrigger value="active" className="relative">
-							Active Alarms
-							{activeAlarms.length > 0 && (
-								<span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-									{activeAlarms.length}
-								</span>
-							)}
-						</TabsTrigger>
-						<TabsTrigger value="history" className="relative">
-							Alarm History
-							{resolvedAlarms.length > 0 && (
-								<span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-[10px] text-white">
-									{resolvedAlarms.length}
-								</span>
-							)}
-						</TabsTrigger>
-					</TabsList>
-					<div className="flex space-x-2">
-						<div className="relative">
-							<Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-							<Input
-								placeholder="Search alarms..."
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-								className="pl-9 w-64 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-							/>
-						</div>
-						<Select value={filterStatus} onValueChange={setFilterStatus}>
-							<SelectTrigger className="w-32">
-								<SelectValue placeholder="Status" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Status</SelectItem>
-								<SelectItem value="ACTIVE">Active</SelectItem>
-								<SelectItem value="RESOLVED">Resolved</SelectItem>
-								<SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-				</div>
-
-				<TabsContent value="active" className="space-y-4">
-					{filteredActiveAlarms.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-12 text-center">
-							<div className="p-4 rounded-full bg-muted/30 mb-4">
-								<Bell className="h-8 w-8 text-muted-foreground" />
-							</div>
-							<h3 className="text-lg font-medium">No active alarms</h3>
-							<p className="text-muted-foreground mt-1">
-								All security systems are operating normally
-							</p>
-						</div>
-					) : (
-						<div className="grid gap-4">
-							{filteredActiveAlarms.map((alarm, index) => (
-								<Card
-									key={alarm.id}
-									className={cn(
-										"animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20",
-										alarm.status === "ACTIVE" &&
-											alarm.severity === "CRITICAL" &&
-											"border-l-4 border-l-red-500"
+			<div className="flex flex-row gap-3">
+				<div className="w-3/4 space-y-4">
+					{/* Overview Cards */}
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+						<Card
+							className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
+							style={{ animationDelay: "0.1s" }}>
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+								<CardTitle className="text-sm font-medium">
+									Active Alarms
+								</CardTitle>
+								<div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
+									<AlertTriangle className="h-4 w-4 text-red-500" />
+								</div>
+							</CardHeader>
+							<CardContent>
+								<div className="text-2xl font-bold text-red-600">
+									{mockAlarms.filter((a) => a.status === "ACTIVE").length}
+								</div>
+								<div className="flex justify-between items-center">
+									<p className="text-xs text-muted-foreground">
+										Require immediate attention
+									</p>
+									{mockAlarms.filter((a) => a.status === "ACTIVE").length >
+										0 && (
+										<span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
 									)}
-									style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
-									<CardContent className="p-6">
-										<div className="flex items-center justify-between">
-											<div className="flex items-center space-x-4">
-												{alarm.branch?.company?.logo ? (
-													<Image
-														src={`${NEXT_PUBLIC_API_URL}${alarm.branch?.company?.logo.replace(
-															"/var/www/html/koppa-security-api",
-															""
-														)}`}
-														width={20}
-														height={20}
-														alt={`${alarm.branch?.company?.name} logo`}
-														className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
-													/>
-												) : (
-													<div
-														className={cn(
-															"p-3 rounded-lg",
-															alarm.status === "ACTIVE"
-																? "bg-red-100 dark:bg-red-900/20"
-																: alarm.status === "ACKNOWLEDGED"
-																? "bg-blue-100 dark:bg-blue-900/20"
-																: "bg-yellow-100 dark:bg-yellow-900/20"
-														)}>
-														{getStatusIcon(alarm.status)}
-													</div>
-												)}
+								</div>
+							</CardContent>
+						</Card>
 
-												<div className="space-y-1">
-													<h4 className="font-semibold text-lg">
-														{alarm.type}
-													</h4>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<Building className="h-3 w-3" />
-														<span>{alarm.branch?.company?.name}</span>
-													</div>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<MapPin className="h-3 w-3" />
-														<span>{alarm.branch.name}</span>
-													</div>
-													<div className="flex items-center gap-2 text-xs text-muted-foreground">
-														<Clock className="h-3 w-3" />
-														<span>{formatTimeAgo(alarm.createdAt)}</span>
-													</div>
-													{alarm.reports?.[0]?.assignedTo && (
-														<div className="flex items-center gap-2 text-sm">
-															<Shield className="h-3 w-3 text-blue-500" />
-															<span className="text-blue-600 dark:text-blue-400">
-																{alarm.reports[0].assignedTo.name}
-															</span>
+						<Card
+							className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
+							style={{ animationDelay: "0.3s" }}>
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+								<CardTitle className="text-sm font-medium">
+									Acknowledged
+								</CardTitle>
+								<div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+									<Clock className="h-4 w-4 text-yellow-500" />
+								</div>
+							</CardHeader>
+							<CardContent>
+								<div className="text-2xl font-bold text-yellow-600">
+									{mockAlarms.filter((a) => a.status === "ACKNOWLEDGED").length}
+								</div>
+								<div className="flex justify-between items-center">
+									<p className="text-xs text-muted-foreground">Being handled</p>
+									{mockAlarms.filter((a) => a.status === "ACKNOWLEDGED")
+										.length > 0 && (
+										<span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+									)}
+								</div>
+							</CardContent>
+						</Card>
+						<Card
+							className="animate-slide-up glass hover:shadow-lg transition-all duration-300"
+							style={{ animationDelay: "0.4s" }}>
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+								<CardTitle className="text-sm font-medium">
+									Resolved Today
+								</CardTitle>
+								<div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20">
+									<CheckCircle className="h-4 w-4 text-green-500" />
+								</div>
+							</CardHeader>
+							<CardContent>
+								<div className="text-2xl font-bold text-green-600">
+									{mockAlarms.filter((a) => a.status === "RESOLVED").length}
+								</div>
+								<div className="flex justify-between items-center">
+									<p className="text-xs text-muted-foreground">
+										Successfully handled
+									</p>
+									{mockAlarms.filter((a) => a.status === "RESOLVED").length >
+										0 && (
+										<span className="h-2 w-2 rounded-full bg-green-500"></span>
+									)}
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+
+					{/* Alarm Management Tabs */}
+					<Tabs
+						defaultValue="active"
+						className="space-y-4 animate-slide-up"
+						style={{ animationDelay: "0.5s" }}>
+						<div className="flex justify-between items-center">
+							<TabsList className="glass">
+								<TabsTrigger value="active" className="relative">
+									Active Alarms
+									{activeAlarms.length > 0 && (
+										<span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+											{activeAlarms.length}
+										</span>
+									)}
+								</TabsTrigger>
+								<TabsTrigger value="history" className="relative">
+									Alarm History
+									{resolvedAlarms.length > 0 && (
+										<span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-[10px] text-white">
+											{resolvedAlarms.length}
+										</span>
+									)}
+								</TabsTrigger>
+							</TabsList>
+							<div className="flex space-x-2">
+								<div className="relative">
+									<Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+									<Input
+										placeholder="Search alarms..."
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+										className="pl-9 w-64 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+									/>
+								</div>
+								<Select value={filterStatus} onValueChange={setFilterStatus}>
+									<SelectTrigger className="w-32">
+										<SelectValue placeholder="Status" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">All Status</SelectItem>
+										<SelectItem value="ACTIVE">Active</SelectItem>
+										<SelectItem value="RESOLVED">Resolved</SelectItem>
+										<SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+
+						<TabsContent value="active" className="space-y-4">
+							{filteredActiveAlarms.length === 0 ? (
+								<div className="flex flex-col items-center justify-center py-12 text-center">
+									<div className="p-4 rounded-full bg-muted/30 mb-4">
+										<Bell className="h-8 w-8 text-muted-foreground" />
+									</div>
+									<h3 className="text-lg font-medium">No active alarms</h3>
+									<p className="text-muted-foreground mt-1">
+										All security systems are operating normally
+									</p>
+								</div>
+							) : (
+								<div className="grid gap-4">
+									{filteredActiveAlarms.map((alarm, index) => (
+										<Card
+											key={alarm.id}
+											className={cn(
+												"animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20",
+												alarm.status === "ACTIVE" &&
+													alarm.severity === "CRITICAL" &&
+													"border-l-4 border-l-red-500"
+											)}
+											style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+											<CardContent className="p-6">
+												<div className="flex items-center justify-between">
+													<div className="flex items-center space-x-4">
+														{alarm.branch?.company?.logo ? (
+															<Image
+																src={`${NEXT_PUBLIC_API_URL}${alarm.branch?.company?.logo.replace(
+																	"/var/www/html/koppa-security-api",
+																	""
+																)}`}
+																width={20}
+																height={20}
+																alt={`${alarm.branch?.company?.name} logo`}
+																className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
+															/>
+														) : (
+															<div
+																className={cn(
+																	"p-3 rounded-lg",
+																	alarm.status === "ACTIVE"
+																		? "bg-red-100 dark:bg-red-900/20"
+																		: alarm.status === "ACKNOWLEDGED"
+																		? "bg-blue-100 dark:bg-blue-900/20"
+																		: "bg-yellow-100 dark:bg-yellow-900/20"
+																)}>
+																{getStatusIcon(alarm.status)}
+															</div>
+														)}
+
+														<div className="space-y-1">
+															<h4 className="font-semibold text-lg">
+																{alarm.type}
+															</h4>
+															<div className="flex items-center gap-2 text-sm text-muted-foreground">
+																<Building className="h-3 w-3" />
+																<span>{alarm.branch?.company?.name}</span>
+															</div>
+															<div className="flex items-center gap-2 text-sm text-muted-foreground">
+																<MapPin className="h-3 w-3" />
+																<span>{alarm.branch.name}</span>
+															</div>
+															<div className="flex items-center gap-2 text-xs text-muted-foreground">
+																<Clock className="h-3 w-3" />
+																<span>{formatTimeAgo(alarm.createdAt)}</span>
+															</div>
+															{alarm.reports?.[0]?.assignedTo && (
+																<div className="flex items-center gap-2 text-sm">
+																	<Shield className="h-3 w-3 text-blue-500" />
+																	<span className="text-blue-600 dark:text-blue-400">
+																		{alarm.reports[0].assignedTo.name}
+																	</span>
+																</div>
+															)}
 														</div>
-													)}
-												</div>
-											</div>
-											<div className="flex items-center space-x-3">
-												<div className="text-left space-y-2">
-													<div className="">
-														<Badge
-															className={cn(
-																"text-xs font-medium shadow-sm",
-																getStatusColor(alarm.status)
-															)}>
-															{alarm.status}
-														</Badge>
 													</div>
+													<div className="flex items-center space-x-3">
+														<div className="text-left space-y-2">
+															<div className="">
+																<Badge
+																	className={cn(
+																		"text-xs font-medium shadow-sm",
+																		getStatusColor(alarm.status)
+																	)}>
+																	{alarm.status}
+																</Badge>
+															</div>
 
-													{alarm?.updatedAt && (
-														<p className="text-xs text-muted-foreground">
-															{formatDateTime(alarm.updatedAt)}
-														</p>
-													)}
+															{alarm?.updatedAt && (
+																<p className="text-xs text-muted-foreground">
+																	{formatDateTime(alarm.updatedAt)}
+																</p>
+															)}
+														</div>
+														<DropdownMenu>
+															<DropdownMenuTrigger asChild>
+																<Button
+																	variant="outline"
+																	size="sm"
+																	className="h-8 w-8 p-0">
+																	<MoreHorizontal className="h-4 w-4" />
+																</Button>
+															</DropdownMenuTrigger>
+															<DropdownMenuContent
+																align="end"
+																className="glass">
+																<DropdownMenuItem
+																	className="cursor-pointer"
+																	onClick={() => {
+																		setSelectedAlarm(alarm);
+																		setIsViewDialogOpen(true);
+																	}}>
+																	<Eye className="h-4 w-4 mr-2" />
+																	View Details
+																</DropdownMenuItem>
+																<DropdownMenuItem
+																	className="cursor-pointer"
+																	onClick={() => {
+																		setSelectedAlarm(alarm);
+																		setIsEditDialogOpen(true);
+																	}}>
+																	<Edit className="h-4 w-4 mr-2" />
+																	Edit Alarm
+																</DropdownMenuItem>
+																<DropdownMenuItem className="cursor-pointer">
+																	<Send className="h-4 w-4 mr-2" />
+																	Dispatch
+																</DropdownMenuItem>
+															</DropdownMenuContent>
+														</DropdownMenu>
+													</div>
 												</div>
-												<DropdownMenu>
-													<DropdownMenuTrigger asChild>
+											</CardContent>
+										</Card>
+									))}
+								</div>
+							)}
+						</TabsContent>
+
+						<TabsContent value="history" className="space-y-4">
+							{filteredResolvedAlarms.length === 0 ? (
+								<div className="flex flex-col items-center justify-center py-12 text-center">
+									<div className="p-4 rounded-full bg-muted/30 mb-4">
+										<FileText className="h-8 w-8 text-muted-foreground" />
+									</div>
+									<h3 className="text-lg font-medium">No alarm history</h3>
+									<p className="text-muted-foreground mt-1">
+										No resolved alarms found in the system
+									</p>
+								</div>
+							) : (
+								<div className="grid gap-4">
+									{filteredResolvedAlarms.map((alarm, index) => (
+										<Card
+											key={alarm.id}
+											className="animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20 border-l-4 border-l-green-500"
+											style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+											<CardContent className="p-6">
+												<div className="flex items-center justify-between">
+													<div className="flex items-center space-x-4">
+														<div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20">
+															<CheckCircle className="h-4 w-4 text-green-500" />
+														</div>
+														<div className="space-y-1">
+															<h4 className="font-semibold text-lg">
+																{alarm.type}
+															</h4>
+															<div className="flex items-center gap-2 text-sm text-muted-foreground">
+																<Building className="h-3 w-3" />
+																<span>{alarm.branch?.company?.name}</span>
+															</div>
+															<div className="flex items-center gap-2 text-sm text-muted-foreground">
+																<MapPin className="h-3 w-3" />
+																<span>
+																	{alarm.location} • {alarm.branch.name}
+																</span>
+															</div>
+															<div className="flex items-center gap-2 text-xs text-muted-foreground">
+																<Clock className="h-3 w-3" />
+																<span>{formatTimeAgo(alarm.createdAt)}</span>
+															</div>
+															{alarm.reports?.[0]?.assignedTo && (
+																<div className="flex items-center gap-2 text-sm">
+																	<Shield className="h-3 w-3 text-blue-500" />
+																	<span className="text-blue-600 dark:text-blue-400">
+																		{alarm.reports[0].assignedTo.name}
+																	</span>
+																</div>
+															)}
+														</div>
+													</div>
+													<div className="flex items-center space-x-3">
+														<div className="text-right space-y-2">
+															<div className="flex gap-2">
+																<Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-md text-xs font-medium">
+																	RESOLVED
+																</Badge>
+															</div>
+															{alarm.updatedAt && (
+																<p className="text-xs text-green-600 font-medium">
+																	{formatDateTime(alarm.updatedAt)}{" "}
+																</p>
+															)}
+														</div>
 														<Button
 															variant="outline"
 															size="sm"
-															className="h-8 w-8 p-0">
-															<MoreHorizontal className="h-4 w-4" />
-														</Button>
-													</DropdownMenuTrigger>
-													<DropdownMenuContent align="end" className="glass">
-														<DropdownMenuItem
-															className="cursor-pointer"
 															onClick={() => {
 																setSelectedAlarm(alarm);
 																setIsViewDialogOpen(true);
-															}}>
+															}}
+															className="hover:bg-green-50 dark:hover:bg-green-900/20">
 															<Eye className="h-4 w-4 mr-2" />
-															View Details
-														</DropdownMenuItem>
-														<DropdownMenuItem
-															className="cursor-pointer"
-															onClick={() => {
-																setSelectedAlarm(alarm);
-																setIsEditDialogOpen(true);
-															}}>
-															<Edit className="h-4 w-4 mr-2" />
-															Edit Alarm
-														</DropdownMenuItem>
-														<DropdownMenuItem className="cursor-pointer">
-															<Send className="h-4 w-4 mr-2" />
-															Dispatch
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							))}
-						</div>
-					)}
-				</TabsContent>
+															View Report
+														</Button>
+													</div>
+												</div>
+											</CardContent>
+										</Card>
+									))}
+								</div>
+							)}
+						</TabsContent>
+					</Tabs>
+				</div>
 
-				<TabsContent value="history" className="space-y-4">
-					{filteredResolvedAlarms.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-12 text-center">
-							<div className="p-4 rounded-full bg-muted/30 mb-4">
-								<FileText className="h-8 w-8 text-muted-foreground" />
-							</div>
-							<h3 className="text-lg font-medium">No alarm history</h3>
-							<p className="text-muted-foreground mt-1">
-								No resolved alarms found in the system
-							</p>
-						</div>
-					) : (
-						<div className="grid gap-4">
-							{filteredResolvedAlarms.map((alarm, index) => (
-								<Card
-									key={alarm.id}
-									className="animate-slide-up glass hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20 border-l-4 border-l-green-500"
-									style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
-									<CardContent className="p-6">
-										<div className="flex items-center justify-between">
-											<div className="flex items-center space-x-4">
-												<div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20">
-													<CheckCircle className="h-4 w-4 text-green-500" />
-												</div>
-												<div className="space-y-1">
-													<h4 className="font-semibold text-lg">
-														{alarm.type}
-													</h4>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<Building className="h-3 w-3" />
-														<span>{alarm.branch?.company?.name}</span>
-													</div>
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<MapPin className="h-3 w-3" />
-														<span>
-															{alarm.location} • {alarm.branch.name}
-														</span>
-													</div>
-													<div className="flex items-center gap-2 text-xs text-muted-foreground">
-														<Clock className="h-3 w-3" />
-														<span>{formatTimeAgo(alarm.createdAt)}</span>
-													</div>
-													{alarm.reports?.[0]?.assignedTo && (
-														<div className="flex items-center gap-2 text-sm">
-															<Shield className="h-3 w-3 text-blue-500" />
-															<span className="text-blue-600 dark:text-blue-400">
-																{alarm.reports[0].assignedTo.name}
-															</span>
-														</div>
-													)}
-												</div>
-											</div>
-											<div className="flex items-center space-x-3">
-												<div className="text-right space-y-2">
-													<div className="flex gap-2">
-														<Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-md text-xs font-medium">
-															RESOLVED
-														</Badge>
-													</div>
-													{alarm.updatedAt && (
-														<p className="text-xs text-green-600 font-medium">
-															{formatDateTime(alarm.updatedAt)}{" "}
-														</p>
-													)}
-												</div>
-												<Button
-													variant="outline"
-													size="sm"
-													onClick={() => {
-														setSelectedAlarm(alarm);
-														setIsViewDialogOpen(true);
-													}}
-													className="hover:bg-green-50 dark:hover:bg-green-900/20">
-													<Eye className="h-4 w-4 mr-2" />
-													View Report
-												</Button>
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							))}
-						</div>
-					)}
-				</TabsContent>
-			</Tabs>
+				<div className="w-1/4">
+					<PoliceStatusCard
+						onConnectionStatusUpdate={(data: any) => {
+							setConnectionStatusData(data);
+							console.log("👮 Police status updated:", data);
+						}}
+					/>
+				</div>
+			</div>
 
 			{/* Alarm Details Dialog */}
 

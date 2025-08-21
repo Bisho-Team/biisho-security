@@ -160,6 +160,8 @@ export const apiService = {
 				operatorType: "POLICE";
 				companyId: string;
 				status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+				password?: string;
+				phone?: string;
 			}
 		) => {
 			return apiService.put(`/users/${id}`, data);

@@ -663,7 +663,7 @@ export default function EnhancedAlarmReportsPage() {
 										alarm.severity === "MEDIUM" &&
 											"bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-600",
 										alarm.severity === "LOW" &&
-											"bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600"
+											"bg-gradient-to-r from-green-500 via-green-400 to-green-600"
 									)}
 								/>
 
@@ -710,7 +710,7 @@ export default function EnhancedAlarmReportsPage() {
 													alarm.severity === "CRITICAL" && "bg-red-500",
 													alarm.severity === "HIGH" && "bg-orange-500",
 													alarm.severity === "MEDIUM" && "bg-yellow-500",
-													alarm.severity === "LOW" && "bg-blue-500"
+													alarm.severity === "LOW" && "bg-green-500"
 												)}>
 												{alarm.severity === "CRITICAL" && "!"}
 												{alarm.severity === "HIGH" && "H"}
@@ -770,7 +770,7 @@ export default function EnhancedAlarmReportsPage() {
 															alarm.severity === "CRITICAL" && "text-red-400",
 															alarm.severity === "HIGH" && "text-orange-400",
 															alarm.severity === "MEDIUM" && "text-yellow-400",
-															alarm.severity === "LOW" && "text-blue-400"
+															alarm.severity === "LOW" && "text-green-400"
 														)}
 													/>
 													<span className="text-white font-semibold text-sm truncate">

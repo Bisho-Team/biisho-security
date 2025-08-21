@@ -543,7 +543,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 									</div>
 								</div>
 
-								<DropdownMenuItem className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground">
+								{/* <DropdownMenuItem className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors text-sidebar-foreground">
 									<UserIcon className="h-4 w-4 mr-3 text-blue-500" />
 									<div>
 										<p className="font-medium">Profile Settings</p>
@@ -599,7 +599,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 											Get assistance
 										</p>
 									</div>
-								</DropdownMenuItem>
+								</DropdownMenuItem> */}
 
 								<DropdownMenuSeparator className="bg-sidebar-border/50" />
 

@@ -1247,7 +1247,7 @@ export default function EnhancedOperatorsPage() {
 								Operator Details & Activity Log
 							</div>
 							<div className="flex items-center gap-2">
-								<Button
+								{/* <Button
 									variant="outline"
 									size="sm"
 									onClick={() => {
@@ -1257,7 +1257,7 @@ export default function EnhancedOperatorsPage() {
 									className="hover:bg-green-50">
 									<Download className="h-4 w-4 mr-2" />
 									Export Report
-								</Button>
+								</Button> */}
 							</div>
 						</DialogTitle>
 						<DialogDescription>

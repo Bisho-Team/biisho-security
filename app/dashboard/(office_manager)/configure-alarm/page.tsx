@@ -36,6 +36,7 @@ import {
 	Clock,
 	Search,
 	X,
+	AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PoliceStatusCard } from "@/components/police-status-card";
@@ -94,9 +95,17 @@ interface AlarmFormData {
 	location: string;
 	longitude: string;
 	latitude: string;
-	severity: "CRITICAL";
+	// severity: "CRITICAL";
+	severity: AlarmSeverity;
 	description: string;
 	assignedToId: string;
+}
+
+enum AlarmSeverity {
+	LOW = "LOW",
+	MEDIUM = "MEDIUM",
+	HIGH = "HIGH",
+	CRITICAL = "CRITICAL",
 }
 
 export default function CreateAlarmPage() {
@@ -159,16 +168,18 @@ export default function CreateAlarmPage() {
 	// NEW: State for branch search functionality
 	const [branchSearchOpen, setBranchSearchOpen] = useState(false);
 	const [branchSearchValue, setBranchSearchValue] = useState("");
+	const [alarmType, setAlarmType] = useState("ACTIVE");
 
-	// Simplified form data - removed unnecessary fields
+	// Test (Green), Attempted robbery (Yellow), Active robbery (Red)?
+
 	const [formData, setFormData] = useState<AlarmFormData>({
-		type: "ACTIVE BURGLARY ALERT", // Fixed value
+		type: `${alarmType} BURGLARY ALERT`, // Fixed value
 		branchId: "",
 		companyId: "",
 		location: "",
 		longitude: "",
 		latitude: "",
-		severity: "CRITICAL", // Fixed value
+		severity: "CRITICAL" as AlarmSeverity,
 		description: "",
 		assignedToId: "",
 	});
@@ -290,7 +301,27 @@ export default function CreateAlarmPage() {
 
 	// Handle form field changes
 	const handleInputChange = (field: keyof AlarmFormData, value: string) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
+		if (field === "severity") {
+			const severityValue = value as AlarmSeverity;
+
+			let newAlarmType: "TEST" | "ATTEMPTED" | "ACTIVE" = "ACTIVE";
+			if (severityValue === AlarmSeverity.LOW) {
+				newAlarmType = "TEST";
+			} else if (severityValue === AlarmSeverity.MEDIUM) {
+				newAlarmType = "ATTEMPTED";
+			}
+
+			setAlarmType(newAlarmType);
+
+			setFormData((prev) => ({
+				...prev,
+				severity: severityValue, // ✅ typed
+				type: `${newAlarmType} BURGLARY ALERT`,
+			}));
+		} else {
+			setFormData((prev) => ({ ...prev, [field]: value }));
+		}
+		// setFormData((prev) => ({ ...prev, [field]: value }));
 		// Clear error when user starts typing
 		if (errors[field]) {
 			setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -366,7 +397,7 @@ export default function CreateAlarmPage() {
 				location: "",
 				longitude: "",
 				latitude: "",
-				severity: "CRITICAL",
+				severity: "CRITICAL" as AlarmSeverity,
 				description: "",
 				assignedToId: "",
 			});
@@ -463,7 +494,7 @@ export default function CreateAlarmPage() {
 								<div className="flex items-center justify-center space-x-4">
 									<div className="text-center">
 										<h3 className="text-2xl font-bold text-white">
-											ACTIVE BURGLARY ALARM
+											{alarmType} BURGLARY ALARM
 										</h3>
 									</div>
 								</div>
@@ -579,6 +610,43 @@ export default function CreateAlarmPage() {
 									{errors.branchId && (
 										<p className="text-red-400 text-sm mt-1">
 											{errors.branchId}
+										</p>
+									)}
+								</div>
+							</CardContent>
+						</Card>
+
+						{/* Alarm Severity */}
+						<Card className="bg-slate-900/50 border-slate-700">
+							<CardHeader>
+								<CardTitle className="flex items-center space-x-2">
+									<AlertTriangle className="h-5 w-5 text-yellow-400" />
+									<span>Alarm Severity</span>
+								</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div>
+									<Label htmlFor="severity" className="text-slate-300 text-lg">
+										Select Alarm Severity *
+									</Label>
+									<Select
+										value={formData.severity}
+										onValueChange={(value) =>
+											handleInputChange("severity", value)
+										}>
+										<SelectTrigger className="bg-slate-800 border-slate-600 text-white mt-2 h-12">
+											<SelectValue placeholder="Choose severity level" />
+										</SelectTrigger>
+										<SelectContent className="bg-slate-800 border-slate-600">
+											<SelectItem value="LOW">Test</SelectItem>
+											<SelectItem value="MEDIUM">Attempt</SelectItem>
+											{/* <SelectItem value="HIGH">High</SelectItem> */}
+											<SelectItem value="CRITICAL">Critical</SelectItem>
+										</SelectContent>
+									</Select>
+									{errors.severity && (
+										<p className="text-red-400 text-sm mt-1">
+											{errors.severity}
 										</p>
 									)}
 								</div>

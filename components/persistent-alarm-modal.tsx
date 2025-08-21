@@ -293,7 +293,7 @@ export function PersistentAlarmModal({
 			case "MEDIUM":
 				return "bg-yellow-600 text-white";
 			case "LOW":
-				return "bg-blue-600 text-white";
+				return "bg-green-600 text-white";
 			default:
 				return "bg-gray-600 text-white";
 		}
@@ -308,7 +308,7 @@ export function PersistentAlarmModal({
 			case "MEDIUM":
 				return "border-yellow-500";
 			case "LOW":
-				return "border-blue-500";
+				return "border-green-500";
 			default:
 				return "border-gray-500";
 		}
@@ -568,7 +568,7 @@ export function PersistentAlarmModal({
 									currentAlarm.severity === "CRITICAL" && "bg-red-900/20",
 									currentAlarm.severity === "HIGH" && "bg-orange-900/20",
 									currentAlarm.severity === "MEDIUM" && "bg-yellow-900/20",
-									currentAlarm.severity === "LOW" && "bg-blue-900/20"
+									currentAlarm.severity === "LOW" && "bg-green-900/20"
 								)}>
 								<Badge
 									className={cn(

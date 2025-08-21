@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -54,8 +54,28 @@ import {
 	ShieldIcon,
 	Activity,
 	User,
+	EyeOff,
+	CheckCircle,
+	Timer,
+	BarChart3,
+	TargetIcon,
+	Clock,
+	FileDown,
 } from "lucide-react";
 import { apiService } from "@/lib/api-operator-service";
+import { Switch } from "@/components/ui/switch";
+import {
+	Bar,
+	BarChart,
+	CartesianGrid,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+	PieChart,
+	Pie,
+	Cell,
+} from "recharts";
 
 // Types based on Prisma schema
 interface UserType {
@@ -110,6 +130,73 @@ interface UpdateOperatorData {
 	status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 }
 
+interface Operator {
+	id: string;
+	name: string;
+	email: string;
+	phone: string;
+	password?: string;
+	status: "ACTIVE" | "INACTIVE";
+	createdBy: string;
+	managedById?: string;
+	operatorType?: string;
+	companyId: string;
+	role: "OPERATOR";
+	createdAt: string;
+	lastActive?: string;
+}
+
+interface ActivityLogEntry {
+	id: string;
+	action: string;
+	actionType:
+		| "LOGIN"
+		| "ALARM_CREATED"
+		| "ALARM_ACKNOWLEDGED"
+		| "ALARM_RESOLVED"
+		| "STATUS_UPDATE"
+		| "REPORT_SUBMITTED";
+	timestamp: string;
+	details: string;
+	alarmId?: string;
+	branchId?: string;
+	metadata?: Record<string, any>;
+}
+
+interface OperatorMetrics {
+	totalAlarms: number;
+	alarmsCreated: number;
+	alarmsAcknowledged: number;
+	alarmsResolved: number;
+	avgResponseTime: number;
+	avgResolutionTime: number;
+	totalLogins: number;
+	activeHours: number;
+	performanceScore: number;
+	lastLogin: string;
+	branchesAssigned: number;
+	reportsSubmitted: number;
+}
+
+interface OperatorDetails extends Operator {
+	branches?: {
+		id: string;
+		name: string;
+		location: string;
+		city: string;
+	}[];
+	alarms?: {
+		id: string;
+		type: string;
+		status: string;
+		severity: string;
+		timestamp: string;
+		branchName: string;
+	}[];
+	activityLog?: ActivityLogEntry[];
+	metrics?: OperatorMetrics;
+}
+
 export default function OperatorsManagementPage() {
 	const router = useRouter();
 	const [operators, setOperators] = useState<UserType[]>([]);
@@ -122,7 +209,7 @@ export default function OperatorsManagementPage() {
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [typeFilter, setTypeFilter] = useState<string>("all");
 	const [companyFilter, setCompanyFilter] = useState<string>("all");
-
+	const [activityLogFilter, setActivityLogFilter] = useState<string>("all");
 	// Dialog states
 	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -148,7 +235,14 @@ export default function OperatorsManagementPage() {
 		status: "ACTIVE",
 	});
 
+	// Extra states for reset password
+	const [resetPassword, setResetPassword] = useState(false);
+	const [newPassword, setNewPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
+	const [selectedOperatorDetails, setSelectedOperatorDetails] =
+		useState<OperatorDetails | null>(null);
 	const { toast } = useToast();
+	const [dateRangeFilter, setDateRangeFilter] = useState<string>("30");
 
 	useEffect(() => {
 		fetchData();
@@ -157,6 +251,88 @@ export default function OperatorsManagementPage() {
 	useEffect(() => {
 		filterOperators();
 	}, [operators, searchTerm, statusFilter, typeFilter, companyFilter]);
+
+	// Filter activity log based on filters
+	const filteredActivityLog = useMemo(() => {
+		if (!selectedOperatorDetails?.activityLog) return [];
+
+		let filtered = selectedOperatorDetails.activityLog;
+
+		// Filter by activity type
+		if (activityLogFilter !== "all") {
+			filtered = filtered.filter(
+				(activity) => activity.actionType === activityLogFilter
+			);
+		}
+
+		// Filter by date range
+		const daysBack = Number.parseInt(dateRangeFilter);
+		if (daysBack > 0) {
+			const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+			filtered = filtered.filter(
+				(activity) => new Date(activity.timestamp) >= cutoffDate
+			);
+		}
+
+		return filtered.sort(
+			(a, b) =>
+				new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+		);
+	}, [
+		selectedOperatorDetails?.activityLog,
+		activityLogFilter,
+		dateRangeFilter,
+	]);
+
+	// Activity chart data
+	const activityChartData = useMemo(() => {
+		if (!filteredActivityLog.length) return [];
+
+		const last7Days = Array.from({ length: 7 }, (_, i) => {
+			const date = new Date();
+			date.setDate(date.getDate() - (6 - i));
+			return date.toISOString().split("T")[0];
+		});
+
+		return last7Days.map((date) => {
+			const dayActivities = filteredActivityLog.filter(
+				(activity) => activity.timestamp.split("T")[0] === date
+			);
+			return {
+				date: new Date(date).toLocaleDateString("en-US", {
+					month: "short",
+					day: "numeric",
+				}),
+				activities: dayActivities.length,
+				logins: dayActivities.filter((a) => a.actionType === "LOGIN").length,
+				alarms: dayActivities.filter((a) => a.actionType.includes("ALARM"))
+					.length,
+			};
+		});
+	}, [filteredActivityLog]);
+
+	// Performance metrics chart data
+	const performanceChartData = useMemo(() => {
+		if (!selectedOperatorDetails?.metrics) return [];
+
+		return [
+			{
+				name: "Alarms Created",
+				value: selectedOperatorDetails.metrics.alarmsCreated,
+				color: "#3b82f6",
+			},
+			{
+				name: "Acknowledged",
+				value: selectedOperatorDetails.metrics.alarmsAcknowledged,
+				color: "#f59e0b",
+			},
+			{
+				name: "Resolved",
+				value: selectedOperatorDetails.metrics.alarmsResolved,
+				color: "#10b981",
+			},
+		];
+	}, [selectedOperatorDetails?.metrics]);
 
 	const fetchData = async () => {
 		try {
@@ -270,10 +446,16 @@ export default function OperatorsManagementPage() {
 		if (!selectedOperator || !validateForm(editForm, false)) return;
 
 		setIsSubmitting(true);
+
+		const payload: any = {
+			...editForm,
+			...(resetPassword && newPassword ? { password: newPassword } : {}),
+		};
+
 		try {
 			const response = await apiService.operators.update(
 				selectedOperator.id,
-				editForm as any
+				payload as any
 			);
 			setOperators(
 				operators.map((op) => (op.id === selectedOperator.id ? response : op))
@@ -372,6 +554,8 @@ export default function OperatorsManagementPage() {
 
 	const openEditDialog = (operator: UserType) => {
 		setSelectedOperator(operator);
+		fetchOperatorDetails(operator.id as any);
+
 		setEditForm({
 			name: operator.name,
 			email: operator.email,
@@ -382,6 +566,42 @@ export default function OperatorsManagementPage() {
 			status: operator.status,
 		});
 		setIsEditDialogOpen(true);
+	};
+
+	const fetchOperatorDetails = async (operatorId: string) => {
+		try {
+			const [detailsResponse, metricsResponse, activityResponse] =
+				await Promise.all([
+					apiService.get(`/users/operators/${operatorId}`),
+					apiService.get(`/users/operators/${operatorId}/metrics`),
+					apiService.get(`/users/operators/${operatorId}/activity`, {
+						dateFrom: new Date(
+							Date.now() - 30 * 24 * 60 * 60 * 1000
+						).toISOString(),
+						dateTo: new Date().toISOString(),
+						limit: 50,
+					}),
+				]);
+
+			console.log({
+				activityResponse,
+			});
+
+			const operatorDetails: OperatorDetails = {
+				...detailsResponse,
+				metrics: metricsResponse,
+				activityLog: (activityResponse as any).activities,
+			} as any;
+
+			setSelectedOperatorDetails(operatorDetails);
+		} catch (error) {
+			console.error("Failed to fetch operator details:", error);
+			toast({
+				title: "Error",
+				description: "Failed to load operator details",
+				variant: "destructive",
+			});
+		}
 	};
 
 	const openViewDialog = (operator: UserType) => {
@@ -465,6 +685,64 @@ export default function OperatorsManagementPage() {
 	const policeOperators = filteredOperators.filter(
 		(op) => op.operatorType === "POLICE"
 	);
+
+	const getPerformanceRating = (score: number) => {
+		if (score >= 90)
+			return {
+				label: "Excellent",
+				color: "text-green-600",
+				bgColor: "bg-green-100",
+			};
+		if (score >= 80)
+			return { label: "Good", color: "text-blue-600", bgColor: "bg-blue-100" };
+		if (score >= 70)
+			return {
+				label: "Average",
+				color: "text-yellow-600",
+				bgColor: "bg-yellow-100",
+			};
+		if (score >= 60)
+			return {
+				label: "Below Average",
+				color: "text-orange-600",
+				bgColor: "bg-orange-100",
+			};
+		return { label: "Poor", color: "text-red-600", bgColor: "bg-red-100" };
+	};
+
+	const getActivityIcon = (actionType: string) => {
+		switch (actionType) {
+			case "LOGIN":
+				return <User className="h-4 w-4 text-blue-500" />;
+			case "ALARM_CREATED":
+				return <AlertTriangle className="h-4 w-4 text-red-500" />;
+			case "ALARM_ACKNOWLEDGED":
+				return <Clock className="h-4 w-4 text-yellow-500" />;
+			case "ALARM_RESOLVED":
+				return <CheckCircle className="h-4 w-4 text-green-500" />;
+			case "STATUS_UPDATE":
+				return <Activity className="h-4 w-4 text-purple-500" />;
+			case "REPORT_SUBMITTED":
+				return <FileDown className="h-4 w-4 text-indigo-500" />;
+			default:
+				return <Activity className="h-4 w-4 text-gray-500" />;
+		}
+	};
+
+	const formatDateTime = (dateString: string) => {
+		try {
+			const date = new Date(dateString);
+			return date.toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+		} catch (error) {
+			return dateString;
+		}
+	};
 
 	return (
 		<div className="space-y-6 p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 min-h-screen">
@@ -1310,6 +1588,405 @@ export default function OperatorsManagementPage() {
 							</div>
 						</div>
 					)}
+
+					{selectedOperatorDetails ? (
+						<div className="space-y-6 py-4">
+							{/* Operator Header */}
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-4">
+									<div
+										className={`p-3 rounded-full ${
+											selectedOperatorDetails.status === "ACTIVE"
+												? "bg-green-100 dark:bg-green-900/20"
+												: "bg-gray-100 dark:bg-gray-800"
+										}`}>
+										{selectedOperatorDetails.status === "ACTIVE" ? (
+											<UserCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
+										) : (
+											<UserX className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+										)}
+									</div>
+									<div>
+										<h2 className="text-2xl font-bold">
+											{selectedOperatorDetails.name}
+										</h2>
+										<p className="text-muted-foreground">
+											{selectedOperatorDetails.email}
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-2">
+									<Badge
+										className={
+											selectedOperatorDetails.status === "ACTIVE"
+												? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+												: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+										}>
+										{selectedOperatorDetails.status}
+									</Badge>
+									{selectedOperatorDetails.metrics && (
+										<Badge
+											className={`${
+												getPerformanceRating(
+													selectedOperatorDetails.metrics.performanceScore
+												).bgColor
+											} ${
+												getPerformanceRating(
+													selectedOperatorDetails.metrics.performanceScore
+												).color
+											}`}>
+											{
+												getPerformanceRating(
+													selectedOperatorDetails.metrics.performanceScore
+												).label
+											}
+										</Badge>
+									)}
+								</div>
+							</div>
+
+							{/* Performance Metrics */}
+							{selectedOperatorDetails.metrics && (
+								<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+									<Card>
+										<CardHeader className="pb-2">
+											<CardTitle className="text-sm font-medium flex items-center gap-2">
+												<AlertTriangle className="h-4 w-4 text-red-500" />
+												Total Alarms
+											</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<div className="text-2xl font-bold text-red-600">
+												{selectedOperatorDetails.metrics.totalAlarms}
+											</div>
+											<p className="text-xs text-muted-foreground">
+												{selectedOperatorDetails.metrics.alarmsCreated} created
+											</p>
+										</CardContent>
+									</Card>
+
+									<Card>
+										<CardHeader className="pb-2">
+											<CardTitle className="text-sm font-medium flex items-center gap-2">
+												<CheckCircle className="h-4 w-4 text-green-500" />
+												Resolved
+											</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<div className="text-2xl font-bold text-green-600">
+												{selectedOperatorDetails.metrics.alarmsResolved}
+											</div>
+											<p className="text-xs text-muted-foreground">
+												{selectedOperatorDetails.metrics.totalAlarms > 0
+													? Math.round(
+															(selectedOperatorDetails.metrics.alarmsResolved /
+																selectedOperatorDetails.metrics.totalAlarms) *
+																100
+													  )
+													: 0}
+												% resolution rate
+											</p>
+										</CardContent>
+									</Card>
+
+									<Card>
+										<CardHeader className="pb-2">
+											<CardTitle className="text-sm font-medium flex items-center gap-2">
+												<Timer className="h-4 w-4 text-blue-500" />
+												Response Time
+											</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<div className="text-2xl font-bold text-blue-600">
+												{Math.round(
+													selectedOperatorDetails.metrics.avgResponseTime
+												)}
+												m
+											</div>
+											<p className="text-xs text-muted-foreground">
+												Average response
+											</p>
+										</CardContent>
+									</Card>
+
+									<Card>
+										<CardHeader className="pb-2">
+											<CardTitle className="text-sm font-medium flex items-center gap-2">
+												<Activity className="h-4 w-4 text-purple-500" />
+												Active Hours
+											</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<div className="text-2xl font-bold text-purple-600">
+												{Math.round(
+													selectedOperatorDetails.metrics.activeHours
+												)}
+												h
+											</div>
+											<p className="text-xs text-muted-foreground">
+												This month
+											</p>
+										</CardContent>
+									</Card>
+								</div>
+							)}
+
+							{/* Charts Section */}
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+								{/* Activity Chart */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<BarChart3 className="h-4 w-4 text-blue-500" />
+											Daily Activity (Last 7 Days)
+										</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<div className="h-64">
+											<ResponsiveContainer width="100%" height="100%">
+												<BarChart data={activityChartData}>
+													<CartesianGrid
+														strokeDasharray="3 3"
+														stroke="#374151"
+													/>
+													<XAxis
+														dataKey="date"
+														stroke="#9ca3af"
+														fontSize={12}
+													/>
+													<YAxis stroke="#9ca3af" fontSize={12} />
+													<Tooltip
+														contentStyle={{
+															backgroundColor: "#1e293b",
+															border: "1px solid #475569",
+															borderRadius: "8px",
+															color: "#fff",
+														}}
+													/>
+													<Bar
+														dataKey="activities"
+														fill="#3b82f6"
+														radius={[4, 4, 0, 0]}
+													/>
+												</BarChart>
+											</ResponsiveContainer>
+										</div>
+									</CardContent>
+								</Card>
+
+								{/* Performance Distribution */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<TargetIcon className="h-4 w-4 text-green-500" />
+											Alarm Actions Distribution
+										</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<div className="h-64">
+											<ResponsiveContainer width="100%" height="100%">
+												<PieChart>
+													<Pie
+														data={performanceChartData}
+														cx="50%"
+														cy="50%"
+														innerRadius={60}
+														outerRadius={100}
+														paddingAngle={5}
+														dataKey="value">
+														{performanceChartData.map((entry, index) => (
+															<Cell key={`cell-${index}`} fill={entry.color} />
+														))}
+													</Pie>
+													<Tooltip
+														contentStyle={{
+															backgroundColor: "#1e293b",
+															border: "1px solid #475569",
+															borderRadius: "8px",
+															color: "#fff",
+														}}
+													/>
+												</PieChart>
+											</ResponsiveContainer>
+										</div>
+										<div className="flex justify-center space-x-4 mt-4">
+											{performanceChartData.map((item, index) => (
+												<div
+													key={index}
+													className="flex items-center space-x-2">
+													<div
+														className="w-3 h-3 rounded-full"
+														style={{ backgroundColor: item.color }}
+													/>
+													<span className="text-sm text-slate-300">
+														{item.name}: {item.value}
+													</span>
+												</div>
+											))}
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Activity Log Section */}
+							<Card>
+								<CardHeader>
+									<div className="flex items-center justify-between">
+										<CardTitle className="flex items-center gap-2">
+											<Activity className="h-4 w-4 text-purple-500" />
+											Activity Log
+										</CardTitle>
+										<div className="flex items-center gap-2">
+											<Select
+												value={activityLogFilter}
+												onValueChange={setActivityLogFilter}>
+												<SelectTrigger className="w-40">
+													<SelectValue placeholder="Filter by type" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="all">All Activities</SelectItem>
+													<SelectItem value="LOGIN">Logins</SelectItem>
+													<SelectItem value="ALARM_CREATED">
+														Alarms Created
+													</SelectItem>
+													<SelectItem value="ALARM_ACKNOWLEDGED">
+														Acknowledged
+													</SelectItem>
+													<SelectItem value="ALARM_RESOLVED">
+														Resolved
+													</SelectItem>
+													<SelectItem value="REPORT_SUBMITTED">
+														Reports
+													</SelectItem>
+												</SelectContent>
+											</Select>
+											<Select
+												value={dateRangeFilter}
+												onValueChange={setDateRangeFilter}>
+												<SelectTrigger className="w-32">
+													<SelectValue placeholder="Date range" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="7">Last 7 days</SelectItem>
+													<SelectItem value="30">Last 30 days</SelectItem>
+													<SelectItem value="90">Last 90 days</SelectItem>
+													<SelectItem value="0">All time</SelectItem>
+												</SelectContent>
+											</Select>
+										</div>
+									</div>
+								</CardHeader>
+								<CardContent>
+									<div className="space-y-4 max-h-96 overflow-y-auto">
+										{filteredActivityLog.length === 0 ? (
+											<div className="text-center py-8">
+												<Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+												<p className="text-muted-foreground">
+													No activity found for the selected filters
+												</p>
+											</div>
+										) : (
+											filteredActivityLog.map((activity) => (
+												<div
+													key={activity.id}
+													className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+													<div className="mt-1">
+														{getActivityIcon(activity.actionType)}
+													</div>
+													<div className="flex-1 min-w-0">
+														<div className="flex items-center justify-between">
+															<p className="font-medium text-sm">
+																{activity.action}
+															</p>
+															<span className="text-xs text-muted-foreground">
+																{formatDateTime(activity.timestamp)}
+															</span>
+														</div>
+														<p className="text-sm text-muted-foreground mt-1">
+															{activity.details}
+														</p>
+														{activity.metadata && (
+															<div className="flex flex-wrap gap-1 mt-2">
+																{Object.entries(activity.metadata).map(
+																	([key, value]) => (
+																		<Badge
+																			key={key}
+																			variant="outline"
+																			className="text-xs">
+																			{key}: {String(value)}
+																		</Badge>
+																	)
+																)}
+															</div>
+														)}
+													</div>
+												</div>
+											))
+										)}
+									</div>
+								</CardContent>
+							</Card>
+
+							{/* Basic Info Card */}
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg flex items-center gap-2">
+										<UserCog className="h-4 w-4 text-primary" />
+										Operator Information
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-4">
+									<div className="grid grid-cols-2 gap-4">
+										<div>
+											<Label className="text-sm text-muted-foreground">
+												Phone
+											</Label>
+											<p>{selectedOperatorDetails.phone}</p>
+										</div>
+										<div>
+											<Label className="text-sm text-muted-foreground">
+												Role
+											</Label>
+											<p>{selectedOperatorDetails.role}</p>
+										</div>
+									</div>
+
+									<div className="grid grid-cols-2 gap-4">
+										<div>
+											<Label className="text-sm text-muted-foreground">
+												Operator Type
+											</Label>
+											<p>
+												{selectedOperatorDetails.operatorType ||
+													"Not specified"}
+											</p>
+										</div>
+										<div>
+											<Label className="text-sm text-muted-foreground">
+												Created
+											</Label>
+											<p>{formatDate(selectedOperatorDetails.createdAt)}</p>
+										</div>
+									</div>
+
+									{selectedOperatorDetails.lastActive && (
+										<div>
+											<Label className="text-sm text-muted-foreground">
+												Last Active
+											</Label>
+											<p>
+												{formatDateTime(selectedOperatorDetails.lastActive)}
+											</p>
+										</div>
+									)}
+								</CardContent>
+							</Card>
+						</div>
+					) : (
+						<div className="flex items-center justify-center py-12">
+							<Loader2 className="h-8 w-8 animate-spin text-primary" />
+						</div>
+					)}
 				</DialogContent>
 			</Dialog>
 
@@ -1416,6 +2093,46 @@ export default function OperatorsManagementPage() {
 								</SelectContent>
 							</Select> */}
 						</div>
+
+						<div className="space-y-2">
+							<div className="flex items-center justify-between">
+								<Label htmlFor="reset-password">
+									Do you want to reset password?
+								</Label>
+								<Switch
+									id="reset-password"
+									checked={resetPassword}
+									onCheckedChange={(checked) => setResetPassword(checked)}
+								/>
+							</div>
+						</div>
+
+						{/* Conditional Password Input */}
+						{resetPassword && (
+							<div className="space-y-2 mt-2">
+								<Label htmlFor="new-password">New Password *</Label>
+								<div className="relative">
+									<Input
+										id="new-password"
+										type={showPassword ? "text" : "password"}
+										value={newPassword}
+										onChange={(e) => setNewPassword(e.target.value)}
+										placeholder="Enter new password"
+										className="pr-10" // leave space for the button
+									/>
+									<button
+										type="button"
+										onClick={() => setShowPassword((prev) => !prev)}
+										className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200">
+										{showPassword ? (
+											<EyeOff className="h-5 w-5" />
+										) : (
+											<Eye className="h-5 w-5" />
+										)}
+									</button>
+								</div>
+							</div>
+						)}
 					</div>
 					<DialogFooter>
 						<Button
