@@ -35,6 +35,7 @@ import { apiClient } from "@/lib/api";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { PoliceStatusCard } from "@/components/police-status-card";
 import { cn } from "@/lib/utils";
+import { PersonnelStatusCard } from "@/components/op-personnel-status-card";
 
 interface DashboardStats {
 	totalEntities?: number;
@@ -798,12 +799,17 @@ export default function EnhancedDashboardOverview() {
 				<div
 					className="col-span-3 animate-slide-up"
 					style={{ animationDelay: "0.5s" }}>
-					<PoliceStatusCard
+					<PersonnelStatusCard
+						onConnectionStatusUpdate={(data: any) => {
+							setConnectionStatusData(data);
+						}}
+					/>
+					{/* <PoliceStatusCard
 						onConnectionStatusUpdate={(data) => {
 							setConnectionStatusData(data);
 							console.log("👮 Police status updated from dashboard:", data);
 						}}
-					/>
+					/> */}
 				</div>
 			</div>
 		</div>

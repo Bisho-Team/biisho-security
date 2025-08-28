@@ -1,14 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-}
+	async rewrites() {
+		return [
+			{
+				source: "/api/:path*", // when you call /api/...
+				destination: "https://frt.et/api/:path*", // proxy to frt.et
+			},
+		];
+	},
+	eslint: {
+		ignoreDuringBuilds: true,
+	},
+	typescript: {
+		ignoreBuildErrors: true,
+	},
+	images: {
+		unoptimized: true,
+	},
+};
 
-export default nextConfig
+export default nextConfig;

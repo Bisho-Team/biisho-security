@@ -61,6 +61,7 @@ import {
 	TargetIcon,
 	Clock,
 	FileDown,
+	Download,
 } from "lucide-react";
 import { apiService } from "@/lib/api-operator-service";
 import { Switch } from "@/components/ui/switch";
@@ -217,7 +218,8 @@ export default function OperatorsManagementPage() {
 	const [selectedOperator, setSelectedOperator] = useState<UserType | null>(
 		null
 	);
-
+	const [isExporting, setIsExporting] = useState<"csv" | "pdf" | null>(null);
+	const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 	// Form data
 	const [createForm, setCreateForm] = useState<CreateOperatorData>({
 		name: "",
@@ -243,6 +245,16 @@ export default function OperatorsManagementPage() {
 		useState<OperatorDetails | null>(null);
 	const { toast } = useToast();
 	const [dateRangeFilter, setDateRangeFilter] = useState<string>("30");
+	const [exportFilters, setExportFilters] = useState<any>({
+		dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+			.toISOString()
+			.split("T")[0],
+		dateTo: new Date().toISOString().split("T")[0],
+		activityType: "all",
+		includeMetrics: true,
+		includeActivityLog: true,
+		includeAlarmHistory: true,
+	});
 
 	useEffect(() => {
 		fetchData();
@@ -554,13 +566,11 @@ export default function OperatorsManagementPage() {
 
 	const openEditDialog = (operator: UserType) => {
 		setSelectedOperator(operator);
-		fetchOperatorDetails(operator.id as any);
 
 		setEditForm({
 			name: operator.name,
 			email: operator.email,
 			phone: operator.phone || "",
-
 			operatorType: operator.operatorType || "POLICE",
 			// companyId: operator.companyId || "",
 			status: operator.status,
@@ -568,45 +578,137 @@ export default function OperatorsManagementPage() {
 		setIsEditDialogOpen(true);
 	};
 
+	function getAuthToken(): string {
+		if (typeof window !== "undefined") {
+			return localStorage.getItem("authToken") || "";
+		}
+		return "";
+	}
+
 	const fetchOperatorDetails = async (operatorId: string) => {
 		try {
-			const [detailsResponse, metricsResponse, activityResponse] =
-				await Promise.all([
-					apiService.get(`/users/operators/${operatorId}`),
-					apiService.get(`/users/operators/${operatorId}/metrics`),
-					apiService.get(`/users/operators/${operatorId}/activity`, {
-						dateFrom: new Date(
-							Date.now() - 30 * 24 * 60 * 60 * 1000
-						).toISOString(),
-						dateTo: new Date().toISOString(),
-						limit: 50,
-					}),
-				]);
+			const token = getAuthToken();
 
-			console.log({
-				activityResponse,
-			});
+			// Prepare query params for activity
+			const dateFrom = new Date(
+				Date.now() - 30 * 24 * 60 * 60 * 1000
+			).toISOString();
+			const dateTo = new Date().toISOString();
+			const activityUrl = `/api/users/operators/${operatorId}/activity?dateFrom=${encodeURIComponent(
+				dateFrom
+			)}&dateTo=${encodeURIComponent(dateTo)}&limit=50`;
 
+			// Run requests in parallel
+			const [detailsRes, metricsRes, activityRes] = await Promise.all([
+				fetch(`/api/users/operators/${operatorId}`, {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+				fetch(`/api/users/operators/${operatorId}/metrics`, {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+				fetch(activityUrl, {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+			]);
+
+			// Parse JSON
+			const [detailsData, metricsData, activityData] = await Promise.all([
+				detailsRes.json(),
+				metricsRes.json(),
+				activityRes.json(),
+			]);
+
+			// Normalize response
 			const operatorDetails: OperatorDetails = {
-				...detailsResponse,
-				metrics: metricsResponse,
-				activityLog: (activityResponse as any).activities,
-			} as any;
+				...detailsData,
+				metrics: metricsData,
+				activityLog: activityData.activities ?? [],
+			};
 
 			setSelectedOperatorDetails(operatorDetails);
-		} catch (error) {
-			console.error("Failed to fetch operator details:", error);
+		} catch (error: any) {
+			console.error("❌ Failed to fetch operator details:", error);
+
 			toast({
 				title: "Error",
-				description: "Failed to load operator details",
+				description: error?.message || "Failed to load operator details",
 				variant: "destructive",
 			});
+		}
+	};
+
+	const exportOperatorReport = async (format: "csv" | "pdf") => {
+		if (!selectedOperator) return;
+
+		try {
+			setIsExporting(format);
+
+			const exportData = {
+				operatorId: selectedOperator.id,
+				filters: exportFilters,
+				format,
+			};
+
+			if (format === "csv") {
+				// await apiService.downloadFile(
+				// 	`/operators/${selectedOperator.id}/export/csv?${new URLSearchParams(
+				// 		exportFilters as any
+				// 	).toString()}`,
+				// 	`operator-report-${selectedOperator.name.replace(/\s+/g, "-")}-${
+				// 		new Date().toISOString().split("T")[0]
+				// 	}.csv`
+				// );
+			} else {
+				const response = await fetch(
+					`/api/users/operators/${selectedOperator.id}/export/pdf`,
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${localStorage.getItem("authToken")}`,
+						},
+						body: JSON.stringify(exportData),
+					}
+				);
+
+				if (!response.ok) throw new Error("Export failed");
+
+				const blob = await response.blob();
+				const url = window.URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `operator-report-${selectedOperator.name.replace(
+					/\s+/g,
+					"-"
+				)}-${new Date().toISOString().split("T")[0]}.pdf`;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				window.URL.revokeObjectURL(url);
+			}
+
+			toast({
+				title: "Success",
+				description: `${format.toUpperCase()} report exported successfully`,
+			});
+
+			setIsExportDialogOpen(false);
+		} catch (error) {
+			console.error(`${format.toUpperCase()} export failed:`, error);
+			toast({
+				title: "Error",
+				description: `Failed to export ${format.toUpperCase()} report`,
+				variant: "destructive",
+			});
+		} finally {
+			setIsExporting(null);
 		}
 	};
 
 	const openViewDialog = (operator: UserType) => {
 		setSelectedOperator(operator);
 		setIsViewDialogOpen(true);
+		fetchOperatorDetails(operator.id as any);
 	};
 
 	const getStatusColor = (status: string) => {
@@ -907,78 +1009,6 @@ export default function OperatorsManagementPage() {
 					</DialogContent>
 				</Dialog>
 			</div>
-
-			{/* Stats Cards */}
-			{/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				<Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
-							Total Operators
-						</CardTitle>
-						<Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-							{operators.length}
-						</div>
-						<p className="text-xs text-blue-600 dark:text-blue-400">
-							{activeOperators.length} active, {inactiveOperators.length}{" "}
-							inactive
-						</p>
-					</CardContent>
-				</Card>
-
-				<Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
-							Active Operators
-						</CardTitle>
-						<UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-900 dark:text-green-100">
-							{activeOperators.length}
-						</div>
-						<p className="text-xs text-green-600 dark:text-green-400">
-							Currently operational
-						</p>
-					</CardContent>
-				</Card>
-
-				<Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
-							Office Operators
-						</CardTitle>
-						<Building className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-							{officeOperators.length}
-						</div>
-						<p className="text-xs text-purple-600 dark:text-purple-400">
-							Office-based security
-						</p>
-					</CardContent>
-				</Card>
-
-				<Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-indigo-200 dark:border-indigo-800">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
-							Police Operators
-						</CardTitle>
-						<ShieldIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
-							{policeOperators.length}
-						</div>
-						<p className="text-xs text-indigo-600 dark:text-indigo-400">
-							Police coordination
-						</p>
-					</CardContent>
-				</Card>
-			</div> */}
 
 			{/* Filters */}
 			<div className="flex flex-col sm:flex-row gap-4">
@@ -1426,168 +1456,19 @@ export default function OperatorsManagementPage() {
 							Comprehensive information about the operator
 						</DialogDescription>
 					</DialogHeader>
-
-					{selectedOperator && (
-						<div className="space-y-6 py-4">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-4">
-									<div
-										className={`p-4 rounded-full ${
-											selectedOperator.status === "ACTIVE"
-												? "bg-green-100 dark:bg-green-900/20"
-												: selectedOperator.status === "SUSPENDED"
-												? "bg-red-100 dark:bg-red-900/20"
-												: "bg-gray-100 dark:bg-gray-800"
-										}`}>
-										{selectedOperator.operatorType === "POLICE" ? (
-											<ShieldIcon
-												className={`h-8 w-8 ${
-													selectedOperator.status === "ACTIVE"
-														? "text-green-600 dark:text-green-400"
-														: selectedOperator.status === "SUSPENDED"
-														? "text-red-600 dark:text-red-400"
-														: "text-gray-600 dark:text-gray-400"
-												}`}
-											/>
-										) : (
-											<Building
-												className={`h-8 w-8 ${
-													selectedOperator.status === "ACTIVE"
-														? "text-green-600 dark:text-green-400"
-														: selectedOperator.status === "SUSPENDED"
-														? "text-red-600 dark:text-red-400"
-														: "text-gray-600 dark:text-gray-400"
-												}`}
-											/>
-										)}
-									</div>
-									<div>
-										<h2 className="text-2xl font-bold">
-											{selectedOperator.name}
-										</h2>
-										<p className="text-muted-foreground">
-											{selectedOperator.email}
-										</p>
-									</div>
-								</div>
-								<Badge className={getStatusColor(selectedOperator.status)}>
-									{selectedOperator.status}
-								</Badge>
-							</div>
-
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<Card>
-									<CardHeader>
-										<CardTitle className="text-lg flex items-center gap-2">
-											<UserCog className="h-4 w-4" />
-											Basic Information
-										</CardTitle>
-									</CardHeader>
-									<CardContent className="space-y-4">
-										<div className="grid grid-cols-2 gap-4">
-											<div>
-												<Label className="text-sm text-muted-foreground">
-													Role
-												</Label>
-												<p className="font-medium">{selectedOperator.role}</p>
-											</div>
-											<div>
-												<Label className="text-sm text-muted-foreground">
-													Type
-												</Label>
-												<p className="font-medium">
-													{selectedOperator.operatorType} Operator
-												</p>
-											</div>
-										</div>
-										<div>
-											<Label className="text-sm text-muted-foreground">
-												Company
-											</Label>
-											<p className="font-medium">
-												{selectedOperator.company?.name}
-											</p>
-										</div>
-										{selectedOperator.managedBy && (
-											<div>
-												<Label className="text-sm text-muted-foreground">
-													Manager
-												</Label>
-												<p className="font-medium">
-													{selectedOperator.managedBy.name}
-												</p>
-											</div>
-										)}
-									</CardContent>
-								</Card>
-
-								<Card>
-									<CardHeader>
-										<CardTitle className="text-lg flex items-center gap-2">
-											<Activity className="h-4 w-4" />
-											Activity Statistics
-										</CardTitle>
-									</CardHeader>
-									<CardContent className="space-y-4">
-										<div>
-											<Label className="text-sm text-muted-foreground">
-												Member Since
-											</Label>
-											<p className="font-medium">
-												{formatDate(selectedOperator.createdAt)}
-											</p>
-										</div>
-										<div>
-											<Label className="text-sm text-muted-foreground">
-												Last Updated
-											</Label>
-											<p className="font-medium">
-												{formatDate(selectedOperator.updatedAt)}
-											</p>
-										</div>
-									</CardContent>
-								</Card>
-							</div>
-
-							<div className="flex justify-between border-t pt-4">
-								<div className="text-sm text-muted-foreground">
-									<p>Created: {formatDate(selectedOperator.createdAt)}</p>
-									<p>Last Updated: {formatDate(selectedOperator.updatedAt)}</p>
-								</div>
-								<div className="flex gap-2">
-									<Button
-										variant="outline"
-										onClick={() => {
-											setIsViewDialogOpen(false);
-											openEditDialog(selectedOperator);
-										}}>
-										<Edit className="h-4 w-4 mr-2" />
-										Edit Operator
-									</Button>
-									<Button
-										variant={
-											selectedOperator.status === "ACTIVE"
-												? "destructive"
-												: "default"
-										}
-										onClick={() => {
-											handleStatusToggle(
-												selectedOperator.id,
-												selectedOperator.status === "ACTIVE"
-													? "INACTIVE"
-													: "ACTIVE"
-											);
-											setIsViewDialogOpen(false);
-										}}>
-										{selectedOperator.status === "ACTIVE"
-											? "Deactivate"
-											: "Activate"}{" "}
-										Operator
-									</Button>
-								</div>
-							</div>
-						</div>
-					)}
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => {
+								setSelectedOperator(selectedOperator);
+								setIsExportDialogOpen(true);
+							}}
+							className="hover:bg-green-50">
+							<Download className="h-4 w-4 mr-2" />
+							Export Report
+						</Button>
+					</div>
 
 					{selectedOperatorDetails ? (
 						<div className="space-y-6 py-4">
@@ -1615,6 +1496,7 @@ export default function OperatorsManagementPage() {
 										</p>
 									</div>
 								</div>
+
 								<div className="flex items-center gap-2">
 									<Badge
 										className={
@@ -2150,6 +2032,157 @@ export default function OperatorsManagementPage() {
 								"Update Operator"
 							)}
 						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Export Dialog */}
+			<Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+				<DialogContent className="sm:max-w-[500px]">
+					<DialogHeader>
+						<DialogTitle>Export Operator Report</DialogTitle>
+						<DialogDescription>
+							Configure export settings for {selectedOperator?.name}'s activity
+							report
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4 py-4">
+						<div className="grid grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Label htmlFor="dateFrom">From Date</Label>
+								<Input
+									id="dateFrom"
+									type="date"
+									value={exportFilters.dateFrom}
+									onChange={(e) =>
+										setExportFilters({
+											...exportFilters,
+											dateFrom: e.target.value,
+										})
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="dateTo">To Date</Label>
+								<Input
+									id="dateTo"
+									type="date"
+									value={exportFilters.dateTo}
+									onChange={(e) =>
+										setExportFilters({
+											...exportFilters,
+											dateTo: e.target.value,
+										})
+									}
+								/>
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="activityType">Activity Type</Label>
+							<Select
+								value={exportFilters.activityType}
+								onValueChange={(value) =>
+									setExportFilters({ ...exportFilters, activityType: value })
+								}>
+								<SelectTrigger>
+									<SelectValue placeholder="Select activity type" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All Activities</SelectItem>
+									<SelectItem value="LOGIN">Logins Only</SelectItem>
+									<SelectItem value="ALARM_CREATED">Alarms Created</SelectItem>
+									<SelectItem value="ALARM_ACKNOWLEDGED">
+										Alarms Acknowledged
+									</SelectItem>
+									<SelectItem value="ALARM_RESOLVED">
+										Alarms Resolved
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="space-y-3">
+							<Label>Include in Report</Label>
+							<div className="space-y-2">
+								<div className="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id="includeMetrics"
+										checked={exportFilters.includeMetrics}
+										onChange={(e) =>
+											setExportFilters({
+												...exportFilters,
+												includeMetrics: e.target.checked,
+											})
+										}
+										className="rounded"
+									/>
+									<Label htmlFor="includeMetrics" className="text-sm">
+										Performance Metrics
+									</Label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id="includeActivityLog"
+										checked={exportFilters.includeActivityLog}
+										onChange={(e) =>
+											setExportFilters({
+												...exportFilters,
+												includeActivityLog: e.target.checked,
+											})
+										}
+										className="rounded"
+									/>
+									<Label htmlFor="includeActivityLog" className="text-sm">
+										Activity Log
+									</Label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id="includeAlarmHistory"
+										checked={exportFilters.includeAlarmHistory}
+										onChange={(e) =>
+											setExportFilters({
+												...exportFilters,
+												includeAlarmHistory: e.target.checked,
+											})
+										}
+										className="rounded"
+									/>
+									<Label htmlFor="includeAlarmHistory" className="text-sm">
+										Alarm History
+									</Label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setIsExportDialogOpen(false)}>
+							Cancel
+						</Button>
+						<div className="flex gap-2">
+							<Button
+								onClick={() => exportOperatorReport("pdf")}
+								disabled={isExporting === "pdf"}
+								className="bg-red-600 hover:bg-red-700">
+								{isExporting === "pdf" ? (
+									<>
+										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+										Exporting...
+									</>
+								) : (
+									<>
+										<FileDown className="h-4 w-4 mr-2" />
+										Export PDF
+									</>
+								)}
+							</Button>
+						</div>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
