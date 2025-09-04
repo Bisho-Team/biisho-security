@@ -48,6 +48,7 @@ import {
 	BarChart3,
 	Target,
 	Timer,
+	EyeOff,
 } from "lucide-react";
 import { apiService } from "@/lib/api-service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,6 +65,7 @@ import {
 	Pie,
 	Cell,
 } from "recharts";
+import { Switch } from "@/components/ui/switch";
 
 interface UserType {
 	role: string;
@@ -172,6 +174,10 @@ export default function EnhancedOperatorsPage() {
 	const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
 	const [activityLogFilter, setActivityLogFilter] = useState<string>("all");
 	const [dateRangeFilter, setDateRangeFilter] = useState<string>("30");
+	// Extra states for reset password
+	const [resetPassword, setResetPassword] = useState(false);
+	const [newPassword, setNewPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
 
 	const { toast } = useToast();
 
@@ -653,6 +659,7 @@ export default function EnhancedOperatorsPage() {
 				status: editOperator.status as any,
 				phone: editOperator.phone,
 				operatorType: editOperator.operatorType,
+				...(resetPassword && newPassword ? { password: newPassword } : {}),
 			};
 
 			const response = await apiOperatorService.operators.updateOffice(
@@ -997,7 +1004,115 @@ export default function EnhancedOperatorsPage() {
 							Create Operator
 						</Button>
 					</DialogTrigger>
-					{/* Create Dialog Content - Same as original */}
+					<DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>Create New Operator</DialogTitle>
+							<DialogDescription>
+								Add a new security operator to your team
+							</DialogDescription>
+						</DialogHeader>
+						<div className="space-y-4 py-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<Label htmlFor="name">Full Name *</Label>
+									<Input
+										id="name"
+										value={newOperator.name}
+										onChange={(e) =>
+											setNewOperator({ ...newOperator, name: e.target.value })
+										}
+										placeholder="Enter operator's full name"
+										className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="operatorType">Operator Type *</Label>
+									<Select
+										required
+										value={newOperator.operatorType}
+										onValueChange={(value) =>
+											setNewOperator({ ...newOperator, operatorType: value })
+										}>
+										<SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+											<SelectValue placeholder="Select operator type" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="OFFICE">Office Operator</SelectItem>
+											{/* <SelectItem value="POLICE">Police Operator</SelectItem> */}
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+
+							<div className="space-y-2">
+								<Label htmlFor="email">Email *</Label>
+								<Input
+									id="email"
+									type="email"
+									value={newOperator.email}
+									onChange={(e) =>
+										setNewOperator({ ...newOperator, email: e.target.value })
+									}
+									placeholder="operator@company.com"
+									className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+									required
+								/>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<Label htmlFor="phone">Phone Number *</Label>
+									<Input
+										id="phone"
+										value={newOperator.phone}
+										onChange={(e) =>
+											setNewOperator({ ...newOperator, phone: e.target.value })
+										}
+										placeholder="+251911123456"
+										className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+										required
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="password">Password *</Label>
+									<Input
+										id="password"
+										value={newOperator.password}
+										onChange={(e) =>
+											setNewOperator({
+												...newOperator,
+												password: e.target.value,
+											})
+										}
+										placeholder="Minimum 8 characters"
+										type="password"
+										className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+									/>
+								</div>
+							</div>
+						</div>
+						<DialogFooter>
+							<Button
+								variant="outline"
+								onClick={() => setIsCreateDialogOpen(false)}
+								disabled={isSubmitting}>
+								Cancel
+							</Button>
+							<Button
+								onClick={handleCreateOperator}
+								disabled={isSubmitting}
+								className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
+								{isSubmitting ? (
+									<>
+										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+										Creating...
+									</>
+								) : (
+									"Create Operator"
+								)}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
 				</Dialog>
 			</div>
 
@@ -1957,6 +2072,46 @@ export default function EnhancedOperatorsPage() {
 								className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
 							/>
 						</div>
+
+						<div className="space-y-2">
+							<div className="flex items-center justify-between">
+								<Label htmlFor="reset-password">
+									Do you want to reset password?
+								</Label>
+								<Switch
+									id="reset-password"
+									checked={resetPassword}
+									onCheckedChange={(checked) => setResetPassword(checked)}
+								/>
+							</div>
+						</div>
+
+						{/* Conditional Password Input */}
+						{resetPassword && (
+							<div className="space-y-2 mt-2">
+								<Label htmlFor="new-password">New Password *</Label>
+								<div className="relative">
+									<Input
+										id="new-password"
+										type={showPassword ? "text" : "password"}
+										value={newPassword}
+										onChange={(e) => setNewPassword(e.target.value)}
+										placeholder="Enter new password"
+										className="pr-10" // leave space for the button
+									/>
+									<button
+										type="button"
+										onClick={() => setShowPassword((prev) => !prev)}
+										className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200">
+										{showPassword ? (
+											<EyeOff className="h-5 w-5" />
+										) : (
+											<Eye className="h-5 w-5" />
+										)}
+									</button>
+								</div>
+							</div>
+						)}
 					</div>
 					<DialogFooter>
 						<Button

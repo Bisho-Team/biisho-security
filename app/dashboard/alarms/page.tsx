@@ -59,7 +59,6 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { PersonnelStatusCard } from "@/components/op-personnel-status-card";
-import { PoliceStatusCard } from "@/components/police-status-card";
 const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 interface Alarm {
@@ -506,7 +505,12 @@ export default function EnhancedAlarmsPage() {
 			</div>
 
 			<div className="flex flex-row gap-3">
-				<div className="w-3/4 space-y-4">
+				<div
+					className={`${
+						user?.role === "SUPER_ADMIN" || user?.role === "OFFICE_MANAGER"
+							? "w-3/4"
+							: "w-full"
+					} space-y-4`}>
 					{/* Overview Cards */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 						<Card
@@ -863,18 +867,15 @@ export default function EnhancedAlarmsPage() {
 					</Tabs>
 				</div>
 
-				<div className="w-1/4">
-					{/* <PoliceStatusCard
-						onConnectionStatusUpdate={(data: any) => {
-							setConnectionStatusData(data);
-						}}
-					/> */}
-					<PersonnelStatusCard
-						onConnectionStatusUpdate={(data: any) => {
-							setConnectionStatusData(data);
-						}}
-					/>
-				</div>
+				{(user?.role === "SUPER_ADMIN" || user?.role === "OFFICE_MANAGER") && (
+					<div className="w-1/4">
+						<PersonnelStatusCard
+							onConnectionStatusUpdate={(data: any) => {
+								setConnectionStatusData(data);
+							}}
+						/>
+					</div>
+				)}
 			</div>
 
 			{/* Alarm Details Dialog */}

@@ -176,6 +176,7 @@ export const apiService = {
 				operatorType: "OFFICE";
 				companyId: string;
 				status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+				password?: string;
 			}
 		) => {
 			return apiService.put(`/users/${id}`, data);
