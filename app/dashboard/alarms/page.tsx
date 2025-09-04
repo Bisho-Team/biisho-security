@@ -877,7 +877,7 @@ export default function EnhancedAlarmsPage() {
 						/>
 					</div>
 				)}
-				{/* {user?.role === "OPERATOR" && (
+				{user?.role === "OPERATOR" && (
 					<div className="w-1/4">
 						<PersonnelStatusCardOnly
 							onConnectionStatusUpdate={(data: any) => {
@@ -885,7 +885,7 @@ export default function EnhancedAlarmsPage() {
 							}}
 						/>
 					</div>
-				)} */}
+				)}
 			</div>
 
 			{/* Alarm Details Dialog */}
