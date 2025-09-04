@@ -59,6 +59,7 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { PersonnelStatusCard } from "@/components/op-personnel-status-card";
+import { PersonnelStatusCardOnly } from "@/components/op-personnel-status-card-police-only";
 const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 interface Alarm {
@@ -870,6 +871,15 @@ export default function EnhancedAlarmsPage() {
 				{(user?.role === "SUPER_ADMIN" || user?.role === "OFFICE_MANAGER") && (
 					<div className="w-1/4">
 						<PersonnelStatusCard
+							onConnectionStatusUpdate={(data: any) => {
+								setConnectionStatusData(data);
+							}}
+						/>
+					</div>
+				)}
+				{user?.role === "OPERATOR" && (
+					<div className="w-1/4">
+						<PersonnelStatusCardOnly
 							onConnectionStatusUpdate={(data: any) => {
 								setConnectionStatusData(data);
 							}}

@@ -53,6 +53,9 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { PersonnelStatusCard } from "@/components/op-personnel-status-card";
+import { PersonnelStatusCardOnly } from "@/components/op-personnel-status-card-police-only";
+import { useAuth } from "@/contexts/auth-context";
 
 interface Branch {
 	id: string;
@@ -110,6 +113,7 @@ enum AlarmSeverity {
 
 export default function CreateAlarmPage() {
 	const router = useRouter();
+	const { user } = useAuth();
 	const { toast } = useToast();
 	const token =
 		typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
@@ -870,12 +874,31 @@ export default function CreateAlarmPage() {
 						</Card>
 
 						{/* Police Personnel Status - NEW SECTION */}
-						<PoliceStatusCard
+						{/* <PoliceStatusCard
 							onConnectionStatusUpdate={(data) => {
 								setConnectionStatusData(data);
 								console.log("👮 Police status updated:", data);
 							}}
-						/>
+						/> */}
+						{(user?.role === "SUPER_ADMIN" ||
+							user?.role === "OFFICE_MANAGER") && (
+							<div className="">
+								<PersonnelStatusCard
+									onConnectionStatusUpdate={(data: any) => {
+										setConnectionStatusData(data);
+									}}
+								/>
+							</div>
+						)}
+						{user?.role === "OPERATOR" && (
+							<div className="">
+								<PersonnelStatusCardOnly
+									onConnectionStatusUpdate={(data: any) => {
+										setConnectionStatusData(data);
+									}}
+								/>
+							</div>
+						)}
 					</div>
 				</form>
 			</div>
