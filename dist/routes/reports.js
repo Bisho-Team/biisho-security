@@ -605,19 +605,21 @@ router.post("/export/pdf", auth_1.authenticate, (req, res) => __awaiter(void 0, 
                 "Type",
                 "Company",
                 "Branch",
-                "City",
+                // "City",
                 "Status",
                 "Severity",
                 "Created At",
                 "Created By",
                 "Ack. At",
-                "Completed At",
+                // "Completed At",
                 "Resp.(min)",
                 "Resol.(min)",
-                "Assigned To",
+                // "Assigned To",
+                "Acknowledged By",
+                "Resolved By"
             ];
             // Column widths (total should be around 800 for landscape A4)
-            const colWidths = [45, 60, 70, 65, 50, 45, 45, 65, 60, 65, 65, 35, 35, 60];
+            const colWidths = [45, 60, 70, 65, 50, 45, 45, 65, 60, 65, 65, 70, 70];
             const tableLeft = 30;
             const rowHeight = 25;
             // Function to draw table headers
@@ -663,16 +665,18 @@ router.post("/export/pdf", auth_1.authenticate, (req, res) => __awaiter(void 0, 
                     alarm.type || "N/A",
                     ((_d = (_c = alarm.branch) === null || _c === void 0 ? void 0 : _c.company) === null || _d === void 0 ? void 0 : _d.name) || "Unknown",
                     ((_e = alarm.branch) === null || _e === void 0 ? void 0 : _e.name) || "N/A",
-                    ((_f = alarm.branch) === null || _f === void 0 ? void 0 : _f.city) || "N/A",
+                    // alarm.branch?.city || "N/A",
                     alarm.status || "N/A",
                     alarm.severity || "N/A",
                     formatDate(alarm.createdAt),
-                    ((_g = alarm.createdBy) === null || _g === void 0 ? void 0 : _g.name) || "N/A",
+                    ((_f = alarm.createdBy) === null || _f === void 0 ? void 0 : _f.name) || "N/A",
                     (report === null || report === void 0 ? void 0 : report.acknowledgedAt) ? formatDate(report.acknowledgedAt) : "",
-                    (report === null || report === void 0 ? void 0 : report.completedAt) ? formatDate(report.completedAt) : "",
+                    // report?.completedAt ? formatDate(report.completedAt) : "",
                     responseTime.toString(),
                     resolutionTime.toString(),
-                    ((_h = report === null || report === void 0 ? void 0 : report.assignedTo) === null || _h === void 0 ? void 0 : _h.name) || "",
+                    // report?.assignedTo?.name || "",
+                    ((_g = report === null || report === void 0 ? void 0 : report.acknowledgedBy) === null || _g === void 0 ? void 0 : _g.name) || "",
+                    ((_h = report === null || report === void 0 ? void 0 : report.resolvedBy) === null || _h === void 0 ? void 0 : _h.name) || "",
                 ];
                 // Draw row data
                 let currentX = tableLeft;

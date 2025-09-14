@@ -26,6 +26,11 @@ const PORT = process.env.PORT;
 app.use(helmet({
 	crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://167.235.24.44:3002",
+];
   
 app.use(
 	cors({
@@ -33,8 +38,9 @@ app.use(
 		// credentials: true,
 		// allowedHeaders: ["Content-Type", "Authorization"]
 		origin: "*", // or specify exact frontend URL
+		credentials: true,
 		methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-		allowedHeaders: ["Content-Type", "Authorization"]
+		allowedHeaders: ["Content-Type", "Authorization", "Accept"],
 	})
 );
 

@@ -687,20 +687,22 @@ router.post("/export/pdf", authenticate, async (req: AuthRequest, res) => {
         "Type",
         "Company",
         "Branch",
-        "City",
+        // "City",
         "Status",
         "Severity",
         "Created At",
         "Created By",
         "Ack. At",
-        "Completed At",
+        // "Completed At",
         "Resp.(min)",
         "Resol.(min)",
-        "Assigned To",
+        // "Assigned To",
+        "Acknowledged By",
+        "Resolved By"
       ]
 
       // Column widths (total should be around 800 for landscape A4)
-      const colWidths = [45, 60, 70, 65, 50, 45, 45, 65, 60, 65, 65, 35, 35, 60]
+      const colWidths = [45, 60, 70, 65, 50, 45, 45, 65, 60, 65, 65,70, 70]
       const tableLeft = 30
       const rowHeight = 25
 
@@ -767,16 +769,18 @@ router.post("/export/pdf", authenticate, async (req: AuthRequest, res) => {
           alarm.type || "N/A",
           alarm.branch?.company?.name || "Unknown",
           alarm.branch?.name || "N/A",
-          alarm.branch?.city || "N/A",
+          // alarm.branch?.city || "N/A",
           alarm.status || "N/A",
           alarm.severity || "N/A",
           formatDate(alarm.createdAt),
           alarm.createdBy?.name || "N/A",
           report?.acknowledgedAt ? formatDate(report.acknowledgedAt) : "",
-          report?.completedAt ? formatDate(report.completedAt) : "",
+          // report?.completedAt ? formatDate(report.completedAt) : "",
           responseTime.toString(),
           resolutionTime.toString(),
-          report?.assignedTo?.name || "",
+          // report?.assignedTo?.name || "",
+          report?.acknowledgedBy?.name || "",
+          report?.resolvedBy?.name || "",
         ]
 
         // Draw row data
