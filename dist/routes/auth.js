@@ -46,20 +46,40 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     var _a, _b, _c, _d;
     try {
         const { email, password } = loginSchema.parse(req.body);
-        const user = yield prisma.user.findUnique({
-            where: { email },
-            include: {
-                company: true,
-                managedBy: {
-                    select: { id: true, name: true, email: true },
+        console.log("Login attempt for email:", email);
+        console.log("Login attempt for password:", password);
+        let user;
+        try {
+            user = yield prisma.user.findUnique({
+                where: { email },
+                include: {
+                    company: true,
+                    managedBy: {
+                        select: { id: true, name: true, email: true },
+                    },
                 },
-            },
-        });
+            });
+        }
+        catch (err) {
+            console.error("Error fetching user:", err);
+        }
+        // const user = await prisma.user.findUnique({
+        // 	where: { email },
+        // 	include: {
+        // 		company: true,
+        // 		managedBy: {
+        // 			select: { id: true, name: true, email: true },
+        // 		},
+        // 	},
+        // });
+        console.log("User fetched from DB:", user);
         // || !(await comparePassword(password, user.password))
         if (!user || !(yield (0, auth_1.comparePassword)(password, user.password))) {
+            console.log("Invalid credentials for email:", email);
             return res.status(401).json({ error: "Invalid credentials" });
         }
         if (user.status !== "ACTIVE") {
+            console.log("Inactive account for email:", email);
             return res.status(401).json({ error: "Account is not active" });
         }
         const token = (0, auth_1.generateToken)({
@@ -70,6 +90,7 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
             companyName: (_b = (_a = (user)) === null || _a === void 0 ? void 0 : _a.company) === null || _b === void 0 ? void 0 : _b.name,
             companyLogo: (_d = (_c = (user)) === null || _c === void 0 ? void 0 : _c.company) === null || _d === void 0 ? void 0 : _d.logo,
         });
+        console.log("Login successful for token:", token);
         const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
         res.json({
             token,

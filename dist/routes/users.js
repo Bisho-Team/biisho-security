@@ -287,31 +287,13 @@ router.get("/op-filtered", auth_1.authenticate, (req, res) => __awaiter(void 0, 
             var { password } = _a, u = __rest(_a, ["password"]);
             return u;
         });
-        // For Police operators, frontend will use WebSocket data
-        // For Office operators, consider users active within last 15 minutes as online
-        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-        let onlineCount = 0;
-        let offlineCount = 0;
-        if (operatorType === "OFFICE") {
-            // For Office operators, calculate based on recent activity (last login/update time)
-            const recentlyActiveUsers = yield prisma.user.findMany({
-                where: Object.assign(Object.assign({}, where), { updatedAt: {
-                        gte: fifteenMinutesAgo,
-                    } }),
-                select: { id: true },
-            });
-            onlineCount = recentlyActiveUsers.length;
-            offlineCount = allUsers.length - onlineCount;
-        }
-        else {
-            // For Police operators, let frontend handle with WebSocket data
-            onlineCount = 0; // Will be updated by WebSocket on frontend
-            offlineCount = 0; // Will be updated by WebSocket on frontend
-        }
+        // Note: This is a placeholder - in a real app, you'd get online status from your WebSocket/Redis store
         const totalStats = {
             total: allUsers.length,
-            online: onlineCount,
-            offline: offlineCount,
+            // These would be calculated from your real-time connection data
+            // For now, we'll let the frontend handle this with WebSocket data
+            online: 0, // Placeholder - will be updated by WebSocket
+            offline: 0, // Placeholder - will be updated by WebSocket
         };
         res.json({
             users: usersWithoutPasswords,
@@ -330,96 +312,8 @@ router.get("/op-filtered", auth_1.authenticate, (req, res) => __awaiter(void 0, 
         console.error("Error fetching filtered users:", error);
         res.status(500).json({ error: "Failed to fetch users" });
     }
-    // try {
-    //   const { page = 1, limit = 15, role, status, search, operatorType } = req.query
-    //   const where: any = {}
-    //   // Handle multi-role filtering: e.g., role=POLICE_MANAGER,OPERATOR
-    //   if (role) {
-    //     const roles = Array.isArray(role) ? role : (role as string).split(",")
-    //     if (roles.includes("OPERATOR")) {
-    //       where.OR = [{ role: role, operatorType: operatorType }]
-    //     } else if (roles.includes("POLICE_MANAGER")) {
-    //       where.role = "POLICE_MANAGER"
-    //     }
-    //   }
-    //   if (status) {
-    //     where.status = status
-    //   }
-    //   if (operatorType) {
-    //     where.operatorType = operatorType
-    //   }
-    //   if (operatorType === "OFFICE") {
-    //     // If user is Office Manager, filter by their companyId
-    //     if (req.user?.role === "OFFICE_MANAGER") {
-    //       where.companyId = req.user.companyId
-    //     }
-    //     // Super Admin sees all Office Operators (no additional filtering)
-    //     // Police Manager should not see Office Operators (handled by authorization)
-    //   }
-    //   if (search) {
-    //     where.OR = [
-    //       { name: { contains: search as string, mode: "insensitive" } },
-    //       { email: { contains: search as string, mode: "insensitive" } },
-    //     ]
-    //   }
-    //   const total = await prisma.user.count({ where })
-    //   const allUsers = await prisma.user.findMany({
-    //     where,
-    //     select: {
-    //       id: true,
-    //       name: true,
-    //       role: true,
-    //       operatorType: true,
-    //     },
-    //   })
-    //   const pageNum = Math.max(1, Number(page))
-    //   const limitNum = Math.max(1, Math.min(50, Number(limit))) // Max 50 per page for performance
-    //   const skip = (pageNum - 1) * limitNum
-    //   const totalPages = Math.ceil(total / limitNum)
-    //   const users = await prisma.user.findMany({
-    //     where,
-    //     include: {
-    //       company: true,
-    //       managedBy: {
-    //         select: { id: true, name: true, email: true },
-    //       },
-    //       _count: {
-    //         select: {
-    //           managedUsers: true,
-    //         },
-    //       },
-    //     },
-    //     skip, // Add pagination skip
-    //     take: limitNum, // Add pagination limit
-    //     orderBy: { createdAt: "desc" },
-    //   })
-    //   const usersWithoutPasswords = users.map(({ password, ...u }) => u)
-    //   // Note: This is a placeholder - in a real app, you'd get online status from your WebSocket/Redis store
-    //   const totalStats = {
-    //     total: allUsers.length,
-    //     // These would be calculated from your real-time connection data
-    //     // For now, we'll let the frontend handle this with WebSocket data
-    //     online: 0, // Placeholder - will be updated by WebSocket
-    //     offline: 0, // Placeholder - will be updated by WebSocket
-    //   }
-    //   res.json({
-    //     users: usersWithoutPasswords,
-    //     pagination: {
-    //       page: pageNum,
-    //       limit: limitNum,
-    //       total,
-    //       pages: totalPages,
-    //       hasNext: pageNum < totalPages, // Add navigation helpers
-    //       hasPrev: pageNum > 1, // Add navigation helpers
-    //     },
-    //     totalStats,
-    //   })
-    // } catch (error) {
-    //   console.error("Error fetching filtered users:", error)
-    //   res.status(500).json({ error: "Failed to fetch users" })
-    // }
 }));
-// Get operators managed by current user
+// Get operators managed by current userj
 router.get("/my-operators", auth_1.authenticate, (0, auth_1.authorize)("OFFICE_MANAGER", "POLICE_MANAGER"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const operators = yield prisma.user.findMany({

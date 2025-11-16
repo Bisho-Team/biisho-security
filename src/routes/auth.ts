@@ -31,22 +31,43 @@ router.post("/login", async (req, res) => {
 	try {
 		const { email, password } = loginSchema.parse(req.body);
 
-		const user = await prisma.user.findUnique({
-			where: { email },
-			include: {
-				company: true,
-				managedBy: {
-					select: { id: true, name: true, email: true },
+		console.log("Login attempt for email:", email);
+		console.log("Login attempt for password:", password);
+		let user;
+		try {
+			user = await prisma.user.findUnique({
+				where: { email },
+				include: {
+					company: true,
+					managedBy: {
+						select: { id: true, name: true, email: true },
+					},
 				},
-			},
-		});
+			});
+		} catch (err) {
+			console.error("Error fetching user:", err);
+		}
+
+		// const user = await prisma.user.findUnique({
+		// 	where: { email },
+		// 	include: {
+		// 		company: true,
+		// 		managedBy: {
+		// 			select: { id: true, name: true, email: true },
+		// 		},
+		// 	},
+		// });
+
+		console.log("User fetched from DB:", user);
 
 		// || !(await comparePassword(password, user.password))
 		if (!user || !(await comparePassword(password, user.password))) {
+			console.log("Invalid credentials for email:", email);
 			return res.status(401).json({ error: "Invalid credentials" });
 		}
 
 		if (user.status !== "ACTIVE") {
+			console.log("Inactive account for email:", email);
 			return res.status(401).json({ error: "Account is not active" });
 		}
 
@@ -58,6 +79,7 @@ router.post("/login", async (req, res) => {
 			companyName:(user)?.company?.name,
 			companyLogo:(user)?.company?.logo,
 		});
+		console.log("Login successful for token:", token);
 		const { password: _, ...userWithoutPassword } = user;
 
 		res.json({
