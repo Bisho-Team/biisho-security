@@ -14,39 +14,25 @@ import analyticsRoutes from "./routes/analytics";
 import profileRoutes from "./routes/profile"
 import path from "path";
 
-
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT;
 
-// Middleware
-// app.use(helmet());
 app.use(helmet({
 	crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://167.235.24.44:3002",
-];
-  
 app.use(
 	cors({
-		// origin: process.env.FRONTEND_URL,
-		// credentials: true,
-		// allowedHeaders: ["Content-Type", "Authorization"]
-		origin: "*", // or specify exact frontend URL
+		origin: process.env.FRONTEND_URL,
 		credentials: true,
 		methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 		allowedHeaders: ["Content-Type", "Authorization", "Accept"],
 	})
 );
 
-// app.use("/uploads", cors({ origin: "*" }));
-// Serve static files from /uploads
-// This one is correct (with headers)
 app.use("/uploads", express.static(path.join(__dirname, 'uploads'), {
 	setHeaders: (res, path) => {
 	  res.set('Access-Control-Allow-Origin', '*');
@@ -56,11 +42,9 @@ app.use("/uploads", express.static(path.join(__dirname, 'uploads'), {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// check api test
 app.get("/health", (req, res) => {
 	res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

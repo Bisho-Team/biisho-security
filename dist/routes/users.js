@@ -1154,9 +1154,9 @@ router.post("/operators/:operatorId/export/pdf", auth_1.authenticate, (req, res)
         const dateTo = filters.dateTo ? new Date(filters.dateTo) : undefined;
         // Build date filter for queries
         const dateFilter = Object.assign(Object.assign({}, (dateFrom && { gte: dateFrom })), (dateTo && { lte: dateTo }));
-        console.log("[v0] PDF Export - Operator ID:", operatorId);
-        console.log("[v0] PDF Export - Operator Type:", operator.operatorType);
-        console.log("[v0] PDF Export - Date Filter:", dateFilter);
+        console.log("PDF Export - Operator ID:", operatorId);
+        console.log("PDF Export - Operator Type:", operator.operatorType);
+        console.log("PDF Export - Date Filter:", dateFilter);
         // Get alarms acknowledged by this operator (for Police operators)
         const acknowledgedAlarms = yield prisma.alarmReport.findMany({
             where: Object.assign({ acknowledgedById: operatorId }, (Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })),
@@ -1185,11 +1185,11 @@ router.post("/operators/:operatorId/export/pdf", auth_1.authenticate, (req, res)
         const totalAlarmsCount = yield prisma.alarm.count({
             where: Object.assign({ OR: [{ createdById: operatorId }, { reports: { some: { assignedToId: operatorId } } }] }, (Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })),
         });
-        console.log("[v0] PDF Export - Acknowledged alarms found:", acknowledgedAlarms.length);
-        console.log("[v0] PDF Export - Resolved alarms found:", resolvedAlarms.length);
-        console.log("[v0] PDF Export - Assigned reports found:", assignedReports.length);
-        console.log("[v0] PDF Export - Created alarms found:", createdAlarms.length);
-        console.log("[v0] PDF Export - Total alarms count:", totalAlarmsCount);
+        console.log("PDF Export - Acknowledged alarms found:", acknowledgedAlarms.length);
+        console.log("PDF Export - Resolved alarms found:", resolvedAlarms.length);
+        console.log("PDF Export - Assigned reports found:", assignedReports.length);
+        console.log("PDF Export - Created alarms found:", createdAlarms.length);
+        console.log("PDF Export - Total alarms count:", totalAlarmsCount);
         const isPoliceOperator = operator.operatorType === "POLICE";
         const isOfficeOperator = operator.operatorType === "OFFICE";
         let totalAlarms, alarmsCreated, alarmsAcknowledged, alarmsResolved;
@@ -1201,7 +1201,7 @@ router.post("/operators/:operatorId/export/pdf", auth_1.authenticate, (req, res)
             alarmsCreated = createdAlarms.length;
             alarmsAcknowledged = acknowledgedAlarms.length;
             alarmsResolved = resolvedAlarms.length;
-            console.log("[v0] PDF Export - Police Metrics:");
+            console.log("PDF Export - Police Metrics:");
             console.log("  Total Alarms:", totalAlarms);
             console.log("  Acknowledged:", alarmsAcknowledged);
             console.log("  Resolved:", alarmsResolved);
@@ -1228,7 +1228,7 @@ router.post("/operators/:operatorId/export/pdf", auth_1.authenticate, (req, res)
             alarmsCreated = createdAlarms.length;
             alarmsAcknowledged = acknowledgedAlarms.length;
             alarmsResolved = resolvedAlarms.length;
-            console.log("[v0] PDF Export - Office Metrics:");
+            console.log("PDF Export - Office Metrics:");
             console.log("  Total Alarms:", totalAlarms);
             console.log("  Alarms Created:", alarmsCreated);
             console.log("  Acknowledged:", alarmsAcknowledged);
@@ -1267,7 +1267,7 @@ router.post("/operators/:operatorId/export/pdf", auth_1.authenticate, (req, res)
         }
         // Calculate active hours (estimate based on activity)
         const activeHours = Math.round(Math.random() * 160 + 40); // 40-200 hours per month (matching working endpoint)
-        console.log("[v0] PDF Export - Final Metrics:", {
+        console.log("PDF Export - Final Metrics:", {
             totalAlarms,
             alarmsCreated,
             alarmsAcknowledged,
@@ -1358,7 +1358,7 @@ router.post("/operators/:operatorId/export/pdf", auth_1.authenticate, (req, res)
                 orderBy: { createdAt: "desc" },
                 take: 50,
             });
-            console.log("[v0] PDF Export - Alarm history found:", alarms.length);
+            console.log("PDF Export - Alarm history found:", alarms.length);
         }
         // Create PDF document
         doc = new pdfkit_1.default({
