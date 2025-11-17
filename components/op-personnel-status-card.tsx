@@ -173,7 +173,7 @@ export function PersonnelStatusCard({ onConnectionStatusUpdate }: PersonnelStatu
         }
 
         console.log(
-          `[v0] Loaded police personnel page ${page}:`,
+          `Loaded police personnel page ${page}:`,
           paginatedPersonnel.length,
           "of",
           globalSortedPersonnel.length,
@@ -195,7 +195,7 @@ export function PersonnelStatusCard({ onConnectionStatusUpdate }: PersonnelStatu
             // Use WebSocket data if office operators are being tracked
             isOnline = connectedArray.some((cp) => cp.userId === person.id)
           } else {
-            console.log(`[v0] Office operator ${person.name}:`, {
+            console.log(`Office operator ${person.name}:`, {
               updatedAt: person.updatedAt,
               lastActiveAt: person.lastActiveAt,
               lastSeen: person.lastSeen,
@@ -216,7 +216,7 @@ export function PersonnelStatusCard({ onConnectionStatusUpdate }: PersonnelStatu
               // Consider online if active within 8 hours (work shift)
               isOnline = mostRecentActivity > eightHoursAgo
 
-              console.log(`[v0] Office operator ${person.name} status:`, {
+              console.log(`Office operator ${person.name} status:`, {
                 mostRecentActivity: new Date(mostRecentActivity).toISOString(),
                 eightHoursAgo: new Date(eightHoursAgo).toISOString(),
                 isOnline,
@@ -224,7 +224,7 @@ export function PersonnelStatusCard({ onConnectionStatusUpdate }: PersonnelStatu
             } else {
               // If no timestamps available, assume offline
               isOnline = false
-              console.log(`[v0] Office operator ${person.name}: No timestamp data available, marking offline`)
+              console.log(`Office operator ${person.name}: No timestamp data available, marking offline`)
             }
           }
 
@@ -273,7 +273,7 @@ export function PersonnelStatusCard({ onConnectionStatusUpdate }: PersonnelStatu
         }
 
         console.log(
-          `[v0] Loaded office personnel page ${page}:`,
+          `Loaded office personnel page ${page}:`,
           paginatedPersonnel.length,
           "of",
           globalSortedPersonnel.length,
