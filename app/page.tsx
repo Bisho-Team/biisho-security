@@ -82,27 +82,22 @@ export default function LoginPage() {
 
 			<div className="w-full max-w-md space-y-8 relative z-10">
 				{/* Logo and Header */}
-				<div className="text-center space-y-2 animate-fade-in">
-					<div className="relative mx-auto w-72 h-48">
-						{/* <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl rotate-6 animate-pulse"></div> */}
-						{/* <div className="relative bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-4 shadow-2xl">
-							<Shield className="h-12 w-12 text-white mx-auto" />
-						</div> */}
-						<img src="/logo-shield.png" className="h-48 w-72 " alt="" />
-						<div className="absolute top-5 right-4 w-6 h-6 bg-green-500 rounded-full border-4 border-white animate-ping"></div>
+				<div className="text-center justify-center items-center space-y-2 animate-fade-in">
+					<div className="relative mx-auto h-52 w-52">
+						<img src="/logo-shield.png" className="h-52 w-52" alt="" />
 					</div>
 					<div className="space-y-2">
-						{/* <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
-							Koppa Security
-						</h1> */}
-						<p className="text-slate-300 text-lg font-medium">
+						<h1 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
+							Real-Time Response Link
+						</h1>
+						{/* <p className="text-slate-300 text-lg font-medium">
 							Advanced Security Management System
 						</p>
 						<div className="flex items-center justify-center gap-2 text-sm text-slate-400">
 							<Sparkles className="h-4 w-4" />
 							<span>Secure • Reliable • Available</span>
 							<Sparkles className="h-4 w-4" />
-						</div>
+						</div> */}
 					</div>
 				</div>
 
@@ -197,87 +192,6 @@ export default function LoginPage() {
 					</CardContent>
 				</Card>
 
-				{/* Quick Access Demo */}
-				<Card
-					className="glass border-white/20 shadow-2xl backdrop-blur-xl animate-slide-up"
-					style={{ animationDelay: "0.2s" }}>
-					<CardHeader className="pb-4">
-						<CardTitle className="text-center text-lg text-white">
-							Demo Access
-						</CardTitle>
-						<CardDescription className="text-center text-slate-300">
-							Quick login for different user roles
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-3">
-						<Button
-							variant="outline"
-							size="lg"
-							className="w-full justify-start h-12 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 group"
-							onClick={() => quickLogin("superadmin@koppa.com")}
-							disabled={loading}>
-							<div className="flex items-center justify-between w-full">
-								<div className="flex items-center">
-									<div className="p-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-500 mr-3 group-hover:scale-110 transition-transform">
-										<Users className="h-4 w-4 text-white" />
-									</div>
-									<div className="text-left">
-										<div className="font-semibold">Super Administrator</div>
-										<div className="text-xs text-slate-400">
-											Full system access
-										</div>
-									</div>
-								</div>
-								<div className="text-xs text-slate-400">
-									superadmin@koppa.com
-								</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							size="lg"
-							className="w-full justify-start h-12 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 group"
-							onClick={() => quickLogin("office@koppa.com")}
-							disabled={loading}>
-							<div className="flex items-center justify-between w-full">
-								<div className="flex items-center">
-									<div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 mr-3 group-hover:scale-110 transition-transform">
-										<Building className="h-4 w-4 text-white" />
-									</div>
-									<div className="text-left">
-										<div className="font-semibold">Office Manager</div>
-										<div className="text-xs text-slate-400">
-											Branch & alarm management
-										</div>
-									</div>
-								</div>
-								<div className="text-xs text-slate-400">office@koppa.com</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							size="lg"
-							className="w-full justify-start h-12 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 group"
-							onClick={() => quickLogin("police@koppa.com")}
-							disabled={loading}>
-							<div className="flex items-center justify-between w-full">
-								<div className="flex items-center">
-									<div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 mr-3 group-hover:scale-110 transition-transform">
-										<Shield className="h-4 w-4 text-white" />
-									</div>
-									<div className="text-left">
-										<div className="font-semibold">Police Manager</div>
-										<div className="text-xs text-slate-400">
-											Law enforcement operations
-										</div>
-									</div>
-								</div>
-								<div className="text-xs text-slate-400">police@koppa.com</div>
-							</div>
-						</Button>
-					</CardContent>
-				</Card>
-
 				{/* Footer */}
 				<div
 					className="text-center text-slate-400 text-sm animate-fade-in"
@@ -289,176 +203,3 @@ export default function LoginPage() {
 		</div>
 	);
 }
-
-// "use client";
-
-// import { useState } from "react";
-// import { useRouter } from "next/navigation";
-// import { Button } from "@/components/ui/button";
-// import {
-// 	Card,
-// 	CardContent,
-// 	CardDescription,
-// 	CardHeader,
-// 	CardTitle,
-// } from "@/components/ui/card";
-// import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label";
-// import { Alert, AlertDescription } from "@/components/ui/alert";
-// import { Shield, Lock, Users, Building, Loader2 } from "lucide-react";
-// import { useAuth } from "@/contexts/auth-context";
-
-// export default function LoginPage() {
-// 	const [email, setEmail] = useState("");
-// 	const [password, setPassword] = useState("");
-// 	const [error, setError] = useState("");
-// 	const [loading, setLoading] = useState(false);
-// 	const { login, user } = useAuth();
-// 	const router = useRouter();
-
-// 	const handleLogin = async (e: React.FormEvent) => {
-// 		e.preventDefault();
-// 		setError("");
-// 		setLoading(true);
-
-// 		try {
-// 			const response = await login(email, password);
-// 			// router.push("/dashboard");
-// 		} catch (error: any) {
-// 			setError(error.message || "Login failed. Please check your credentials.");
-// 		} finally {
-// 			setLoading(false);
-// 		}
-// 	};
-
-// 	const quickLogin = async (
-// 		email: string,
-// 		password: string = "password123"
-// 	) => {
-// 		setEmail(email);
-// 		setPassword(password);
-// 		setError("");
-// 		setLoading(true);
-
-// 		try {
-// 			await login(email, password);
-// 		} catch (error: any) {
-// 			setError(error.message || "Login failed. Please check your credentials.");
-// 		} finally {
-// 			setLoading(false);
-// 		}
-// 	};
-
-// 	return (
-// 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-// 			<div className="w-full max-w-md space-y-6">
-// 				<div className="text-center space-y-2">
-// 					<img src="/logo-shield.png" alt="" />
-// 				</div>
-
-// 				<Card>
-// 					<CardHeader>
-// 						<CardTitle className="flex items-center space-x-2">
-// 							<Lock className="h-5 w-5" />
-// 							<span>System Login</span>
-// 						</CardTitle>
-// 						<CardDescription>
-// 							Access your security management dashboard
-// 						</CardDescription>
-// 					</CardHeader>
-// 					<CardContent className="space-y-4">
-// 						{error && (
-// 							<Alert variant="destructive">
-// 								<AlertDescription>{error}</AlertDescription>
-// 							</Alert>
-// 						)}
-
-// 						<form onSubmit={handleLogin} className="space-y-4">
-// 							<div className="space-y-2">
-// 								<Label htmlFor="email">Email</Label>
-// 								<Input
-// 									id="email"
-// 									type="email"
-// 									placeholder="Enter your email"
-// 									value={email}
-// 									onChange={(e) => setEmail(e.target.value)}
-// 									required
-// 									disabled={loading}
-// 								/>
-// 							</div>
-// 							<div className="space-y-2">
-// 								<Label htmlFor="password">Password</Label>
-// 								<Input
-// 									id="password"
-// 									type="password"
-// 									placeholder="Enter your password"
-// 									value={password}
-// 									onChange={(e) => setPassword(e.target.value)}
-// 									required
-// 									disabled={loading}
-// 								/>
-// 							</div>
-// 							<Button type="submit" className="w-full" disabled={loading}>
-// 								{loading ? (
-// 									<>
-// 										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-// 										Signing In...
-// 									</>
-// 								) : (
-// 									"Sign In"
-// 								)}
-// 							</Button>
-// 						</form>
-// 					</CardContent>
-// 				</Card>
-
-// 				<Card>
-// 					{/* <CardHeader>
-// 						<CardTitle className="text-sm">Demo Access</CardTitle>
-// 						<CardDescription className="text-xs">
-// 							Quick login for different roles
-// 						</CardDescription>
-// 					</CardHeader> */}
-// 					<CardContent className="space-y-2">
-// 						<Button
-// 							variant="outline"
-// 							size="sm"
-// 							className="w-full justify-start"
-// 							onClick={() => quickLogin("superadmin@koppa.com")}
-// 							disabled={loading}>
-// 							<Users className="h-4 w-4 mr-2" />
-// 							Super Admin
-// 						</Button>
-// 						<Button
-// 							variant="outline"
-// 							size="sm"
-// 							className="w-full justify-start"
-// 							onClick={() => quickLogin("office@koppa.com")}
-// 							disabled={loading}>
-// 							<Building className="h-4 w-4 mr-2" />
-// 							Office Manager
-// 						</Button>
-// 						<Button
-// 							variant="outline"
-// 							size="sm"
-// 							className="w-full justify-start"
-// 							onClick={() => quickLogin("police@koppa.com")}
-// 							disabled={loading}>
-// 							<Shield className="h-4 w-4 mr-2" />
-// 							Police Manager
-// 						</Button>
-// 						{/* <Button
-// 							variant="outline"
-// 							size="sm"
-// 							className="w-full justify-start"
-// 							onClick={() => quickLogin("operator1@koppa.com")}
-// 							disabled={loading}>
-// 							<Lock className="h-4 w-4 mr-2" />
-// 							Office Operator
-// 						</Button> */}
-// 					</CardContent>
-// 				</Card>
-// 			</div>
-// 		</div>
-// 	);
-// }

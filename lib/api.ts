@@ -1,13 +1,14 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 interface ApiResponse<T> {
-	data?: T;
-	message?: string;
-	error?: string;
-	details?: any;
+	users: T[];
+	pagination?: {
+		page: number;
+		limit: number;
+		total: number;
+		pages: number;
+	};
+	totalStats: any;
 }
-import { persistentNotificationService } from "./persistent-notification-service";
-
 class ApiClient {
 	private getAuthHeaders() {
 		const token = localStorage.getItem("authToken");
@@ -45,6 +46,10 @@ class ApiClient {
 
 	// Authentication
 	async login(email: string, password: string) {
+		console.log({
+			email,
+			password,
+		});
 		const response = await this.request<{ token: string; user: any }>(
 			"/auth/login",
 			{
@@ -58,15 +63,11 @@ class ApiClient {
 			localStorage.setItem("currentUser", JSON.stringify(response.user));
 		}
 
-		// Reinitialize notification service after login
-		await persistentNotificationService.reinitializeAfterLogin();
-
 		return response;
 	}
 
 	async logout() {
 		// Stop all sirens before logout
-		persistentNotificationService.stopAllSirens();
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("currentUser");
 	}
@@ -96,6 +97,44 @@ class ApiClient {
 
 	async getMyOperators() {
 		return this.request<any[]>("/users/my-operators");
+	}
+
+	async getPoliceManagerandOperator() {
+		return this.request<any>(
+			"/users/filtered?role=POLICE_MANAGER&page=1&limit=20"
+		);
+	}
+
+	// async getPoliceManagerandOperatorStatus() {
+	// 	return this.request<any>(
+	// 		"/users/filtered?role=OPERATOR&operatorType=POLICE&page=1&limit=20"
+	// 	);
+	// }
+
+	async getPoliceManagerandOperatorStatus(
+		page = 1,
+		limit = 10
+	): Promise<ApiResponse<any>> {
+		return this.request<ApiResponse<any>>(
+			`/users/op-filtered?role=OPERATOR&operatorType=POLICE&page=${page}&limit=${limit}`
+		);
+	}
+
+	// Get Office Operators with company filtering
+	async getOfficeOperatorStatus(
+		page = 1,
+		limit = 10
+	): Promise<ApiResponse<any>> {
+		return this.request<ApiResponse<any>>(
+			`/users/op-filtered?role=OPERATOR&operatorType=OFFICE&page=${page}&limit=${limit}`
+		);
+	}
+
+	// Get both Police and Office personnel
+	async getAllPersonnelStatus(page = 1, limit = 20): Promise<ApiResponse<any>> {
+		return this.request<ApiResponse<any>>(
+			`/users/op-filtered?role=OPERATOR&page=${page}&limit=${limit}`
+		);
 	}
 
 	async createUser(userData: any) {
