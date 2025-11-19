@@ -140,6 +140,10 @@ export default function EnhancedDashboardOverview() {
 			if ((window as any).updatePoliceStatus) {
 				(window as any).updatePoliceStatus(data);
 			}
+
+			if ((window as any).updateOfficeStatus) {
+				(window as any).updateOfficeStatus(data);
+			}
 		},
 		onConnectionEstablished: (userInfo) => {
 			console.log("🎉 Connection established:", userInfo);
@@ -262,11 +266,12 @@ export default function EnhancedDashboardOverview() {
 
 	// Auto-refresh alarms every 30 seconds
 	useEffect(() => {
-		const interval = setInterval(() => {
-			fetchAlarms();
-		}, 30000);
+		// const interval = setInterval(() => {
+		// 	fetchAlarms();
+		// }, 30000);
+		fetchAlarms();
 
-		return () => clearInterval(interval);
+		// return () => clearInterval(interval);
 	}, []);
 
 	if (!user) return null;
@@ -807,7 +812,7 @@ export default function EnhancedDashboardOverview() {
 					{/* <PoliceStatusCard
 						onConnectionStatusUpdate={(data) => {
 							setConnectionStatusData(data);
-							console.log("👮 Police status updated from dashboard:", data);
+							console.log("Police status updated from dashboard:", data);
 						}}
 					/> */}
 				</div>
