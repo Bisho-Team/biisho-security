@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+uploads
+koppa_backup_v3.sql
+docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+.env
+.env.*
