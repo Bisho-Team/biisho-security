@@ -1,0 +1,57 @@
+name: koppa
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./api/docker/00-reset-public-schema.sql:/docker-entrypoint-initdb.d/00-reset-public-schema.sql:ro
+      - ./api/koppa_backup_v3.sql:/docker-entrypoint-initdb.d/01-koppa_backup_v3.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./api
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm start"
+    ports:
+      - "${API_PORT:-3001}:${API_PORT:-3001}"
+      - "${WS_PORT:-3002}:${WS_PORT:-3002}"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public"
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${API_PORT:-3001}
+      WS_PORT: ${WS_PORT:-3002}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      SEED_PASSWORD: ${SEED_PASSWORD:-Test@1234}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./api/uploads:/app/uploads
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?set NEXT_PUBLIC_API_URL in .env}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:?set NEXT_PUBLIC_WS_URL in .env}
+    ports:
+      - "${CLIENT_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
