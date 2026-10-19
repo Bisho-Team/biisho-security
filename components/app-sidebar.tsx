@@ -51,6 +51,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { getUploadUrl } from "@/lib/config";
 
 interface AppSidebarProps {
 	user: {
@@ -343,10 +344,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
 							<img
 								src={
 									user?.company?.logo
-										? `https://frt.et${user.company.logo.replace(
-												"/var/www/html/koppa-security-api",
-												""
-										  )}`
+										? `${getUploadUrl(user.company.logo)}`
 										: "/logo-shield.png"
 								}
 								// 	`https://frt.et${selectedAlarm.branch.company.logo.replace(

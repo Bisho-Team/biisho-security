@@ -3,8 +3,8 @@ const nextConfig = {
 	async rewrites() {
 		return [
 			{
-				source: "/api/:path*", // when you call /api/...
-				destination: "https://frt.et/api/:path*", // proxy to frt.et
+				source: "/api/:path*",
+				destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
 			},
 		];
 	},

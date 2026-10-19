@@ -66,6 +66,7 @@ import {
 	Cell,
 } from "recharts";
 import { Switch } from "@/components/ui/switch";
+import { API_URL } from "@/lib/config";
 
 interface UserType {
 	role: string;
@@ -812,7 +813,7 @@ export default function EnhancedOperatorsPage() {
 				);
 			} else {
 				const response = await fetch(
-					`https://frt.et/api/users/operators/${selectedOperator.id}/export/pdf`,
+					`${API_URL}/users/operators/${selectedOperator.id}/export/pdf`,
 					{
 						method: "POST",
 						headers: {

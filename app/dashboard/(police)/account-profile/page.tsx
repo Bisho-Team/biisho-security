@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/config";
 
 interface UserProfile {
 	id: string;
@@ -92,7 +93,7 @@ export default function AccountProfilePage() {
 	const fetchProfile = async () => {
 		try {
 			setLoading(true);
-			const response = await fetch("https://frt.et/api/profile", {
+			const response = await fetch(`${API_URL}/profile`, {
 				headers: {
 					Authorization: `Bearer ${getAuthToken()}`,
 				},
@@ -124,7 +125,7 @@ export default function AccountProfilePage() {
 		setSuccessMessage("");
 
 		try {
-			const response = await fetch("https://frt.et/api/profile", {
+			const response = await fetch(`${API_URL}/profile`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -174,7 +175,7 @@ export default function AccountProfilePage() {
 
 		try {
 			const response = await fetch(
-				"https://frt.et/api/profile/change-password",
+				`${API_URL}/profile/change-password`,
 				{
 					method: "POST",
 					headers: {

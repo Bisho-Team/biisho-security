@@ -60,8 +60,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { PersonnelStatusCard } from "@/components/op-personnel-status-card";
 import { PersonnelStatusCardOnly } from "@/components/op-personnel-status-card-police-only";
-const NEXT_PUBLIC_API_URL = "https://frt.et";
-
+import { getUploadUrl } from "@/lib/config";
 interface Alarm {
 	id: string;
 	alarmCode: string;
@@ -669,10 +668,7 @@ export default function EnhancedAlarmsPage() {
 													<div className="flex items-center space-x-4">
 														{alarm.branch?.company?.logo ? (
 															<Image
-																src={`${NEXT_PUBLIC_API_URL}${alarm.branch?.company?.logo.replace(
-																	"/var/www/html/koppa-security-api",
-																	""
-																)}`}
+																src={`${getUploadUrl(alarm.branch?.company?.logo)}`}
 																width={20}
 																height={20}
 																alt={`${alarm.branch?.company?.name} logo`}

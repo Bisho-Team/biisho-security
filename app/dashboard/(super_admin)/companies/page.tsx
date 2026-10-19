@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import axios from "axios";
+import { getUploadUrl, API_URL } from "@/lib/config";
 
 interface Company {
 	id: string;
@@ -130,8 +131,6 @@ export default function CompaniesPage() {
 	const [filterStatus, setFilterStatus] = useState("all");
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 	const { toast } = useToast();
-
-	const NEXT_PUBLIC_API_URL = "https://frt.et";
 
 	const [newCompany, setNewCompany] = useState({
 		name: "",
@@ -227,7 +226,7 @@ export default function CompaniesPage() {
 
 			const token = localStorage.getItem("authToken");
 
-			await axios.post("https://frt.et/api/companies", formData, {
+			await axios.post(`${API_URL}/companies`, formData, {
 				headers: {
 					"Content-Type": "multipart/form-data",
 					...(token && { Authorization: `Bearer ${token}` }),
@@ -869,10 +868,7 @@ export default function CompaniesPage() {
 									<div className="relative">
 										{company.logo ? (
 											<img
-												src={`${NEXT_PUBLIC_API_URL}${company.logo.replace(
-													"/var/www/html/koppa-security-api",
-													""
-												)}`}
+												src={`${getUploadUrl(company.logo)}`}
 												alt={`${company.name} logo`}
 												className="h-14 w-14 object-cover rounded-xl shadow-lg border border-border"
 											/>
@@ -1039,10 +1035,7 @@ export default function CompaniesPage() {
 								<div className="p-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
 									{selectedCompany.logo ? (
 										<img
-											src={`${NEXT_PUBLIC_API_URL}${selectedCompany.logo.replace(
-												"/var/www/html/koppa-security-api",
-												""
-											)}`}
+											src={`${getUploadUrl(selectedCompany.logo)}`}
 											alt={`${selectedCompany.name} logo`}
 											className="h-20 w-20 object-cover rounded-xl shadow-lg border border-border"
 										/>
@@ -1586,7 +1579,7 @@ export default function CompaniesPage() {
 // 			const token = localStorage.getItem("authToken");
 
 // 			// await apiService.post("/companies", formData);
-// 			await axios.post("https://frt.et/api/companies", formData, {
+// 			await axios.post(`${API_URL}/companies`, formData, {
 // 				headers: {
 // 					"Content-Type": "multipart/form-data",
 // 					...(token && { Authorization: `Bearer ${token}` }),

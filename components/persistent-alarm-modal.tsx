@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
+import { getUploadUrl } from "@/lib/config";
 
 interface Alarm {
 	id: string;
@@ -399,10 +400,7 @@ export function PersistentAlarmModal({
 										{currentAlarm.branch?.company?.logo ? (
 											<div className="flex items-start flex-col space-x-2 mt-1">
 												<img
-													src={`https://frt.et${currentAlarm.branch.company.logo.replace(
-														"/var/www/html/koppa-security-api",
-														""
-													)}`}
+													src={`${getUploadUrl(currentAlarm.branch.company.logo)}`}
 													alt={`${currentAlarm.branch.company.name} logo`}
 													className="h-16 w-16 object-cover rounded"
 													onError={(e) => {

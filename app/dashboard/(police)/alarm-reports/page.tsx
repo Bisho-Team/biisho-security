@@ -65,6 +65,7 @@ import {
 import { Phone, Info, BarChart3, X, Copy, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGlobalAlarms } from "@/components/global-alarm-provider";
+import { getUploadUrl } from "@/lib/config";
 
 interface Alarm {
 	id: string;
@@ -686,10 +687,7 @@ export default function EnhancedAlarmReportsPage() {
 											{alarm?.branch?.company?.logo ? (
 												<div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 p-1 shadow-lg border border-slate-600/50">
 													<img
-														src={`https://frt.et${alarm.branch.company.logo.replace(
-															"/var/www/html/koppa-security-api",
-															""
-														)}`}
+														src={`${getUploadUrl(alarm.branch.company.logo)}`}
 														alt={`${alarm.branch.company?.name} logo`}
 														className="w-full h-full object-cover rounded-lg"
 														onError={(e) => {
@@ -974,10 +972,7 @@ export default function EnhancedAlarmReportsPage() {
 																"http"
 															)
 																? selectedAlarm.branch.company.logo
-																: `https://frt.et${selectedAlarm.branch.company.logo.replace(
-																		"/var/www/html/koppa-security-api",
-																		""
-																  )}`
+																: `${getUploadUrl(selectedAlarm.branch.company.logo)}`
 														}
 														alt={`${selectedAlarm.branch.company.name} logo`}
 														className="h-10 w-10 object-cover rounded-lg"
