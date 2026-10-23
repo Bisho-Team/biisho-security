@@ -313,7 +313,7 @@ export default function EnhancedAnalyticsPage() {
 	};
 
 	const generateSystemReport = (
-		data: SystemAnalytics | PoliceAnalytics | OfficeAnalytics
+		data: SystemAnalytics | PoliceAnalytics | OfficeAnalytics,
 	) => {
 		const currentTime = new Date().toLocaleString("en-ET", {
 			timeZone: "Africa/Addis_Ababa",
@@ -327,7 +327,7 @@ export default function EnhancedAnalyticsPage() {
 			"totalUsers" in data.overview
 		) {
 			const systemData = data as SystemAnalytics;
-			return `🔒 KOPPA SECURITY SYSTEM REPORT 🔒
+			return `🔒 BIISHO SECURITY SYSTEM REPORT 🔒
 
 📅 Generated: ${currentTime}
 👤 Role: Super Administrator
@@ -350,13 +350,13 @@ export default function EnhancedAnalyticsPage() {
 ${systemData.recentActivity
 	.slice(0, 3)
 	.map(
-		(alarm) => `• ${alarm.severity} - ${alarm.branch.name} (${alarm.status})`
+		(alarm) => `• ${alarm.severity} - ${alarm.branch.name} (${alarm.status})`,
 	)
 	.join("\n")}
 
-🏢 Koppa Security Solutions
+🏢 Biiso Security Solutions
 📞 Emergency: +251-911-000-000
-🌐 www.koppa-security.et`;
+🌐 www.biiso-security.et`;
 		} else if (
 			userRole === "POLICE_MANAGER" &&
 			"overview" in data &&
@@ -386,7 +386,7 @@ ${systemData.recentActivity
 
 🚔 Ethiopian Federal Police
 📞 Emergency: 991
-🏢 Koppa Security Partnership`;
+🏢 Biiso Security Partnership`;
 		} else if (
 			userRole === "OFFICE_MANAGER" &&
 			"overview" in data &&
@@ -409,15 +409,15 @@ ${officeData.branchesData
 	.slice(0, 3)
 	.map(
 		(branch) =>
-			`• ${branch.name}: ${branch._count.operators} operators, ${branch._count.alarms} alarms`
+			`• ${branch.name}: ${branch._count.operators} operators, ${branch._count.alarms} alarms`,
 	)
 	.join("\n")}
 
-🔐 Koppa Security Solutions
+🔐 Biiso Security Solutions
 📞 Support: +251-911-123-456`;
 		}
 
-		return `📊 KOPPA SECURITY REPORT\n\nGenerated: ${currentTime}\nSystem Status: Operational\n\n🏢 Koppa Security Solutions`;
+		return `📊 BIISO SECURITY REPORT\n\nGenerated: ${currentTime}\nSystem Status: Operational\n\n🏢 Biiso Security Solutions`;
 	};
 
 	const sendSmsReport = async () => {
@@ -437,8 +437,8 @@ ${officeData.branchesData
 				userRole === "SUPER_ADMIN"
 					? systemData
 					: userRole === "POLICE_MANAGER"
-					? policeData
-					: officeData;
+						? policeData
+						: officeData;
 
 			if (!currentData) {
 				throw new Error("No data available");
@@ -672,7 +672,7 @@ ${officeData.branchesData
 					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
 						<Card
 							className={`${getMetricCardStyle(
-								"info"
+								"info",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-300">
@@ -695,7 +695,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"success"
+								"success",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-green-700 dark:text-green-300">
@@ -718,7 +718,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"info"
+								"info",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-purple-700 dark:text-purple-300">
@@ -741,7 +741,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"critical"
+								"critical",
 							)} hover:scale-105 transition-all duration-300 border-2 ${
 								systemData.overview.activeAlarms > 0 ? "animate-glow" : ""
 							}`}>
@@ -847,7 +847,7 @@ ${officeData.branchesData
 																(systemData.overview.resolvedAlarms /
 																	systemData.overview.totalAlarms) *
 																100
-														  ).toFixed(1)
+															).toFixed(1)
 														: 0}
 													%
 												</span>
@@ -860,7 +860,7 @@ ${officeData.branchesData
 															systemData.overview.totalAlarms > 0
 																? (systemData.overview.resolvedAlarms /
 																		systemData.overview.totalAlarms) *
-																  100
+																	100
 																: 0
 														}%`,
 													}}
@@ -1022,7 +1022,7 @@ ${officeData.branchesData
 														</p>
 														<Badge
 															className={getSeverityColor(
-																severityData.severity
+																severityData.severity,
 															)}>
 															{severityData.severity}
 														</Badge>
@@ -1071,7 +1071,7 @@ ${officeData.branchesData
 																		timeZone: "Africa/Addis_Ababa",
 																		dateStyle: "medium",
 																		timeStyle: "short",
-																	}
+																	},
 																)}
 															</p>
 														</div>
@@ -1208,7 +1208,7 @@ ${officeData.branchesData
 					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
 						<Card
 							className={`${getMetricCardStyle(
-								"info"
+								"info",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-300">
@@ -1231,7 +1231,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"warning"
+								"warning",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-yellow-700 dark:text-yellow-300">
@@ -1254,7 +1254,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"success"
+								"success",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-green-700 dark:text-green-300">
@@ -1277,7 +1277,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"info"
+								"info",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-300">
@@ -1317,7 +1317,7 @@ ${officeData.branchesData
 														(policeData.overview.completedReports /
 															policeData.overview.totalReports) *
 														100
-												  ).toFixed(1)
+													).toFixed(1)
 												: 0}
 											%
 										</span>
@@ -1490,7 +1490,7 @@ ${officeData.branchesData
 					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
 						<Card
 							className={`${getMetricCardStyle(
-								"success"
+								"success",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-green-700 dark:text-green-300">
@@ -1513,7 +1513,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"info"
+								"info",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-300">
@@ -1536,7 +1536,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"warning"
+								"warning",
 							)} hover:scale-105 transition-all duration-300 border-2`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<CardTitle className="text-sm font-semibold text-orange-700 dark:text-orange-300">
@@ -1559,7 +1559,7 @@ ${officeData.branchesData
 
 						<Card
 							className={`${getMetricCardStyle(
-								"critical"
+								"critical",
 							)} hover:scale-105 transition-all duration-300 border-2 ${
 								officeData.overview.activeAlarms > 0 ? "animate-glow" : ""
 							}`}>

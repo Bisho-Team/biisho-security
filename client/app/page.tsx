@@ -196,7 +196,7 @@ export default function LoginPage() {
 				<div
 					className="text-center text-slate-400 text-sm animate-fade-in"
 					style={{ animationDelay: "0.4s" }}>
-					<p>© 2025 Koppa Security Systems. All rights reserved.</p>
+					<p>© 2026 Biisho Security Systems. All rights reserved.</p>
 					<p className="mt-1">Powered by advanced security technology</p>
 				</div>
 			</div>

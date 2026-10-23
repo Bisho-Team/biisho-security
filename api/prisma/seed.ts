@@ -9,7 +9,9 @@ const SEED_PASSWORD = process.env.SEED_PASSWORD || "Test@1234";
 // Safe to run on every startup: records are matched by email / name and
 // existing ones are left untouched.
 async function findOrCreateCompany(data: Prisma.CompanyCreateInput) {
-	const existing = await prisma.company.findFirst({ where: { name: data.name } });
+	const existing = await prisma.company.findFirst({
+		where: { name: data.name },
+	});
 	return existing ?? prisma.company.create({ data });
 }
 
@@ -27,12 +29,12 @@ async function main() {
 
 	// Companies
 	const officeCompany = await findOrCreateCompany({
-		name: "Koppa Smart Security",
+		name: "Biisho Smart Security",
 		description: "Smart security and alarm monitoring",
 		type: "Other",
 		industry: "Security",
 		city: "Addis Ababa",
-		email: "info@koppaplc.com",
+		email: "info@biishoplc.com",
 	});
 
 	const policeCompany = await findOrCreateCompany({
@@ -45,14 +47,14 @@ async function main() {
 
 	// Users, one per role
 	await upsertUser({
-		email: "superadmin.test@koppa.local",
+		email: "superadmin.test@biisho.local",
 		name: "Test Super Admin",
 		password,
 		role: "SUPER_ADMIN",
 	});
 
 	const officeManager = await upsertUser({
-		email: "office.test@koppa.local",
+		email: "office.test@biisho.local",
 		name: "Test Office Manager",
 		password,
 		role: "OFFICE_MANAGER",
@@ -60,7 +62,7 @@ async function main() {
 	});
 
 	const policeManager = await upsertUser({
-		email: "police.test@koppa.local",
+		email: "police.test@biisho.local",
 		name: "Test Police Manager",
 		password,
 		role: "POLICE_MANAGER",
@@ -68,7 +70,7 @@ async function main() {
 	});
 
 	const officeOperator = await upsertUser({
-		email: "office.operator.test@koppa.local",
+		email: "office.operator.test@biisho.local",
 		name: "Test Office Operator",
 		password,
 		role: "OPERATOR",
@@ -78,7 +80,7 @@ async function main() {
 	});
 
 	const policeOperator = await upsertUser({
-		email: "police.operator.test@koppa.local",
+		email: "police.operator.test@biisho.local",
 		name: "Test Police Operator",
 		password,
 		role: "OPERATOR",
@@ -92,7 +94,10 @@ async function main() {
 		if (!operator.companyId) continue;
 		await prisma.companyOperator.upsert({
 			where: {
-				companyId_operatorId: { companyId: operator.companyId, operatorId: operator.id },
+				companyId_operatorId: {
+					companyId: operator.companyId,
+					operatorId: operator.id,
+				},
 			},
 			update: {},
 			create: { companyId: operator.companyId, operatorId: operator.id },
@@ -124,9 +129,15 @@ async function main() {
 		});
 	}
 
-	console.log("✅ Seed complete. Accounts (password: SEED_PASSWORD, default Test@1234):");
-	console.log("   superadmin.test@koppa.local, office.test@koppa.local, police.test@koppa.local,");
-	console.log("   office.operator.test@koppa.local, police.operator.test@koppa.local");
+	console.log(
+		"✅ Seed complete. Accounts (password: SEED_PASSWORD, default Test@1234):",
+	);
+	console.log(
+		"   superadmin.test@biisho.local, office.test@biisho.local, police.test@biisho.local,",
+	);
+	console.log(
+		"   office.operator.test@biisho.local, police.operator.test@biisho.local",
+	);
 }
 
 main()

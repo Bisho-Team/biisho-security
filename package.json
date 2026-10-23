@@ -1,7 +1,7 @@
 {
-	"name": "koppa",
+	"name": "Biisho",
 	"private": true,
-	"description": "Koppa Smart Security monorepo (api + client)",
+	"description": "Biisho Smart Security monorepo (api + client)",
 	"scripts": {
 		"up": "docker compose up -d --build",
 		"down": "docker compose down",

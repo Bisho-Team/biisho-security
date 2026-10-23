@@ -1,4 +1,4 @@
-name: koppa
+name: biisho
 
 services:
   postgres:
@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./api/docker/00-reset-public-schema.sql:/docker-entrypoint-initdb.d/00-reset-public-schema.sql:ro
-      - ./api/koppa_backup_v3.sql:/docker-entrypoint-initdb.d/01-koppa_backup_v3.sql:ro
+      - ./api/biisho_backup_v3.sql:/docker-entrypoint-initdb.d/01-biisho_backup_v3.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s

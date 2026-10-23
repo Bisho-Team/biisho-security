@@ -6,7 +6,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "Koppa Security System",
+	title: "Biisho Security System",
 	description: "Smart Security Management Platform",
 };
 

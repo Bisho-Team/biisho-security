@@ -1,7 +1,7 @@
 {
-	"name": "koppa-security-backend",
+	"name": "Biisho-security-backend",
 	"version": "1.0.0",
-	"description": "Backend API for Koppa Smart Security System",
+	"description": "Backend API for Biisho Smart Security System",
 	"main": "dist/server.js",
 	"scripts": {
 		"dev": "tsx watch src/server.ts",
